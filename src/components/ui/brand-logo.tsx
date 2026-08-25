@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 interface BrandLogoProps {
   size?: "sm" | "md" | "lg";
   showText?: boolean;
@@ -35,10 +37,11 @@ export function BrandLogo({ size = "md", showText = true, className }: BrandLogo
     <div className={`flex items-center gap-2.5 ${className}`}>
       <div className={`relative ${s.box}`}>
         {/* Single app-icon logo used for both light and dark themes */}
-        <img
+        <Image
           src="/images/bingewise_appicon.png"
           alt="BingeWise"
-          className="h-full w-full object-contain"
+          fill
+          className="object-contain"
         />
       </div>
       {showText && (

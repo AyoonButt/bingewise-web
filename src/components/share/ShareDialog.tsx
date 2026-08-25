@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
+import Image from "next/image";
 import { useAuthStore } from "@/stores/auth-store";
 import { userAvatarUrl } from "@/lib/avatar";
 
@@ -141,10 +142,11 @@ export function ShareDialog({
                   className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-accent text-left"
                 >
                   <div className="h-8 w-8 rounded-full overflow-hidden shrink-0">
-                    <img
+                    <Image
                       src={userAvatarUrl(u.userId, 64)}
                       alt={u.username}
-                      className="h-8 w-8"
+                      width={32}
+                      height={32}
                     />
                   </div>
                   <div className="min-w-0">

@@ -6,6 +6,7 @@ import { LogOut, ChevronRight, ChevronLeft } from "lucide-react";
 import { useTheme } from "@/components/providers";
 import { userAvatarUrl } from "@/lib/avatar";
 import { settingsLinks } from "@/lib/settings-nav";
+import Image from "next/image";
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -28,9 +29,11 @@ export default function SettingsPage() {
           href={`/user/${user.username}`}
           className="card p-4 flex items-center gap-4 hover:bg-accent/50 transition-colors group"
         >
-          <img
+          <Image
             src={userAvatarUrl(user.userId, 96)}
             alt={user.name}
+            width={64}
+            height={64}
             className="avatar avatar-xl rounded-full"
           />
           <div className="flex-1 min-w-0">

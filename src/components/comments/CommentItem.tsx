@@ -3,6 +3,7 @@
 import { formatDate } from "@/lib/utils";
 import { userAvatarUrl } from "@/lib/avatar";
 import type { CommentDto } from "@/types/comment";
+import Image from "next/image";
 
 interface CommentItemProps {
   comment: CommentDto;
@@ -14,10 +15,12 @@ export function CommentItem({ comment, replyCount = 0, onDelete }: CommentItemPr
   return (
     <div className="space-y-2 py-3 border-b border-border last:border-0">
       <div className="flex items-center gap-2">
-        <img
+        <Image
           src={userAvatarUrl(comment.userId, 64)}
           alt={comment.username}
-          className="h-8 w-8 rounded-full"
+          width={32}
+          height={32}
+          className="rounded-full"
         />
         <div>
           <p className="text-sm font-medium">{comment.username}</p>

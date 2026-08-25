@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, DragEvent } from "react";
 import { Check, GripVertical, Loader2, Plus, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 import { apiClient } from "@/lib/api-client";
 import { getLanguageRegion } from "@/lib/locale";
 import { useAuthStore } from "@/stores/auth-store";
@@ -193,10 +194,12 @@ export function SubscriptionPicker({ userId }: SubscriptionPickerProps) {
               >
                 <Plus className="h-4 w-4 text-primary shrink-0" />
                 {provider.logoPath ? (
-                  <img
+                  <Image
                     src={provider.logoPath}
                     alt={provider.providerName}
-                    className="h-8 w-8 object-contain rounded shrink-0"
+                    width={32}
+                    height={32}
+                    className="object-contain rounded shrink-0"
                   />
                 ) : (
                   <div className="h-8 w-8 rounded bg-muted shrink-0" />
@@ -245,10 +248,12 @@ export function SubscriptionPicker({ userId }: SubscriptionPickerProps) {
                 >
                   <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
                   {logo ? (
-                    <img
+                    <Image
                       src={logo}
                       alt={sub.providerName}
-                      className="h-8 w-8 object-contain rounded shrink-0"
+                      width={32}
+                      height={32}
+                      className="object-contain rounded shrink-0"
                     />
                   ) : (
                     <div className="h-8 w-8 rounded bg-muted shrink-0" />

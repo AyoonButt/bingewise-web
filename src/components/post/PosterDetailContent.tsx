@@ -244,7 +244,7 @@ export function PosterDetailContent() {
     } finally {
       setIsCreatingPost(false);
     }
-  }, [media, id, isMovie, languageRegion, region]);
+  }, [media, id, isMovie, languageRegion, language, region]);
 
   const handleViewAsPost = useCallback(async () => {
     // Guest mode: prompt sign-up instead of creating a post
@@ -481,10 +481,12 @@ export function PosterDetailContent() {
             {comments.slice(0, 3).map((comment) => (
               <div key={comment.commentId} className="flex items-start gap-3">
                 <div className="h-8 w-8 rounded-full shrink-0 overflow-hidden">
-                  <img
+                  <Image
                     src={userAvatarUrl(comment.userId, 64)}
                     alt={comment.username}
-                    className="h-8 w-8 rounded-full"
+                    width={32}
+                    height={32}
+                    className="rounded-full"
                   />
                 </div>
                 <div className="flex-1 min-w-0">

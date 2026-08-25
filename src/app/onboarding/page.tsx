@@ -94,7 +94,7 @@ export default function OnboardingWelcomePage() {
               Stop scrolling. Start watching.
             </h1>
             <p className="text-muted-foreground leading-relaxed">
-              There's so much to watch and no time to sort through it. BingeWise learns what you
+              There&apos;s so much to watch and no time to sort through it. BingeWise learns what you
               love and serves up a feed of only the stuff worth your evening.
             </p>
           </div>
@@ -103,7 +103,7 @@ export default function OnboardingWelcomePage() {
           <div className="rounded-xl border border-border bg-card p-5 space-y-4">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Why you'll love it
+                Why you&apos;ll love it
               </p>
               {benefits.map((b) => (
                 <div key={b.title} className="flex items-start gap-3">

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, ChevronRight, ChevronLeft, Loader2, ArrowRight, Pencil, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 import { apiClient } from "@/lib/api-client";
 import { useOnboardingStore, LANGUAGES, REGIONS, GENRES, CONTENT_RATINGS } from "@/stores/onboarding-store";
 import { useAuthStore } from "@/stores/auth-store";
@@ -228,9 +229,11 @@ export default function OnboardingReviewPage() {
               <div key={item.postId ?? item.tmdbId} className="space-y-1">
                 <div className="aspect-[2/3] rounded-lg bg-muted overflow-hidden">
                   {item.posterPath ? (
-                    <img
+                    <Image
                       src={`https://image.tmdb.org/t/p/w200${item.posterPath}`}
                       alt={item.title}
+                      width={200}
+                      height={300}
                       className="w-full h-full object-cover"
                     />
                   ) : (

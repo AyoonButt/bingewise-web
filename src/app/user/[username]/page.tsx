@@ -214,10 +214,12 @@ export default function UserPage() {
         {/* White area — avatar lower half, username directly under the name */}
         <div className="px-4 pb-4">
           <div className="relative -mt-10 flex items-end">
-            <img
+            <Image
               src={userAvatarUrl(user.userId, 160)}
               alt={user.name}
-              className="h-20 w-20 rounded-full ring-4 ring-white dark:ring-zinc-900 object-cover bg-muted shrink-0 shadow-md"
+              width={80}
+              height={80}
+              className="rounded-full ring-4 ring-white dark:ring-zinc-900 object-cover bg-muted shrink-0 shadow-md"
             />
             <div className="flex-1 min-w-0 pb-1 pl-4">
               <div className="flex items-center gap-2 min-w-0">
@@ -531,10 +533,12 @@ function UserListItem({
       href={`/user/${user.username}`}
       className="flex items-center gap-3 py-2 hover:bg-accent/50 transition-colors rounded-lg px-1 -mx-1"
     >
-      <img
+      <Image
         src={userAvatarUrl(user.userId, 96)}
         alt={user.name}
-        className="h-12 w-12 rounded-full object-cover shrink-0 bg-muted"
+        width={48}
+        height={48}
+        className="rounded-full object-cover shrink-0 bg-muted"
       />
       <div className="flex-1 min-w-0">
         <p className="font-medium truncate">{user.name}</p>

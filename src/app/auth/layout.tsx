@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Sign In",
@@ -17,16 +18,20 @@ export default function AuthLayout({
         <div className="relative z-10 flex flex-col items-center justify-center w-full p-12 text-gray-900 dark:text-gray-100">
           <Link href="/feed" className="flex flex-col items-center mb-8">
             {/* Colored logo (light backgrounds) */}
-            <img
+            <Image
               src="/images/bingewise.png"
               alt="BingeWise"
-              className="h-40 w-40 object-contain drop-shadow-lg dark:hidden"
+              width={160}
+              height={160}
+              className="object-contain drop-shadow-lg dark:hidden"
             />
             {/* Light logo (dark backgrounds) */}
-            <img
+            <Image
               src="/images/bingewise_light.png"
               alt="BingeWise"
-              className="hidden h-40 w-40 object-contain drop-shadow-lg dark:block"
+              width={160}
+              height={160}
+              className="hidden object-contain drop-shadow-lg dark:block"
             />
           </Link>
           <p className="text-lg text-gray-500 dark:text-gray-400 text-center max-w-sm leading-relaxed">

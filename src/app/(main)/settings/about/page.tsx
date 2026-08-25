@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { BingeWiseWordmark } from "@/components/ui/brand-logo";
+import Image from "next/image";
 
 // Official attribution logo URLs (same as the mobile app's About screen)
 const TMDB_LOGO_URL =
@@ -25,10 +26,12 @@ export default function AboutPage() {
 
       {/* App identity */}
       <div className="card p-6 flex flex-col items-center text-center space-y-3">
-        <img
+        <Image
           src="/images/bingewise_appicon.png"
           alt="BingeWise"
-          className="h-20 w-20 object-contain rounded-2xl"
+          width={80}
+          height={80}
+          className="object-contain rounded-2xl"
         />
         <span className="text-2xl font-bold tracking-tight">
           <BingeWiseWordmark />
@@ -73,16 +76,14 @@ export default function AboutPage() {
         <p className="text-xs text-muted-foreground leading-relaxed">
           This product uses the TMDB API but is not endorsed or certified by TMDB.
         </p>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={TMDB_LOGO_URL} alt="TMDB Logo" className="h-10 w-44 object-contain" />
+        <Image src={TMDB_LOGO_URL} alt="TMDB Logo" width={176} height={40} unoptimized className="object-contain" />
       </div>
 
       <div className="card p-4 flex flex-col items-center text-center space-y-3">
         <p className="text-xs text-muted-foreground leading-relaxed">
           Streaming availability data provided by JustWatch.
         </p>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={JUSTWATCH_LOGO_URL} alt="JustWatch Logo" className="h-8 w-36 object-contain" />
+        <Image src={JUSTWATCH_LOGO_URL} alt="JustWatch Logo" width={144} height={32} unoptimized className="object-contain" />
       </div>
 
       <p className="text-center text-xs text-muted-foreground">

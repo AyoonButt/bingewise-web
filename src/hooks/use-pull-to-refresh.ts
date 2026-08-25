@@ -21,10 +21,10 @@ export function usePullToRefresh({ onRefresh, scrollRef, refreshing }: Options) 
   const pullRef = useRef(0);
   const localRefreshing = useRef(false);
 
-  const getScrollTop = () =>
-    scrollRef?.current ? scrollRef.current.scrollTop : window.scrollY;
-
   useEffect(() => {
+    const getScrollTop = () =>
+      scrollRef?.current ? scrollRef.current.scrollTop : window.scrollY;
+
     const onDown = (e: PointerEvent) => {
       if (localRefreshing.current) return;
       if (getScrollTop() <= 0) {

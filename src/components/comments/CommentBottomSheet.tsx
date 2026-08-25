@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { X, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { useComments } from "@/hooks/use-comments";
 import { apiClient } from "@/lib/api-client";
 import { formatDate } from "@/lib/utils";
@@ -483,10 +484,12 @@ function CommentItem({
         }}
       >
         <div className="h-10 w-10 rounded-full shrink-0 overflow-hidden">
-          <img
+          <Image
             src={userAvatarUrl(comment.userId, 80)}
             alt={comment.username}
-            className="h-10 w-10 rounded-full"
+            width={40}
+            height={40}
+            className="rounded-full"
           />
         </div>
         <div className="flex-1 min-w-0">
@@ -614,10 +617,12 @@ function ReplyItem({
         }}
       >
         <div className="h-8 w-8 rounded-full shrink-0 overflow-hidden">
-          <img
+          <Image
             src={userAvatarUrl(reply.userId, 64)}
             alt={reply.username}
-            className="h-8 w-8 rounded-full"
+            width={32}
+            height={32}
+            className="rounded-full"
           />
         </div>
         <div className="flex-1 min-w-0">

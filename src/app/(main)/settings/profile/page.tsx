@@ -6,6 +6,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { apiClient } from "@/lib/api-client";
 import { userAvatarUrl } from "@/lib/avatar";
 import { ChevronLeft, Loader2, Check } from "lucide-react";
+import Image from "next/image";
 
 export default function ProfileSettingsPage() {
   const user = useAuthStore((s) => s.user);
@@ -67,9 +68,11 @@ export default function ProfileSettingsPage() {
       <div className="card p-6 space-y-5">
         <div className="flex items-center gap-4">
           {user && (
-            <img
+            <Image
               src={userAvatarUrl(user.userId, 96)}
               alt={user.name}
+              width={64}
+              height={64}
               className="avatar avatar-xl rounded-full"
             />
           )}

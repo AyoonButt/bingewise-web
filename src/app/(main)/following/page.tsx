@@ -8,6 +8,7 @@ import { useFollowList, useFollowRecommendations } from "@/hooks/use-follow";
 import { FollowButton } from "@/components/profile/FollowButton";
 import { apiClient } from "@/lib/api-client";
 import { Users, Search as SearchIcon, UserPlus } from "lucide-react";
+import Image from "next/image";
 import { userAvatarUrl } from "@/lib/avatar";
 import type { FollowingUser } from "@/types/user";
 
@@ -165,10 +166,12 @@ export default function FollowingPage() {
                 className="flex items-center gap-3 flex-1 min-w-0"
               >
                 <div className="avatar avatar-lg bg-primary/10 text-primary text-sm font-bold flex items-center justify-center">
-                  <img
+                  <Image
                     src={userAvatarUrl(u.userId, 80)}
                     alt={u.name || u.username}
-                    className="h-full w-full rounded-full"
+                    width={48}
+                    height={48}
+                    className="rounded-full"
                   />
                 </div>
                 <div className="flex-1 min-w-0">

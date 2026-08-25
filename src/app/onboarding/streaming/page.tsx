@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, DragEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, ChevronLeft, Search, GripVertical, X } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api-client";
 import { useOnboardingStore } from "@/stores/onboarding-store";
@@ -187,10 +188,12 @@ export default function OnboardingStreamingPage() {
                         className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
                       >
                         {provider.logoPath ? (
-                          <img
+                          <Image
                             src={provider.logoPath}
                             alt={provider.providerName}
-                            className="h-6 w-6 object-contain rounded shrink-0"
+                            width={24}
+                            height={24}
+                            className="object-contain rounded shrink-0"
                           />
                         ) : (
                           <div className="h-6 w-6 rounded bg-muted shrink-0" />
@@ -206,7 +209,7 @@ export default function OnboardingStreamingPage() {
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground px-3 py-3">No results for "{search}"</p>
+                <p className="text-xs text-muted-foreground px-3 py-3">No results for &quot;{search}&quot;</p>
               )}
             </div>
           )}
@@ -236,10 +239,12 @@ export default function OnboardingStreamingPage() {
                   >
                     <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
                     {provider.logoPath ? (
-                      <img
+                      <Image
                         src={provider.logoPath}
                         alt={provider.providerName}
-                        className="h-6 w-6 object-contain rounded shrink-0"
+                        width={24}
+                        height={24}
+                        className="object-contain rounded shrink-0"
                       />
                     ) : (
                       <div className="h-6 w-6 rounded bg-muted shrink-0" />
@@ -278,10 +283,12 @@ export default function OnboardingStreamingPage() {
                     )}
                   >
                     {provider.logoPath ? (
-                      <img
+                      <Image
                         src={provider.logoPath}
                         alt={provider.providerName}
-                        className="h-8 w-8 object-contain"
+                        width={32}
+                        height={32}
+                        className="object-contain"
                       />
                     ) : (
                       <div className="h-8 w-8 rounded bg-muted" />

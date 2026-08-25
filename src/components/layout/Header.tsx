@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Bell, Moon, Sun, Menu } from "lucide-react";
 import { userAvatarUrl } from "@/lib/avatar";
+import Image from "next/image";
 import { useTheme } from "@/components/providers";
 import { useAuthStore } from "@/stores/auth-store";
 import { useUiStore } from "@/stores/ui-store";
@@ -69,9 +70,11 @@ export function Header() {
             href="/settings"
             className="hidden sm:flex items-center gap-2 p-1 pr-3 rounded-full hover:bg-accent transition-colors"
           >
-            <img
+            <Image
               src={userAvatarUrl(user.userId, 32)}
               alt={user.name}
+              width={32}
+              height={32}
               className="avatar avatar-sm"
             />
             <span className="text-sm font-medium">{user.name}</span>

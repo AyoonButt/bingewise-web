@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 interface Provider {
   provider_id: number;
   provider_name: string;
@@ -64,9 +66,11 @@ function ProviderRow({
             title={p.provider_name}
             className="w-9 h-9 rounded-lg overflow-hidden bg-muted border border-border hover:border-primary/50 transition-colors shrink-0"
           >
-            <img
+            <Image
               src={`https://image.tmdb.org/t/p/original${p.logo_path}`}
               alt={p.provider_name}
+              width={36}
+              height={36}
               className="w-full h-full object-cover"
             />
           </a>

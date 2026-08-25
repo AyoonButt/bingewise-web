@@ -5,6 +5,7 @@ import { Globe, Lock } from "lucide-react";
 import { parseCoverColor } from "./palette";
 import { userAvatarUrl } from "@/lib/avatar";
 import type { Watchlist } from "@/types/watchlist";
+import Image from "next/image";
 
 export function WatchlistCard({ watchlist }: { watchlist: Watchlist }) {
   const color = parseCoverColor(watchlist.coverColor);
@@ -52,7 +53,7 @@ export function WatchlistCard({ watchlist }: { watchlist: Watchlist }) {
               onClick={(e) => e.stopPropagation()}
             >
               {watchlist.ownerAvatarUrl || watchlist.ownerId ? (
-                <img
+                <Image
                   src={
                     watchlist.ownerAvatarUrl ??
                     userAvatarUrl(watchlist.ownerId, 40)

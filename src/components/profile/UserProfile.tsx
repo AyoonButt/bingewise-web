@@ -5,6 +5,7 @@ import { useFollow } from "@/hooks/use-follow";
 import { userAvatarUrl } from "@/lib/avatar";
 import type { UserDto } from "@/types/user";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface UserProfileProps {
   user: UserDto;
@@ -22,10 +23,12 @@ export function UserProfile({ user, currentUserId }: UserProfileProps) {
 
   return (
     <div className="flex items-start gap-4 p-4">
-      <img
+      <Image
         src={userAvatarUrl(user.userId, 160)}
         alt={user.username}
-        className="h-20 w-20 rounded-full"
+        width={80}
+        height={80}
+        className="rounded-full"
       />
       <div className="flex-1">
         <h2 className="text-xl font-bold">{user.name}</h2>
