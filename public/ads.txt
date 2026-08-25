@@ -1,0 +1,4 @@
+# Authorized Digital Sellers for BingeWise.
+# Required by Google AdSense — missing/incorrect ads.txt severely limits fill.
+# Publisher ID must match your AdSense account (Account → Info).
+google.com, pub-4207821929422505, DIRECT, f08c47fec0942fa0
