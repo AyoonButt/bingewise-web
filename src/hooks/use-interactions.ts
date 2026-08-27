@@ -48,9 +48,36 @@ export function useInteractions(userId: number | undefined) {
         body: JSON.stringify(body),
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["likedPosts"] });
-      queryClient.invalidateQueries({ queryKey: ["savedPosts"] });
+    onMutate: async (vars) => {
+      if (!userId) return;
+      await queryClient.cancelQueries({ queryKey: ["likedPosts", userId] });
+      await queryClient.cancelQueries({ queryKey: ["savedPosts", userId] });
+
+      const previousLiked = queryClient.getQueryData<number[]>(["likedPosts", userId]);
+      const previousSaved = queryClient.getQueryData<number[]>(["savedPosts", userId]);
+
+      queryClient.setQueryData<number[]>(["likedPosts", userId], (old = []) =>
+        vars.likeState
+          ? old.includes(vars.postId) ? old : [...old, vars.postId]
+          : old.filter((id) => id !== vars.postId)
+      );
+
+      queryClient.setQueryData<number[]>(["savedPosts", userId], (old = []) =>
+        vars.saveState
+          ? old.includes(vars.postId) ? old : [...old, vars.postId]
+          : old.filter((id) => id !== vars.postId)
+      );
+
+      return { previousLiked, previousSaved };
+    },
+    onError: (_err, _vars, context) => {
+      if (!userId) return;
+      if (context?.previousLiked) {
+        queryClient.setQueryData(["likedPosts", userId], context.previousLiked);
+      }
+      if (context?.previousSaved) {
+        queryClient.setQueryData(["savedPosts", userId], context.previousSaved);
+      }
     },
   });
 
@@ -71,20 +98,13 @@ export function useInteractions(userId: number | undefined) {
         return;
       }
       const { isCurrentlyLiked, isCurrentlySaved } = stateMutations(postId);
-      queryClient.setQueryData<number[]>(["likedPosts", userId], (posts = []) =>
-        isCurrentlyLiked
-          ? posts.filter((id) => id !== postId)
-          : posts.includes(postId)
-          ? posts
-          : [...posts, postId]
-      );
       saveInteraction.mutate({
         postId,
         likeState: !isCurrentlyLiked,
         saveState: isCurrentlySaved,
       });
     },
-    [stateMutations, saveInteraction, queryClient, userId]
+    [stateMutations, saveInteraction]
   );
 
   const toggleSave = useCallback(
@@ -95,20 +115,13 @@ export function useInteractions(userId: number | undefined) {
         return;
       }
       const { isCurrentlyLiked, isCurrentlySaved } = stateMutations(postId);
-      queryClient.setQueryData<number[]>(["savedPosts", userId], (posts = []) =>
-        isCurrentlySaved
-          ? posts.filter((id) => id !== postId)
-          : posts.includes(postId)
-          ? posts
-          : [...posts, postId]
-      );
       saveInteraction.mutate({
         postId,
         likeState: isCurrentlyLiked,
         saveState: !isCurrentlySaved,
       });
     },
-    [stateMutations, saveInteraction, queryClient, userId]
+    [stateMutations, saveInteraction]
   );
 
   const isLiked = useCallback(

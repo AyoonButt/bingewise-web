@@ -63,7 +63,12 @@ export function useWatchlistFeed(items: WatchlistItem[], enabled: boolean) {
       .then((posts) => {
         if (cancelled) return;
         const map = new Map<string, PostDto>();
-        (posts ?? []).forEach((p) => map.set(`${p.tmdbId}_${p.type}`, p));
+        (posts ?? []).forEach((p) => {
+          if (p && p.tmdbId) {
+            const key = `${p.tmdbId}_${(p.type || "").toLowerCase()}`;
+            map.set(key, p);
+          }
+        });
         setResolved(map);
       })
       .catch(() => {
@@ -78,7 +83,11 @@ export function useWatchlistFeed(items: WatchlistItem[], enabled: boolean) {
   }, [items, enabled, language]);
 
   const posts = useMemo<PostDto[]>(
-    () => items.map((item) => resolved.get(`${item.tmdbId}_${item.mediaType}`) ?? watchlistItemToPostDto(item)),
+    () =>
+      items.map((item) => {
+        const key = `${item.tmdbId}_${(item.mediaType || "").toLowerCase()}`;
+        return resolved.get(key) ?? watchlistItemToPostDto(item);
+      }),
     [items, resolved]
   );
 
