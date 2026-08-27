@@ -20,6 +20,7 @@ export function MobileNav() {
 
   return (
     <nav
+      data-mobile-nav
       className={cn(
         "lg:hidden fixed bottom-0 inset-x-0 z-50 safe-area-inset transition-colors duration-300",
         isExplore ? "bg-[var(--explore-nav-bg)] border-t border-white/10" : "bg-card border-t border-border"

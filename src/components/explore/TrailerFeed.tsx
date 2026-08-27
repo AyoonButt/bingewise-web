@@ -22,6 +22,7 @@ import {
 import { getLanguageRegion } from "@/lib/locale";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
+import { useReelHeight } from "@/hooks/use-reel-height"
 import type { ContentResponse, PostDto } from "@/types/post";
 
 export function TrailerFeed() {
@@ -31,6 +32,7 @@ export function TrailerFeed() {
   const region = language.split("-")[1] ?? "US";
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const reelHeight = useReelHeight(scrollRef);
 
   const EXPLORE_ADS = isPlacementEnabled("explore");
 
@@ -364,7 +366,11 @@ export function TrailerFeed() {
     <div
       ref={scrollRef}
       className="w-full h-[calc(100dvh-8rem-env(safe-area-inset-bottom,0px))] lg:h-[calc(100vh-4rem)] overflow-y-scroll snap-y snap-mandatory snap-scroll"
-      style={{ scrollBehavior: "auto", overscrollBehavior: "contain" }}
+      style={{
+        scrollBehavior: "auto",
+        overscrollBehavior: "contain",
+        height: reelHeight ?? undefined,
+      }}
     >
       <div
         style={{

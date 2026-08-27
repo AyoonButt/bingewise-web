@@ -9,6 +9,7 @@ import { CommentBottomSheet } from "@/components/comments/CommentBottomSheet";
 import { ShareDialog } from "@/components/share/ShareDialog";
 import { useInteractions } from "@/hooks/use-interactions";
 import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
+import { useReelHeight } from "@/hooks/use-reel-height";
 import { useTrailerInteractionTracker } from "@/hooks/use-trailer-interactions";
 import {
   isVideoKeyFailed,
@@ -42,6 +43,7 @@ export function TrailerPager({
   const user = useAuthStore((s) => s.user);
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const reelHeight = useReelHeight(scrollRef);
   const [muted, setMuted] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [commentPostId, setCommentPostId] = useState<number | null>(null);
@@ -233,7 +235,11 @@ export function TrailerPager({
           className ??
           "w-full h-[calc(100dvh-8rem-env(safe-area-inset-bottom,0px))] lg:h-[calc(100vh-4rem)] overflow-y-scroll snap-y snap-mandatory snap-scroll"
         }
-        style={{ scrollBehavior: "auto", overscrollBehavior: "contain" }}
+        style={{
+          scrollBehavior: "auto",
+          overscrollBehavior: "contain",
+          height: reelHeight ?? undefined,
+        }}
       >
         {items.map((post, index) => {
           const id = post.postId ?? post.tmdbId;
