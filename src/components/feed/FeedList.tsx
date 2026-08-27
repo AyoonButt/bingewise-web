@@ -86,6 +86,7 @@ export function FeedList({
                 onNotInterested={
                   onNotInterested ? () => onNotInterested(pid) : undefined
                 }
+                enablePosterDoubleTap
               />
               {FEED_ADS && index > 0 && index % AD_INTERVALS.feed === AD_INTERVALS.feed - 1 && (
                 <AdUnit placement="feed" className="my-4" />

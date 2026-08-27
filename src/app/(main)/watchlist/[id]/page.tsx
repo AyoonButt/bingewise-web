@@ -472,6 +472,7 @@ function WatchlistDetailInner() {
                   isSaved={post.postId ? isSaved(post.postId) : false}
                   onLike={() => post.postId && toggleLike(post.postId)}
                   onSave={() => post.postId && toggleSave(post.postId)}
+                  enablePosterDoubleTap
                 />
               ))}
             </div>

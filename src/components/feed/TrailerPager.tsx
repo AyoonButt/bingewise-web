@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
 import { TrailerCard } from "@/components/explore/TrailerCard";
 import { CommentBottomSheet } from "@/components/comments/CommentBottomSheet";
 import { ShareDialog } from "@/components/share/ShareDialog";
-import { useInteractions } from "@/hooks/use-interactions";
 import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
 import { useReelHeight } from "@/hooks/use-reel-height";
 import { useTrailerInteractionTracker } from "@/hooks/use-trailer-interactions";
@@ -50,9 +51,43 @@ export function TrailerPager({
   const commentAnchorRef = useRef<HTMLElement | null>(null);
   const [sharePost, setSharePost] = useState<PostDto | null>(null);
 
-  const { isLiked, isSaved, toggleLike, toggleSave } = useInteractions(
-    user?.userId
-  );
+  const [likedTrailerIds, setLikedTrailerIds] = useState<Set<number>>(new Set());
+  const [savedTrailerIds, setSavedTrailerIds] = useState<Set<number>>(new Set());
+
+  // Populate initial liked/saved trailer states for this user
+  const userId = user?.userId;
+  const { data: userLikedIds } = useQuery({
+    queryKey: ["likedPosts", userId],
+    queryFn: () => apiClient<number[]>(`/api/interactions/liked/user/${userId}`),
+    enabled: !!userId,
+  });
+
+  const { data: userSavedIds } = useQuery({
+    queryKey: ["savedPosts", userId],
+    queryFn: () => apiClient<number[]>(`/api/interactions/saved/user/${userId}`),
+    enabled: !!userId,
+  });
+
+  useEffect(() => {
+    if (userLikedIds) {
+      setLikedTrailerIds((prev) => {
+        const next = new Set(prev);
+        for (const id of userLikedIds) next.add(id);
+        return next;
+      });
+    }
+  }, [userLikedIds]);
+
+  useEffect(() => {
+    if (userSavedIds) {
+      setSavedTrailerIds((prev) => {
+        const next = new Set(prev);
+        for (const id of userSavedIds) next.add(id);
+        return next;
+      });
+    }
+  }, [userSavedIds]);
+
   const {
     beginSession,
     endSession,
@@ -60,7 +95,7 @@ export function TrailerPager({
     updateLikeState,
     updateSaveState,
     updateCommentPressed,
-  } = useTrailerInteractionTracker(user?.userId);
+  } = useTrailerInteractionTracker(userId);
 
   useEffect(() => {
     loadFailedVideoKeys();
@@ -170,20 +205,32 @@ export function TrailerPager({
     (post: PostDto) => {
       const postId = post.postId;
       if (!postId || !user) return;
-      toggleLike(postId);
-      updateLikeState(!isLiked(postId));
+      setLikedTrailerIds((ids) => {
+        const next = new Set(ids);
+        const liked = !next.has(postId);
+        if (liked) next.add(postId);
+        else next.delete(postId);
+        updateLikeState(liked);
+        return next;
+      });
     },
-    [toggleLike, isLiked, user, updateLikeState]
+    [user, updateLikeState]
   );
 
   const handleSaveClick = useCallback(
     (post: PostDto) => {
       const postId = post.postId;
       if (!postId || !user) return;
-      toggleSave(postId);
-      updateSaveState(!isSaved(postId));
+      setSavedTrailerIds((ids) => {
+        const next = new Set(ids);
+        const saved = !next.has(postId);
+        if (saved) next.add(postId);
+        else next.delete(postId);
+        updateSaveState(saved);
+        return next;
+      });
     },
-    [toggleSave, isSaved, user, updateSaveState]
+    [user, updateSaveState]
   );
 
   const handleCommentClick = useCallback(
@@ -254,8 +301,8 @@ export function TrailerPager({
                 active={isActive}
                 muted={muted}
                 playerContainerRef={scrollRef}
-                isLiked={post.postId ? isLiked(post.postId) : false}
-                isSaved={post.postId ? isSaved(post.postId) : false}
+                isLiked={post.postId ? likedTrailerIds.has(post.postId) : false}
+                isSaved={post.postId ? savedTrailerIds.has(post.postId) : false}
                 onToggleMute={handleToggleMute}
                 onStarted={handleStarted}
                 onMutedChange={updateMuted}

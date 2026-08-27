@@ -7,6 +7,7 @@ import { tmdbImage, getPersonDetail } from "@/lib/tmdb";
 import { getLanguageRegion } from "@/lib/locale";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
+import { useViewDurationTracker } from "@/hooks/use-view-duration-tracker";
 import { Loader2 } from "lucide-react";
 import type { TmdbPersonCredit, TmdbPersonDetail } from "@/types/tmdb";
 
@@ -20,6 +21,9 @@ export function PersonDetailContent() {
   const user = useAuthStore((s) => s.user);
   const languageRegion = getLanguageRegion(user);
   const id = Number(params.id);
+
+  // Track viewing duration for person detail screen (matches Android InfoDto / POST /api/info/save)
+  useViewDurationTracker(id, "person");
 
   const [person, setPerson] = useState<TmdbPersonDetail | null>(null);
   const [loading, setLoading] = useState(true);

@@ -12,7 +12,6 @@ import { AdUnit } from "@/components/ads/AdUnit";
 import { AD_INTERVALS, isPlacementEnabled } from "@/lib/ads";
 import { CommentBottomSheet } from "@/components/comments/CommentBottomSheet";
 import { ShareDialog } from "@/components/share/ShareDialog";
-import { useInteractions } from "@/hooks/use-interactions";
 import { useTrailerInteractionTracker } from "@/hooks/use-trailer-interactions";
 import {
   isVideoKeyFailed,
@@ -47,12 +46,8 @@ export function TrailerFeed() {
   const commentAnchorRef = useRef<HTMLElement | null>(null);
   const [sharePost, setSharePost] = useState<PostDto | null>(null);
 
-  const {
-    isLiked,
-    isSaved,
-    toggleLike,
-    toggleSave,
-  } = useInteractions(userId);
+  const [likedTrailerIds, setLikedTrailerIds] = useState<Set<number>>(new Set());
+  const [savedTrailerIds, setSavedTrailerIds] = useState<Set<number>>(new Set());
 
   const {
     beginSession,
@@ -273,20 +268,32 @@ export function TrailerFeed() {
     (post: PostDto) => {
       const postId = post.postId;
       if (!postId || !user) return;
-      toggleLike(postId);
-      updateLikeState(!isLiked(postId));
+      setLikedTrailerIds((ids) => {
+        const next = new Set(ids);
+        const liked = !next.has(postId);
+        if (liked) next.add(postId);
+        else next.delete(postId);
+        updateLikeState(liked);
+        return next;
+      });
     },
-    [toggleLike, isLiked, user, updateLikeState]
+    [user, updateLikeState]
   );
 
   const handleSaveClick = useCallback(
     (post: PostDto) => {
       const postId = post.postId;
       if (!postId || !user) return;
-      toggleSave(postId);
-      updateSaveState(!isSaved(postId));
+      setSavedTrailerIds((ids) => {
+        const next = new Set(ids);
+        const saved = !next.has(postId);
+        if (saved) next.add(postId);
+        else next.delete(postId);
+        updateSaveState(saved);
+        return next;
+      });
     },
-    [toggleSave, isSaved, user, updateSaveState]
+    [user, updateSaveState]
   );
 
   const handleCommentClick = useCallback(
@@ -401,8 +408,8 @@ export function TrailerFeed() {
                 active={isActive}
                 muted={muted}
                 playerContainerRef={scrollRef}
-                isLiked={post.postId ? isLiked(post.postId) : false}
-                isSaved={post.postId ? isSaved(post.postId) : false}
+                isLiked={post.postId ? likedTrailerIds.has(post.postId) : false}
+                isSaved={post.postId ? savedTrailerIds.has(post.postId) : false}
                 onToggleMute={handleToggleMute}
                 onStarted={handleStarted}
                 onMutedChange={updateMuted}

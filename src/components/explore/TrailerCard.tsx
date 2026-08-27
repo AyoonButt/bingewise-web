@@ -128,7 +128,7 @@ export function TrailerCard({
       {active && canPlay && (
         <button
           onClick={handleTogglePlay}
-          className="absolute inset-0 z-40 flex items-center justify-center"
+          className="absolute inset-0 z-40 flex items-center justify-center active:scale-[0.99] transition-transform"
           aria-label={playing ? "Pause" : "Play"}
         >
           {!playing && (
@@ -141,7 +141,7 @@ export function TrailerCard({
 
       <button
         onClick={handleToggleMute}
-        className="absolute top-3 left-3 z-40 h-10 w-10 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+        className="absolute top-3 left-3 z-40 h-10 w-10 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-white hover:bg-black/70 active:scale-90 transition-all"
         aria-label={muted ? "Unmute" : "Mute"}
       >
         {muted ? (
@@ -193,7 +193,7 @@ export function TrailerCard({
       <div className="absolute right-2 bottom-24 z-40 flex flex-col items-center gap-4">
         <button
           onClick={onLikeClick}
-          className="flex flex-col items-center gap-0.5"
+          className="flex flex-col items-center gap-0.5 active:scale-90 transition-transform"
           aria-label={isLiked ? "Unlike" : "Like"}
         >
           <span
@@ -212,7 +212,7 @@ export function TrailerCard({
 
         <button
           onClick={() => onCommentClick?.(containerRef.current ?? null)}
-          className="flex flex-col items-center gap-0.5"
+          className="flex flex-col items-center gap-0.5 active:scale-90 transition-transform"
           aria-label="Comment"
         >
           <span className="h-10 w-10 rounded-full bg-black/40 backdrop-blur text-white flex items-center justify-center hover:bg-black/60 transition-colors">
@@ -222,7 +222,7 @@ export function TrailerCard({
 
         <button
           onClick={onSaveClick}
-          className="flex flex-col items-center gap-0.5"
+          className="flex flex-col items-center gap-0.5 active:scale-90 transition-transform"
           aria-label={isSaved ? "Unsave" : "Save"}
         >
           <span
@@ -241,7 +241,7 @@ export function TrailerCard({
 
         <button
           onClick={onInfoClick}
-          className="flex flex-col items-center gap-0.5"
+          className="flex flex-col items-center gap-0.5 active:scale-90 transition-transform"
           aria-label="Info"
         >
           <span className="h-10 w-10 rounded-full bg-black/40 backdrop-blur text-white flex items-center justify-center hover:bg-black/60 transition-colors">
@@ -252,7 +252,7 @@ export function TrailerCard({
         {onNotInterested && (
           <button
             onClick={onNotInterested}
-            className="flex flex-col items-center gap-0.5"
+            className="flex flex-col items-center gap-0.5 active:scale-90 transition-transform"
             aria-label="Not interested"
           >
             <span className="h-10 w-10 rounded-full bg-black/40 backdrop-blur text-white flex items-center justify-center hover:bg-black/60 transition-colors">

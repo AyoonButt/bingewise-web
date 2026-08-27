@@ -19,6 +19,7 @@ import { userAvatarUrl } from "@/lib/avatar";
 import { useAuthStore } from "@/stores/auth-store";
 import { useUiStore } from "@/stores/ui-store";
 import { useComments } from "@/hooks/use-comments";
+import { useViewDurationTracker } from "@/hooks/use-view-duration-tracker";
 import { RatingDisplay } from "@/components/post/RatingDisplay";
 import { PosterActions } from "@/components/post/PosterActions";
 import { InfoCard } from "@/components/post/InfoCard";
@@ -126,6 +127,9 @@ export function PosterDetailContent() {
     postComment,
     deleteComment,
   } = useComments(id);
+
+  // Track viewing duration for this poster detail screen (matches Android InfoDto / POST /api/info/save)
+  useViewDurationTracker(id, isMovie ? "movie" : "tv");
 
   useEffect(() => {
     if (highlightCommentIds.length > 0) setShowComments(true);

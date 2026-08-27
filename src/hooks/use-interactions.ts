@@ -71,13 +71,20 @@ export function useInteractions(userId: number | undefined) {
         return;
       }
       const { isCurrentlyLiked, isCurrentlySaved } = stateMutations(postId);
+      queryClient.setQueryData<number[]>(["likedPosts", userId], (posts = []) =>
+        isCurrentlyLiked
+          ? posts.filter((id) => id !== postId)
+          : posts.includes(postId)
+          ? posts
+          : [...posts, postId]
+      );
       saveInteraction.mutate({
         postId,
         likeState: !isCurrentlyLiked,
         saveState: isCurrentlySaved,
       });
     },
-    [stateMutations, saveInteraction]
+    [stateMutations, saveInteraction, queryClient, userId]
   );
 
   const toggleSave = useCallback(
@@ -88,13 +95,20 @@ export function useInteractions(userId: number | undefined) {
         return;
       }
       const { isCurrentlyLiked, isCurrentlySaved } = stateMutations(postId);
+      queryClient.setQueryData<number[]>(["savedPosts", userId], (posts = []) =>
+        isCurrentlySaved
+          ? posts.filter((id) => id !== postId)
+          : posts.includes(postId)
+          ? posts
+          : [...posts, postId]
+      );
       saveInteraction.mutate({
         postId,
         likeState: isCurrentlyLiked,
         saveState: !isCurrentlySaved,
       });
     },
-    [stateMutations, saveInteraction]
+    [stateMutations, saveInteraction, queryClient, userId]
   );
 
   const isLiked = useCallback(
