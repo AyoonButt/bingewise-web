@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ACCESS_TOKEN_MAX_AGE, REFRESH_TOKEN_MAX_AGE } from "@/lib/session";
 
+const CANONICAL_HOST = "bingewise.net";
+
 const publicPaths = ["/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password"];
 
 /**
@@ -16,6 +18,34 @@ function isGuestAllowed(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = request.headers.get("host")?.toLowerCase().split(":")[0] ?? "";
+
+  // 1) Canonicalize www -> apex with a permanent redirect so Google indexes a
+  //    single host instead of treating www + apex as duplicates.
+  if (process.env.NODE_ENV === "production" && host === `www.${CANONICAL_HOST}`) {
+    const url = request.nextUrl.clone();
+    url.protocol = "https";
+    url.host = CANONICAL_HOST;
+    url.port = "";
+    return NextResponse.redirect(url, 308);
+  }
+
+  // 2) Auth / guest routing.
+  const response = await handleRequest(request, pathname);
+
+  // 3) Keep Vercel preview/production subdomains out of search indexes; the
+  //    apex (bingewise.net) is the only host we want crawled.
+  if (process.env.NODE_ENV === "production" && host.endsWith(".vercel.app")) {
+    response.headers.set("X-Robots-Tag", "noindex");
+  }
+
+  return response;
+}
+
+async function handleRequest(
+  request: NextRequest,
+  pathname: string
+): Promise<NextResponse> {
   const accessToken = request.cookies.get("accessToken")?.value;
   const refreshToken = request.cookies.get("refreshToken")?.value;
 
