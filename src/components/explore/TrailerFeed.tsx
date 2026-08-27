@@ -75,14 +75,18 @@ export function TrailerFeed() {
       }
 
       // Guest mode: same endpoint the mobile app uses (unauthenticated).
+      // Backend returns a ContentResponse object (with `.posts`); keep the bare
+      // array fallback just in case.
       const [lang] = language.split("-");
-      const guestPosts = await fetch(
-        `/api/guest/recommendations?language=${lang}&region=${region}&contentType=trailers&limit=15`
+      const guestData = await fetch(
+        `/api/recommendations/guest?language=${lang}&region=${region}&contentType=trailers&limit=15`
       ).then((r) => {
         if (!r.ok) throw new Error(`Guest trailers error: ${r.status}`);
         return r.json();
       });
-      const posts: PostDto[] = Array.isArray(guestPosts) ? guestPosts : [];
+      const posts: PostDto[] = Array.isArray(guestData)
+        ? guestData
+        : ((guestData?.posts as PostDto[] | undefined) ?? []);
       return {
         posts,
         totalCount: posts.length,
@@ -90,8 +94,8 @@ export function TrailerFeed() {
         qualityCount: 0,
         hasQualityFallback: false,
         contentType: "recommendations",
-        nextCursor: null,
-        hasMore: false,
+        nextCursor: !Array.isArray(guestData) ? (guestData?.nextCursor ?? null) : null,
+        hasMore: !Array.isArray(guestData) ? (guestData?.hasMore ?? false) : false,
       } as ContentResponse;
     },
     getNextPageParam: (lastPage) =>
