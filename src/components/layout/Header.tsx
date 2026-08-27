@@ -10,6 +10,8 @@ import { useUiStore } from "@/stores/ui-store";
 import { useUnreadCount } from "@/hooks/use-notifications";
 import { BingeWiseWordmark } from "@/components/ui/brand-logo";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export function Header() {
   const { resolvedTheme, setTheme } = useTheme();
@@ -17,14 +19,27 @@ export function Header() {
   const { toggleSidebar } = useUiStore();
   const unreadCount = useUnreadCount(user?.userId);
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => setMounted(true), []);
 
+  const isExplore = pathname.startsWith("/explore");
+
   return (
-    <header className="sticky top-0 z-40 flex items-center gap-3 px-4 h-14 bg-background/80 backdrop-blur-xl border-b border-border">
+    <header
+      className={cn(
+        "sticky top-0 z-40 flex items-center gap-3 px-4 h-14 safe-area-top transition-all duration-300 border-b",
+        isExplore
+          ? "max-lg:bg-[var(--explore-nav-bg)] text-white border-white/10 lg:bg-[#0A1628]/80 lg:backdrop-blur-xl"
+          : "max-lg:bg-card text-card-foreground border-border lg:bg-background/80 lg:text-foreground lg:backdrop-blur-xl"
+      )}
+    >
       <button
         onClick={toggleSidebar}
-        className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-accent transition-colors"
+        className={cn(
+          "lg:hidden p-2.5 -ml-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center",
+          isExplore ? "hover:bg-white/10" : "hover:bg-accent"
+        )}
         aria-label="Toggle menu"
       >
         <Menu className="h-5 w-5" />
@@ -38,14 +53,17 @@ export function Header() {
 
       <button
         onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-        className="p-2 rounded-lg hover:bg-accent transition-colors"
+        className={cn(
+          "p-2.5 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center",
+          isExplore ? "hover:bg-white/10" : "hover:bg-accent"
+        )}
         aria-label="Toggle theme"
       >
         {mounted ? (
           resolvedTheme === "dark" ? (
-            <Sun className="h-5 w-5 text-primary" />
+            <Sun className="h-5 w-5" />
           ) : (
-            <Moon className="h-5 w-5 text-primary" />
+            <Moon className="h-5 w-5" />
           )
         ) : (
           <div className="h-5 w-5" />
@@ -54,7 +72,10 @@ export function Header() {
 
       <Link
         href="/notifications"
-        className="relative p-2 rounded-lg hover:bg-accent transition-colors"
+        className={cn(
+          "relative p-2.5 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center",
+          isExplore ? "hover:bg-white/10" : "hover:bg-accent"
+        )}
         aria-label="Notifications"
       >
         <Bell className="h-5 w-5" />
@@ -68,7 +89,10 @@ export function Header() {
       {user?.username ? (
           <Link
             href="/settings"
-            className="hidden sm:flex items-center gap-2 p-1 pr-3 rounded-full hover:bg-accent transition-colors"
+            className={cn(
+              "hidden sm:flex items-center gap-2 p-1 pr-3 rounded-full transition-colors",
+              isExplore ? "hover:bg-white/10" : "hover:bg-accent"
+            )}
           >
             <Image
               src={userAvatarUrl(user.userId, 32)}
@@ -82,7 +106,7 @@ export function Header() {
       ) : (
         <Link
           href="/auth/login"
-          className="btn-primary h-8 px-3 text-xs sm:text-sm flex items-center"
+          className="btn-primary h-10 px-3 text-xs sm:text-sm flex items-center"
         >
           Log in
         </Link>

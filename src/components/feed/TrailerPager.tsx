@@ -54,7 +54,6 @@ export function TrailerPager({
   const {
     beginSession,
     endSession,
-    recordReplay,
     updateMuted,
     updateLikeState,
     updateSaveState,
@@ -71,49 +70,60 @@ export function TrailerPager({
     [posts]
   );
 
-  // Locally remove failed videos (the posts prop stays immutable)
-  const [removedIds, setRemovedIds] = useState<Set<number>>(new Set());
-
-  useEffect(() => {
-    setRemovedIds(new Set());
-  }, [posts]);
-
-  const visible = useMemo(
-    () => items.filter((p) => !removedIds.has(p.postId ?? p.tmdbId)),
-    [items, removedIds]
-  );
+  const visibleRef = useRef(items);
+  visibleRef.current = items;
 
   // Preserve reel position when navigating into a poster detail and back.
   useScrollRestoration(scrollRestorationKey ?? "", {
     containerRef: scrollRef,
-    ready: visible.length > 0,
+    ready: items.length > 0,
   });
+
+  // Settled page gate: only the exact settled page is active.
+  // settledPage only updates 150ms after scrolling stops, preventing
+  // snap-animation jitter from flipping activeIndex (matching the
+  // Android app's allowVideoPlayer = !isScrolling && page == settledPage).
+  const [settledIndex, setSettledIndex] = useState(0);
 
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
 
     let ticking = false;
+    let settleTimer: ReturnType<typeof setTimeout> | null = null;
+
     const onScroll = () => {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
         ticking = false;
         const { scrollTop, clientHeight } = container;
-        const snappedIndex = Math.round(scrollTop / clientHeight);
-        if (
-          snappedIndex !== activeIndex &&
-          snappedIndex >= 0 &&
-          snappedIndex < items.length
-        ) {
-          setActiveIndex(snappedIndex);
-        }
+        const raw = scrollTop / clientHeight;
+        const snappedIndex = Math.round(raw);
+
+        // Debounce: only commit after scrolling has stopped for 150ms.
+        // This prevents snap-animation oscillation from rapidly flipping
+        // activeIndex and causing acquire/release cascades on the pool.
+        if (settleTimer) clearTimeout(settleTimer);
+        settleTimer = setTimeout(() => {
+          if (
+            snappedIndex >= 0 &&
+            snappedIndex < items.length &&
+            Math.abs(raw - snappedIndex) < 0.25
+          ) {
+            setSettledIndex(snappedIndex);
+            setActiveIndex(snappedIndex);
+          }
+        }, 150);
       });
     };
 
     container.addEventListener("scroll", onScroll, { passive: true });
-    return () => container.removeEventListener("scroll", onScroll);
-  }, [activeIndex, items.length]);
+    return () => {
+      container.removeEventListener("scroll", onScroll);
+      if (settleTimer) clearTimeout(settleTimer);
+    };
+  }, [items.length]);
 
   const activeId = useMemo(() => {
     const post = items[activeIndex];
@@ -125,10 +135,10 @@ export function TrailerPager({
   }, [activeId, endSession]);
 
   useEffect(() => {
-    if (hasMore && !loadingMore && visible.length - activeIndex - 1 <= 5) {
+    if (hasMore && !loadingMore && items.length - activeIndex - 1 <= 5) {
       onNearEnd?.();
     }
-  }, [visible.length, activeIndex, hasMore, loadingMore, onNearEnd]);
+  }, [items.length, activeIndex, hasMore, loadingMore, onNearEnd]);
 
   const scrollToIndex = useCallback((index: number) => {
     const container = scrollRef.current;
@@ -192,29 +202,22 @@ export function TrailerPager({
     [router]
   );
 
+  // Match mobile app: report the failed key but do NOT remove the video
+  // or advance to the next one. The card sets videoFailed=true which
+  // makes canPlay=false, so the player won't be acquired. The video
+  // stays visible as a poster — the user scrolls manually. This
+  // completely eliminates the error→remove→recompose→error cascade.
   const handleVideoError = useCallback(
     (post: PostDto, reason: string) => {
       const videoKey = post.videoKey;
       if (videoKey) {
         reportVideoKeyFailed(videoKey, reason);
       }
-      const id = post.postId ?? post.tmdbId;
-      const idx = visible.findIndex((p) => (p.postId ?? p.tmdbId) === id);
-      setRemovedIds((prev) => {
-        const next = new Set(prev);
-        next.add(id);
-        return next;
-      });
-      if (idx >= 0 && visible.length > 1) {
-        const clamped = Math.min(idx, visible.length - 2);
-        setActiveIndex(clamped);
-        requestAnimationFrame(() => scrollToIndex(clamped));
-      }
     },
-    [visible, scrollToIndex]
+    []
   );
 
-  if (visible.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="text-center py-16 text-muted-foreground text-sm">
         {emptyMessage}
@@ -232,7 +235,7 @@ export function TrailerPager({
         }
         style={{ scrollBehavior: "auto", overscrollBehavior: "contain" }}
       >
-        {visible.map((post, index) => {
+        {items.map((post, index) => {
           const id = post.postId ?? post.tmdbId;
           const isActive = index === activeIndex;
           return (
@@ -249,7 +252,6 @@ export function TrailerPager({
                 isSaved={post.postId ? isSaved(post.postId) : false}
                 onToggleMute={handleToggleMute}
                 onStarted={handleStarted}
-                onReplay={recordReplay}
                 onMutedChange={updateMuted}
                 onLikeClick={() => handleLikeClick(post)}
                 onSaveClick={() => handleSaveClick(post)}

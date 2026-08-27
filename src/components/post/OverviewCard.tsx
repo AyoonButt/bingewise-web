@@ -13,7 +13,7 @@ export function OverviewCard({ overview }: OverviewCardProps) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <h3 className="font-semibold mb-2">Overview</h3>
-      <p className="text-sm text-muted-foreground leading-relaxed">
+      <p className="text-sm text-muted-foreground leading-relaxed break-words">
         {text}
       </p>
     </div>

@@ -25,7 +25,7 @@ export function InfoCard({ rows }: InfoCardProps) {
           <span className="font-semibold text-muted-foreground shrink-0">
             {row.label}
           </span>
-          <span className="text-foreground">{row.value}</span>
+          <span className="text-foreground break-words">{row.value}</span>
         </div>
       ))}
     </div>

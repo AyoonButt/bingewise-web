@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, Link2 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/auth-store";
 import { userAvatarUrl } from "@/lib/avatar";
+import { PreferredSourceBadge } from "./PreferredSourceBadge";
 
 interface ShareDialogProps {
   postId: number;
@@ -62,6 +63,7 @@ export function ShareDialog({
   };
 
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const handleShare = async (userId: number) => {
     setError(null);
@@ -110,6 +112,26 @@ export function ShareDialog({
     setShared(true);
   };
 
+  const handleCopyLink = async () => {
+    setError(null);
+    try {
+      const url = watchlistTarget
+        ? await watchlistTarget.getLink()
+        : `${window.location.origin}/activity/item/${postId}`;
+      if (navigator.share) {
+        await navigator.share({ title: postTitle, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (e) {
+      if (e instanceof Error && e.name !== "AbortError") {
+        setError(e.message || "Couldn't copy link");
+      }
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-md bg-card rounded-lg p-6 space-y-4">
@@ -155,6 +177,17 @@ export function ShareDialog({
                   </div>
                 </button>
               ))}
+            </div>
+            <div className="pt-3 border-t border-border space-y-3">
+              <PreferredSourceBadge />
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="w-full flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-accent transition-colors"
+              >
+                <Link2 className="h-4 w-4" />
+                {copied ? "Link copied!" : "Copy link"}
+              </button>
             </div>
           </>
         )}

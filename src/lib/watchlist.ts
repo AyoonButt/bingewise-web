@@ -14,18 +14,21 @@ import type {
   WatchlistDetailResponse,
   WatchlistItem,
   WatchlistShareInfo,
+  WatchlistCollaborator,
 } from "@/types/watchlist";
 
-interface WatchlistDTO extends Omit<Watchlist, "isPublic" | "isOwner"> {
+interface WatchlistDTO extends Omit<Watchlist, "isPublic" | "isOwner" | "collaboratorCount"> {
   isPublic?: boolean;
   isOwner?: boolean;
   public?: boolean;
   owner?: boolean;
+  collaboratorCount?: number;
 }
 
 interface WatchlistDetailDTO {
   watchlist: WatchlistDTO;
   items: WatchlistItem[];
+  collaborators?: WatchlistCollaborator[];
 }
 
 interface CloneWatchlistDTO {
@@ -48,6 +51,7 @@ function normalizeWatchlist(dto: WatchlistDTO): Watchlist {
     ownerName: dto.ownerName ?? null,
     ownerAvatarUrl: dto.ownerAvatarUrl ?? null,
     itemCount: dto.itemCount,
+    collaboratorCount: dto.collaboratorCount ?? 0,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
   };
@@ -61,6 +65,7 @@ function normalizeDetail(dto: WatchlistDetailDTO): WatchlistDetailResponse {
   return {
     watchlist: normalizeWatchlist(dto.watchlist),
     items: dto.items,
+    collaborators: dto.collaborators ?? [],
   };
 }
 
@@ -245,4 +250,53 @@ export function getWatchlistShareInfo(
   watchlistId: number
 ): Promise<WatchlistShareInfo> {
   return apiClient<WatchlistShareInfo>(`/api/watchlists/${watchlistId}/share`);
+}
+
+// ── Collaborator management ──────────────────────────────────────────
+
+export function getCollaborators(
+  watchlistId: number
+): Promise<WatchlistCollaborator[]> {
+  return apiClient<WatchlistCollaborator[]>(
+    `/api/watchlists/${watchlistId}/collaborators`
+  );
+}
+
+export function addCollaborator(
+  watchlistId: number,
+  payload: { userId: number } | { username: string }
+): Promise<WatchlistCollaborator> {
+  return apiClient<WatchlistCollaborator>(
+    `/api/watchlists/${watchlistId}/collaborators`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }
+  ).then((result) => {
+    notifyWatchlistChanged(watchlistId);
+    // Refresh the cached "My Lists" collections so shared state stays accurate
+    // for the owner and the newly-added collaborator.
+    invalidateCurrentUserWatchlists();
+    const addedUserId = "userId" in payload ? payload.userId : undefined;
+    if (addedUserId) invalidateUserWatchlists(addedUserId);
+    return result;
+  });
+}
+
+export function removeCollaborator(
+  watchlistId: number,
+  userId: number
+): Promise<ApiResponse> {
+  return apiClient<ApiResponse>(
+    `/api/watchlists/${watchlistId}/collaborators/${userId}`,
+    { method: "DELETE" }
+  ).then((res) => {
+    notifyWatchlistChanged(watchlistId);
+    // Drop the cached collections so the list no longer shows as shared after
+    // the collaborator is removed. The owner's and the removed user's caches
+    // are cleared so neither view keeps a stale "Shared by" entry.
+    invalidateCurrentUserWatchlists();
+    invalidateUserWatchlists(userId);
+    return res;
+  });
 }

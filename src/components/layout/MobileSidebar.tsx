@@ -49,7 +49,7 @@ export function MobileSidebar() {
           <BrandLogo />
           <button
             onClick={() => setOpen(false)}
-            className="p-2 rounded-lg hover:bg-accent transition-colors"
+            className="p-2.5 rounded-lg hover:bg-accent transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-label="Close menu"
           >
             <X className="h-5 w-5" />

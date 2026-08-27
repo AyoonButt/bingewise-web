@@ -36,9 +36,7 @@ export function PostCard({
   const commentAnchorRef = useRef<HTMLElement | null>(null);
 
   const handleDoubleClick = () => {
-    if (!isLiked) {
-      onLike();
-    }
+    onLike();
   };
 
   const openComments = (e: React.MouseEvent) => {

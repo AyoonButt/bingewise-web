@@ -5,7 +5,6 @@ import {
   Volume2,
   VolumeX,
   Play,
-  RotateCcw,
   Heart,
   MessageCircle,
   Bookmark,
@@ -16,6 +15,7 @@ import {
 } from "lucide-react";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { useYoutubePlayer } from "@/hooks/use-youtube-player";
+import { youtubePlayerPool } from "@/lib/youtube-player-pool";
 import type { PostDto } from "@/types/post";
 
 interface TrailerCardProps {
@@ -27,7 +27,6 @@ interface TrailerCardProps {
   playerContainerRef: React.RefObject<HTMLDivElement | null>;
   onToggleMute: () => void;
   onStarted?: (postId: number) => void;
-  onReplay?: () => void;
   onMutedChange?: (muted: boolean) => void;
   onLikeClick?: () => void;
   onSaveClick?: () => void;
@@ -47,7 +46,6 @@ export function TrailerCard({
   playerContainerRef,
   onToggleMute,
   onStarted,
-  onReplay,
   onMutedChange,
   onLikeClick,
   onSaveClick,
@@ -60,7 +58,6 @@ export function TrailerCard({
   const containerRef = useRef<HTMLDivElement>(null);
   const playerAreaRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(true);
-  const [ended, setEnded] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
@@ -69,15 +66,15 @@ export function TrailerCard({
 
   useEffect(() => {
     if (active) {
-      setEnded(false);
       setPlaying(true);
     }
   }, [active]);
 
   const handleEnded = useCallback(() => {
-    setEnded(true);
-    setPlaying(false);
-  }, []);
+    // Auto-loop: seek back to start and play again (matches mobile app behavior).
+    // Do NOT set ended=true or stop playing — the video loops seamlessly.
+    youtubePlayerPool.replay(ownerKey);
+  }, [ownerKey]);
 
   const handleError = useCallback(
     (reason: string) => {
@@ -94,33 +91,22 @@ export function TrailerCard({
     [active, onStarted, post.postId, post.tmdbId]
   );
 
-  const { replay } = useYoutubePlayer({
+  useYoutubePlayer({
     ownerKey,
     videoKey: post.videoKey,
     targetRef: playerAreaRef,
     containerRef: playerContainerRef,
     active: active && canPlay,
-    playing: active && playing && !ended,
+    playing: active && playing,
     muted,
     onEnded: handleEnded,
     onError: handleError,
     onPlayingChange: handlePlayingChange,
   });
 
-  const handleReplay = useCallback(() => {
-    setEnded(false);
-    setPlaying(true);
-    onReplay?.();
-    replay();
-  }, [replay, onReplay]);
-
   const handleTogglePlay = useCallback(() => {
-    if (ended) {
-      handleReplay();
-      return;
-    }
     setPlaying((p) => !p);
-  }, [ended, handleReplay]);
+  }, []);
 
   const handleToggleMute = useCallback(() => {
     onToggleMute();
@@ -145,13 +131,9 @@ export function TrailerCard({
           className="absolute inset-0 z-40 flex items-center justify-center"
           aria-label={playing ? "Pause" : "Play"}
         >
-          {(!playing || ended) && (
+          {!playing && (
             <span className="h-16 w-16 rounded-full bg-black/60 flex items-center justify-center">
-              {ended ? (
-                <RotateCcw className="h-7 w-7 text-white" />
-              ) : (
-                <Play className="h-7 w-7 text-white translate-x-0.5" />
-              )}
+              <Play className="h-7 w-7 text-white translate-x-0.5" />
             </span>
           )}
         </button>

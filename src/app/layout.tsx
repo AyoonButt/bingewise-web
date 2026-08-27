@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { Footer } from "@/components/layout/Footer";
+import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/seo/JsonLd";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -14,18 +16,29 @@ export const metadata: Metadata = {
     default: "BingeWise",
     template: "%s | BingeWise",
   },
-  description: "Movie & TV show recommendations and social platform",
+  description:
+    "Discover your next favorite TV show and movie. BingeWise learns what you love and serves personalized recommendations across all your streaming services.",
   applicationName: "BingeWise",
   icons: {
     icon: "/images/bingewise_appicon.png",
     apple: "/images/bingewise_appicon.png",
   },
+  openGraph: {
+    siteName: "BingeWise",
+    type: "website",
+    locale: "en_US",
+    url: "https://bingewise.net",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
+  metadataBase: new URL("https://bingewise.net"),
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F8FAFC" },
     { media: "(prefers-color-scheme: dark)", color: "#121212" },
@@ -39,8 +52,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <OrganizationJsonLd />
+        <WebSiteJsonLd />
+      </head>
       <body className={`${inter.className} min-h-screen`}>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

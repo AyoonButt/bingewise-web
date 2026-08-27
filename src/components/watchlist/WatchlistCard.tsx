@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { Globe, Lock } from "lucide-react";
+import { Globe, Lock, Users } from "lucide-react";
 import { parseCoverColor } from "./palette";
 import { userAvatarUrl } from "@/lib/avatar";
 import type { Watchlist } from "@/types/watchlist";
 import Image from "next/image";
 
-export function WatchlistCard({ watchlist }: { watchlist: Watchlist }) {
+export function WatchlistCard({
+  watchlist,
+  showSharedBy = true,
+}: {
+  watchlist: Watchlist;
+  showSharedBy?: boolean;
+}) {
   const color = parseCoverColor(watchlist.coverColor);
   return (
     <Link
@@ -20,9 +26,17 @@ export function WatchlistCard({ watchlist }: { watchlist: Watchlist }) {
           background: `linear-gradient(135deg, ${color}, ${color}99)`,
         }}
       >
-        <span className="absolute bottom-2 right-3 text-3xl font-black text-white/25 select-none">
-          {watchlist.name?.[0]?.toUpperCase() ?? "W"}
-        </span>
+        {showSharedBy && !watchlist.isOwner && (watchlist.ownerName || watchlist.ownerUsername) ? (
+          <span className="absolute top-2 left-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/45 text-white text-[11px] font-medium">
+            <Users className="h-3 w-3" />
+            Shared by {watchlist.ownerName ?? watchlist.ownerUsername}
+          </span>
+        ) : watchlist.collaboratorCount > 0 ? (
+          <span className="absolute top-2 left-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/45 text-white text-[11px] font-medium">
+            <Users className="h-3 w-3" />
+            Group
+          </span>
+        ) : null}
       </div>
       <div className="p-4 space-y-1.5">
         <p className="font-semibold truncate group-hover:text-primary transition-colors">

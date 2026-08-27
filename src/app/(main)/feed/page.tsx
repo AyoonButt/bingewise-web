@@ -65,11 +65,11 @@ export default function FeedPage() {
 
   return (
     <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
-      <div className="space-y-6">
-        <div className="hidden md:flex items-center gap-2">
+      <section aria-label="Personalized recommendations feed" className="space-y-6">
+        <header className="hidden md:flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-bold tracking-tight">Your Feed</h2>
-        </div>
+          <h1 className="text-xl font-bold tracking-tight">Your Feed</h1>
+        </header>
 
         <FeedList
           posts={visiblePosts}
@@ -83,7 +83,7 @@ export default function FeedPage() {
           isLiked={isLiked}
           isSaved={isSaved}
         />
-      </div>
+      </section>
     </PullToRefresh>
   );
 }

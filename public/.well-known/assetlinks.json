@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.bingewise.app",
+      "sha256_cert_fingerprints": [
+        "31:1C:25:1A:7B:0F:26:79:58:E3:18:AE:3C:FC:16:D2:F6:50:45:82:2A:BE:93:57:25:27:AC:B9:51:13:77:04"
+      ]
+    }
+  }
+]

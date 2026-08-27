@@ -16,9 +16,15 @@ const navItems = [
 
 export function MobileNav() {
   const pathname = usePathname();
+  const isExplore = pathname.startsWith("/explore");
 
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-card/80 backdrop-blur-xl border-t border-border safe-area-inset">
+    <nav
+      className={cn(
+        "lg:hidden fixed bottom-0 inset-x-0 z-50 safe-area-inset transition-colors duration-300",
+        isExplore ? "bg-[var(--explore-nav-bg)] border-t border-white/10" : "bg-card border-t border-border"
+      )}
+    >
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -32,8 +38,8 @@ export function MobileNav() {
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 h-full transition-colors relative",
                 isActive
-                  ? "text-secondary"
-                  : "text-muted-foreground active:text-foreground"
+                  ? (isExplore ? "text-[var(--explore-nav-selected)]" : "text-primary")
+                  : (isExplore ? "text-[var(--explore-nav-unselected)]" : "text-muted-foreground active:text-foreground")
               )}
             >
               <Icon
@@ -47,7 +53,12 @@ export function MobileNav() {
                 {item.label}
               </span>
               {isActive && (
-                <div className="absolute -bottom-0 h-[3px] w-8 rounded-t-full bg-secondary" />
+                <div
+                  className={cn(
+                    "absolute -bottom-0 h-[3px] w-8 rounded-t-full transition-colors",
+                    isExplore ? "bg-[var(--explore-nav-selected)]" : "bg-primary"
+                  )}
+                />
               )}
             </Link>
           );

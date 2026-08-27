@@ -96,6 +96,21 @@
     --requested-orange: #FF9800;
 
     --action-icon: #757575;
+
+    --explore-nav-bg: #0A1628;
+    --explore-nav-selected: #FF6D00;
+    --explore-nav-unselected: rgba(255, 255, 255, 0.78);
+
+    --section-features: rgba(21, 101, 192, 0.10);
+    --section-guest: rgba(255, 109, 0, 0.12);
+    --section-faq: rgba(103, 58, 183, 0.09);
+    --section-trust: rgba(76, 175, 80, 0.10);
+    --hero-from: rgba(21, 101, 192, 0.15);
+    --hero-via: rgba(21, 101, 192, 0.06);
+    --hero-blob-primary: rgba(21, 101, 192, 0.11);
+    --hero-blob-secondary: rgba(255, 109, 0, 0.10);
+    --cta-from: rgba(255, 109, 0, 0.15);
+    --cta-via: rgba(21, 101, 192, 0.07);
   }
 
   .dark {
@@ -138,6 +153,17 @@
     --divider: #333333;
     --surface: #1E1E1E;
     --surface-variant: #2D2D2D;
+
+    --section-features: rgba(66, 165, 245, 0.10);
+    --section-guest: rgba(255, 183, 77, 0.12);
+    --section-faq: rgba(149, 117, 205, 0.10);
+    --section-trust: rgba(102, 187, 106, 0.10);
+    --hero-from: rgba(66, 165, 245, 0.17);
+    --hero-via: rgba(66, 165, 245, 0.07);
+    --hero-blob-primary: rgba(66, 165, 245, 0.12);
+    --hero-blob-secondary: rgba(255, 183, 77, 0.11);
+    --cta-from: rgba(255, 183, 77, 0.15);
+    --cta-via: rgba(66, 165, 245, 0.07);
   }
 }
 
@@ -146,7 +172,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased overflow-x-hidden;
   }
 }
 
@@ -161,6 +187,9 @@
   .safe-area-inset {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
   .snap-scroll {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -172,7 +201,7 @@
 
 @layer components {
   .input-base {
-    @apply w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors;
+    @apply w-full px-3 py-2.5 rounded-lg border border-input bg-background text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors;
   }
 
   .btn-primary {

@@ -171,7 +171,7 @@ function DiscoverTab({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {feed.results.map((w) => (
-            <WatchlistCard key={w.id} watchlist={w} />
+            <WatchlistCard key={w.id} watchlist={w} showSharedBy={false} />
           ))}
         </div>
       )}

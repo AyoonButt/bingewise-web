@@ -7,11 +7,11 @@ import { apiClient } from "@/lib/api-client";
 import { ChevronLeft, Loader2, Check, Shield } from "lucide-react";
 
 const RATINGS = [
-  { value: 99, label: "Everyone", desc: "All content, no restrictions" },
-  { value: 17, label: "Mature (17+)", desc: "Up to R-rated content" },
-  { value: 13, label: "Teen (13+)", desc: "Up to PG-13 content" },
-  { value: 7, label: "Family (7+)", desc: "Family-friendly content" },
-  { value: 0, label: "Kids", desc: "Children's content only" },
+  { value: 99, label: "Everyone", short: "E", desc: "All content, no restrictions" },
+  { value: 17, label: "Mature (17+)", short: "17", desc: "Up to R-rated content" },
+  { value: 13, label: "Teen (13+)", short: "13", desc: "Up to PG-13 content" },
+  { value: 7, label: "Family (7+)", short: "7", desc: "Family-friendly content" },
+  { value: 0, label: "Kids", short: "K", desc: "Children's content only" },
 ];
 
 export default function ContentRatingPage() {
@@ -109,7 +109,7 @@ export default function ContentRatingPage() {
                   : "bg-muted text-muted-foreground"
               }`}
             >
-              {r.label}
+              {r.short}
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium">{r.label}</p>

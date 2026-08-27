@@ -55,7 +55,6 @@ export function TrailerFeed() {
   const {
     beginSession,
     endSession,
-    recordReplay,
     updateMuted,
     updateLikeState,
     updateSaveState,
@@ -70,19 +69,9 @@ export function TrailerFeed() {
       if (cursor) params.set("cursor", cursor);
 
       if (userId) {
-        const data = await apiClient<PostDto[] | ContentResponse>(
+        return await apiClient<ContentResponse>(
           `/api/recommendations/${userId}/${language}?${params.toString()}`
         );
-        if (Array.isArray(data)) {
-          return {
-            posts: data,
-            totalCount: data.length,
-            nextCursor: null,
-            hasMore: false,
-            success: true,
-          } as ContentResponse;
-        }
-        return data;
       }
 
       // Guest mode: same endpoint the mobile app uses (unauthenticated).
@@ -97,13 +86,16 @@ export function TrailerFeed() {
       return {
         posts,
         totalCount: posts.length,
+        recentCount: posts.length,
+        qualityCount: 0,
+        hasQualityFallback: false,
+        contentType: "recommendations",
         nextCursor: null,
         hasMore: false,
-        success: true,
       } as ContentResponse;
     },
     getNextPageParam: (lastPage) =>
-      lastPage?.hasMore && lastPage.nextCursor ? lastPage.nextCursor : undefined,
+      lastPage?.hasMore && lastPage?.nextCursor ? lastPage.nextCursor : undefined,
     initialPageParam: null as string | null,
   });
 
@@ -111,21 +103,28 @@ export function TrailerFeed() {
     loadFailedVideoKeys();
   }, []);
 
+  // Raw (failure-independent) list — drives pagination/load-more decisions so a
+  // video failing can never shrink the count that triggers the next fetch.
+  const rawPosts = useMemo(
+    () => query.data?.pages.flatMap((p) => p?.posts ?? []) ?? [],
+    [query.data]
+  );
+
+  // Clean dedup + filter: exclude failed videos + already-removed (not-interested) items.
+  // When items runs low, the useEffect below loads more from the infinite query.
   const items = useMemo(() => {
     void removedVersion;
     const seen = new Set<number>();
     const result: PostDto[] = [];
-    for (const page of query.data?.pages ?? []) {
-      for (const post of page?.posts ?? []) {
-        const id = post.postId ?? post.tmdbId;
-        if (!post.videoKey || isVideoKeyFailed(post.videoKey)) continue;
-        if (seen.has(id) || removedIdsRef.current.has(id)) continue;
-        seen.add(id);
-        result.push(post);
-      }
+    for (const post of rawPosts) {
+      const id = post.postId ?? post.tmdbId;
+      if (!post.videoKey || isVideoKeyFailed(post.videoKey)) continue;
+      if (seen.has(id) || removedIdsRef.current.has(id)) continue;
+      seen.add(id);
+      result.push(post);
     }
     return result;
-  }, [query.data, removedVersion]);
+  }, [rawPosts, removedVersion]);
 
   // Preserve reel position when navigating into a poster detail and back.
   useScrollRestoration("/explore", {
@@ -161,11 +160,44 @@ export function TrailerFeed() {
     refresh();
   }, [contentRefreshSignal, refresh]);
 
+  // Index of the active item within the RAW list (not the filtered `items`),
+  // so prefetch proximity is measured against content that actually loaded.
+  const activeRawIndex = useMemo(() => {
+    const post = items[activeIndex];
+    const id = post ? (post.postId ?? post.tmdbId) : null;
+    if (id == null) return -1;
+    return rawPosts.findIndex((p) => (p.postId ?? p.tmdbId) === id);
+  }, [items, activeIndex, rawPosts]);
+
+  // Prefetch when the user is within 5 raw items of the loaded end. Keyed on the
+  // RAW length (never shrinks on video failure), so a player error can't trigger
+  // the refill and can't re-arm this effect. Each fetch only grows rawPosts, so
+  // the threshold stops being satisfied after one pull — no run-away fetching.
   useEffect(() => {
-    if (query.hasNextPage && !query.isFetchingNextPage && items.length - activeIndex - 1 <= 5) {
+    if (
+      query.hasNextPage &&
+      !query.isFetchingNextPage &&
+      rawPosts.length - activeRawIndex - 1 <= 5
+    ) {
       loadMore();
     }
-  }, [items.length, activeIndex, query.hasNextPage, query.isFetchingNextPage, loadMore]);
+  }, [rawPosts.length, activeRawIndex, query.hasNextPage, query.isFetchingNextPage, loadMore]);
+
+  // Bounded refill when an entire page yields no playable videos (e.g. a locale
+  // where most keys are broken). Caps consecutive empty fetches so a fully
+  // broken region can't drain the catalog or storm the recommendations endpoint.
+  const emptyStreakRef = useRef(0);
+  useEffect(() => {
+    if (query.isLoading) return;
+    if (items.length > 0) {
+      emptyStreakRef.current = 0;
+      return;
+    }
+    if (query.hasNextPage && !query.isFetchingNextPage) {
+      emptyStreakRef.current += 1;
+      if (emptyStreakRef.current <= 3) loadMore();
+    }
+  }, [items.length, query.hasNextPage, query.isFetchingNextPage, query.isLoading, loadMore]);
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -283,9 +315,11 @@ export function TrailerFeed() {
       if (videoKey) {
         reportVideoKeyFailed(videoKey, reason);
       }
-      const id = post.postId ?? post.tmdbId;
-      removedIdsRef.current.add(id);
-      setRemovedVersion((v) => v + 1);
+      // Match mobile app: do NOT remove the video from the feed.
+      // The card sets videoFailed=true which makes canPlay=false,
+      // so the player won't be acquired. The video stays visible
+      // as a poster — the user scrolls manually. Removing on error
+      // causes: error → removal → recomposition → new video → error cascade.
     },
     []
   );
@@ -361,7 +395,6 @@ export function TrailerFeed() {
                 isSaved={post.postId ? isSaved(post.postId) : false}
                 onToggleMute={handleToggleMute}
                 onStarted={handleStarted}
-                onReplay={recordReplay}
                 onMutedChange={updateMuted}
                 onLikeClick={() => handleLikeClick(post)}
                 onSaveClick={() => handleSaveClick(post)}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import type { ContentResponse, PostDto } from "@/types/post";
@@ -12,29 +12,19 @@ export function useFeed(
 ) {
   const query = useInfiniteQuery({
     queryKey: ["feed", userId, language, region],
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({ pageParam }): Promise<ContentResponse> => {
       const cursor = pageParam as string | null;
       const params = new URLSearchParams({ limit: "20" });
       if (cursor) params.set("cursor", cursor);
 
       if (userId) {
-        // Recommendations returns a raw List<PostDto> (no cursor pagination)
-        const posts = await apiClient<PostDto[] | ContentResponse>(
+        return await apiClient<ContentResponse>(
           `/api/recommendations/${userId}/${language}?${params.toString()}`
         );
-        if (Array.isArray(posts)) {
-          return {
-            posts,
-            totalCount: posts.length,
-            nextCursor: null,
-            hasMore: false,
-          } as ContentResponse;
-        }
-        return posts;
       }
 
       // Guest mode: same endpoint the mobile app uses. Unauthenticated,
-      // returns a bare PostDto[] with no cursor pagination.
+      // returns a bare PostDto[] (backend exposes no cursor for guests).
       const [lang] = language.split("-");
       const guestPosts = await fetch(
         `/api/guest/recommendations?language=${lang}&region=${region}&contentType=posts&limit=25`
@@ -46,25 +36,39 @@ export function useFeed(
       return {
         posts,
         totalCount: posts.length,
+        recentCount: posts.length,
+        qualityCount: 0,
+        hasQualityFallback: false,
+        contentType: "recommendations",
         nextCursor: null,
         hasMore: false,
       } as ContentResponse;
     },
     getNextPageParam: (lastPage) =>
-      lastPage?.hasMore && lastPage.nextCursor ? lastPage.nextCursor : undefined,
+      lastPage?.hasMore && lastPage?.nextCursor ? lastPage.nextCursor : undefined,
     initialPageParam: null as string | null,
   });
 
   const posts: PostDto[] =
     query.data?.pages.flatMap((p) => p?.posts ?? []).filter(Boolean) ?? [];
 
+  // Bounded refill: the Feed tab scrolls via a bottom sentinel, so an empty page
+  // (backend keeps hasMore=true but yields nothing) would otherwise keep firing
+  // loadMore. Cap consecutive empty fetches so a sparse catalog can't storm the
+  // recommendations endpoint.
+  const emptyStreakRef = useRef(0);
   const loadMore = useCallback(() => {
-    if (query.hasNextPage && !query.isFetchingNextPage) {
-      query.fetchNextPage();
-    }
+    if (!(query.hasNextPage && !query.isFetchingNextPage)) return;
+    if (emptyStreakRef.current >= 3) return;
+    const before = query.data?.pages.flatMap((p) => p?.posts ?? []).length ?? 0;
+    void query.fetchNextPage().then(() => {
+      const after = query.data?.pages.flatMap((p) => p?.posts ?? []).length ?? 0;
+      emptyStreakRef.current = after === before ? emptyStreakRef.current + 1 : 0;
+    });
   }, [query]);
 
   const refresh = useCallback(() => {
+    emptyStreakRef.current = 0;
     query.refetch();
   }, [query]);
 

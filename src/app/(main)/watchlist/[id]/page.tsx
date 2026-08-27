@@ -30,7 +30,10 @@ import { parseCoverColor } from "@/components/watchlist/palette";
 import { cloneWatchlist, getWatchlistShareInfo } from "@/lib/watchlist";
 import { ShareDialog } from "@/components/share/ShareDialog";
 import { Send as SendIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, siteUrl } from "@/lib/utils";
+import { MobileAppBanner } from "@/components/mobile-app-banner";
+import { CollaboratorsRow } from "@/components/watchlist/CollaboratorsRow";
+import { ManageMembersModal } from "@/components/watchlist/ManageMembersModal";
 
 export default function WatchlistDetailPage() {
   return (
@@ -88,6 +91,7 @@ function WatchlistDetailInner() {
     togglePublic,
     updateMeta,
     deleteList,
+    refresh,
   } = useWatchlistDetail(watchlistId, shareToken);
   const [showEdit, setShowEdit] = useState(false);
 
@@ -114,6 +118,7 @@ function WatchlistDetailInner() {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSend, setShowSend] = useState(false);
+  const [showManage, setShowManage] = useState(false);
 
   const watchlist = detail?.watchlist;
   const isOwner =
@@ -122,14 +127,15 @@ function WatchlistDetailInner() {
   // Resolves the share URL for notifications: owners mint a secret link;
   // other viewers reuse the current URL (which already carries ?st=).
   const getShareLink = useCallback(async () => {
+    const currentPath = window.location.pathname + window.location.search;
     if (isOwner) {
       // Owners MUST get a secret-link token for private lists. No silent
       // fallback — a token-less link would 403 for recipients.
       const info = await getWatchlistShareInfo(watchlistId);
-      return info?.deepLink || window.location.href;
+      return info?.deepLink || siteUrl(currentPath);
     }
     // Non-owners share their own access context (URL already carries ?st=).
-    return window.location.href;
+    return siteUrl(currentPath);
   }, [isOwner, watchlistId]);
   const [isCloning, setIsCloning] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -148,7 +154,7 @@ function WatchlistDetailInner() {
 
   const handleShare = async () => {
     try {
-      let url = window.location.href;
+      let url = siteUrl(window.location.pathname + window.location.search);
       try {
         const info = await getWatchlistShareInfo(watchlistId);
         if (info?.deepLink) url = info.deepLink;
@@ -310,6 +316,25 @@ function WatchlistDetailInner() {
         )}
       </div>
 
+      {/* Collaborators row */}
+      <CollaboratorsRow
+        ownerName={watchlist.ownerName}
+        ownerAvatarUrl={watchlist.ownerAvatarUrl}
+        collaborators={detail.collaborators ?? []}
+        onManageClick={() => setShowManage(true)}
+      />
+
+      <ManageMembersModal
+        open={showManage}
+        onOpenChange={setShowManage}
+        watchlistId={watchlistId}
+        isOwner={isOwner}
+        ownerName={watchlist.ownerName}
+        ownerAvatarUrl={watchlist.ownerAvatarUrl}
+        collaborators={detail.collaborators ?? []}
+        onChanged={refresh}
+      />
+
       {updateError && (
         <p className="text-sm text-destructive">{updateError}</p>
       )}
@@ -319,14 +344,14 @@ function WatchlistDetailInner() {
         <div className="flex gap-3">
           <button
             onClick={() => setShowEdit(true)}
-            className="btn-outline flex-1 h-10 flex items-center justify-center gap-2 text-sm"
+            className="btn-outline flex-1 h-10 flex items-center justify-center gap-2 text-xs sm:text-sm whitespace-nowrap"
           >
             <Pencil className="h-4 w-4" />
             Edit
           </button>
           <button
             onClick={handleShare}
-            className="btn-outline flex-1 h-10 flex items-center justify-center gap-2 text-sm"
+            className="btn-outline flex-1 h-10 flex items-center justify-center gap-2 text-xs sm:text-sm whitespace-nowrap"
           >
             <Share2 className="h-4 w-4" />
             Share Link
@@ -334,7 +359,7 @@ function WatchlistDetailInner() {
           <button
             onClick={() => setShowDeleteConfirm(true)}
             disabled={isDeleting}
-            className="flex-1 h-10 rounded-xl border border-destructive/30 text-destructive text-sm font-medium flex items-center justify-center gap-2 hover:bg-destructive/5 transition-colors disabled:opacity-50"
+            className="flex-1 h-10 rounded-xl border border-destructive/30 text-destructive text-xs sm:text-sm font-medium flex items-center justify-center gap-2 hover:bg-destructive/5 transition-colors disabled:opacity-50"
           >
             {isDeleting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -517,6 +542,7 @@ function WatchlistDetailInner() {
             .catch(() => {});
         }}
       />
+      {(shareToken || !isOwner) && <MobileAppBanner />}
     </div>
   );
 }

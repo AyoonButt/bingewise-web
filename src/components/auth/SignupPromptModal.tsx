@@ -33,7 +33,7 @@ export function SignupPromptModal() {
       >
         <button
           onClick={close}
-          className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-accent transition-colors"
+          className="absolute top-2 right-2 p-2.5 rounded-lg hover:bg-accent transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           aria-label="Close"
         >
           <X className="h-4 w-4" />

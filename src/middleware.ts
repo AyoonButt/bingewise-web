@@ -31,6 +31,9 @@ export async function middleware(request: NextRequest) {
   }
 
   if (accessToken) {
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL("/feed", request.url));
+    }
     return NextResponse.next();
   }
 

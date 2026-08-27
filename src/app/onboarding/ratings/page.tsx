@@ -93,7 +93,7 @@ export default function OnboardingRatingsPage() {
                   </div>
                   <span
                     className={cn(
-                      "text-[10px] font-medium transition-colors whitespace-nowrap",
+                      "text-[10px] font-medium transition-colors leading-tight text-center",
                       isIncluded ? "text-primary" : "text-muted-foreground"
                     )}
                   >

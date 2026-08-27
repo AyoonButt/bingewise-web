@@ -1,0 +1,58 @@
+# BingeWise — Personalized TV & Movie Recommendations
+
+## About
+BingeWise is a free personalized TV show and movie recommendation platform. It learns your viewing preferences and serves a curated feed of content worth watching across all your streaming services. Unlike traditional recommendation engines, BingeWise combines AI-powered taste profiling with community insights from fans with similar preferences.
+
+## Key Features
+- **Personalized Feed**: AI-powered recommendations that learn from your likes, saves, and viewing history
+- **Cross-Service Watchlists**: Track shows and movies across Netflix, Hulu, Disney+, HBO Max, Amazon Prime, Apple TV+, and more
+- **Streaming Availability**: Instantly see which streaming service has the show you want to watch
+- **Community**: Follow users with similar taste, discover recommendations from real fans
+- **Content Ratings**: Age-appropriate filtering with customizable content rating preferences
+- **Multi-Language**: Available in 73 languages with region-specific streaming availability for 139 countries
+
+## How It Works
+1. Create a free account and tell BingeWise which streaming services you subscribe to
+2. Rate shows and movies to train your personal recommendation engine
+3. Browse your personalized feed of trailers, reviews, and recommendations
+4. Save interesting titles to organized watchlists
+5. Share watchlists with friends and discover what the community is watching
+
+## FAQ
+### Is BingeWise free?
+Yes, BingeWise is completely free to use. Create an account, build watchlists, and get personalized recommendations at no cost.
+
+### Which streaming services does BingeWise support?
+BingeWise supports Netflix, Hulu, Disney+, HBO Max, Amazon Prime Video, Apple TV+, Peacock, Paramount+, Crunchyroll, and many more. Availability varies by region.
+
+### How does BingeWise find shows for me?
+BingeWise uses machine learning to analyze your viewing preferences based on the shows you like, save, and add to watchlists. It combines this with community data from users with similar taste to surface recommendations you'll actually enjoy.
+
+### Can I share my watchlists with friends?
+Yes. You can share watchlists via a secret link or by sending a notification to other BingeWise users. Friends can clone your watchlist to their own collection.
+
+### Is BingeWise available as a mobile app?
+Yes, BingeWise is available on both Android and iOS. Search "BingeWise" in your app store.
+
+## Comparison
+### BingeWise vs JustWatch
+JustWatch focuses primarily on streaming availability — telling you where to watch a specific title. BingeWise goes further by learning your preferences and proactively recommending new content you haven't discovered yet. Both tools are complementary: use JustWatch to find where to watch, and BingeWise to decide what to watch next.
+
+### BingeWise vs IMDb
+IMDb is an encyclopedia of film and TV data. BingeWise is a recommendation engine that learns your personal taste. While IMDb tells you what others think, BingeWise tells what you'll think based on your unique preferences.
+
+## Links
+- Website: https://bingewise.net
+- Feed: https://bingewise.net/feed
+- Explore: https://bingewise.net/explore
+- Search: https://bingewise.net/search
+- About: https://bingewise.net/legal/about
+- FAQ: https://bingewise.net/legal/faq
+- Terms: https://bingewise.net/legal/terms
+- Privacy: https://bingewise.net/legal/privacy
+- Android App: https://play.google.com/store/apps/details?id=com.bingewise.app
+- iOS App: https://apps.apple.com/app/bingewise/id000000000
+
+## Contact
+- Email: support@bingewise.net
+- Twitter: @BingeWiseApp

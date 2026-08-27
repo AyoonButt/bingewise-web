@@ -19,8 +19,8 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      // AdSense + Next.js inline/eval requirements.
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://www.googletagmanager.com https://fcmregistrations.google.com",
+      // AdSense + Next.js inline/eval requirements + YouTube IFrame API.
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://www.googletagmanager.com https://fcmregistrations.google.com https://www.youtube.com",
       "style-src 'self' 'unsafe-inline'",
       // TMDB posters, dicebear avatars, ad creative images.
       "img-src 'self' data: blob: https:",

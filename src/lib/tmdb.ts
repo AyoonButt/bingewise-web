@@ -98,5 +98,8 @@ export function tmdbImage(
   size: "w92" | "w154" | "w185" | "w342" | "w500" | "w780" | "w1280" | "original" = "w500"
 ): string {
   if (!path) return "/images/placeholder.png";
+  // Avatar URLs (e.g. dicebear) and any other absolute URLs are already
+  // complete — prefixing them with the TMDB base yields a broken URL.
+  if (/^https?:\/\//i.test(path)) return path;
   return `${process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE}/${size}${path}`;
 }

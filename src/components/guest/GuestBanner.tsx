@@ -41,7 +41,7 @@ export function GuestBanner() {
           localStorage.setItem(DISMISS_KEY, "1");
           setDismissed(true);
         }}
-        className="p-1 rounded-lg hover:bg-accent transition-colors shrink-0"
+        className="p-2.5 rounded-lg hover:bg-accent transition-colors shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
         aria-label="Dismiss"
       >
         <X className="h-4 w-4" />

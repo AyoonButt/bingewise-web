@@ -76,6 +76,7 @@ export function useWatchlistDetail(
             itemCount: Math.max(0, prev.watchlist.itemCount - 1),
           },
           items: prev.items.filter((i) => i.id !== itemId),
+          collaborators: prev.collaborators,
         };
       });
       try {
@@ -152,6 +153,15 @@ export function useWatchlistDetail(
     }
   }, [watchlistId, queryClient]);
 
+  const refresh = useCallback(async () => {
+    try {
+      const fresh = await getWatchlistDetail(watchlistId, shareToken);
+      setDetail(fresh);
+    } catch {
+      // keep current state on failure
+    }
+  }, [watchlistId, shareToken]);
+
   return {
     detail,
     isLoading,
@@ -163,5 +173,6 @@ export function useWatchlistDetail(
     togglePublic,
     updateMeta,
     deleteList,
+    refresh,
   };
 }

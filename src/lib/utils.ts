@@ -1,6 +1,13 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
+
+export function siteUrl(path: string): string {
+  const base = SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

@@ -1,0 +1,19 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "956HL2KYP4.com.bingewise.app"
+        ],
+        "components": [
+          {
+            "/": "/watchlist/*"
+          },
+          {
+            "/": "/reset-password"
+          }
+        ]
+      }
+    ]
+  }
+}

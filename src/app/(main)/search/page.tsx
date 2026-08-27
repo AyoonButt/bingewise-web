@@ -111,11 +111,11 @@ export default function SearchPage() {
 
   return (
     <PullToRefresh onRefresh={refresh} refreshing={isLoading}>
-      <div className="space-y-6">
-        <div className="flex items-center gap-2">
+      <section aria-label="Search TV shows, movies, and people" className="space-y-6">
+        <header className="flex items-center gap-2">
           <SearchIcon className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-bold tracking-tight">Search</h2>
-        </div>
+          <h1 className="text-xl font-bold tracking-tight">Search</h1>
+        </header>
 
         <SearchBar onSearch={handleSearch} />
 
@@ -218,7 +218,7 @@ export default function SearchPage() {
             )}
           </div>
         )}
-      </div>
+      </section>
     </PullToRefresh>
   );
 }

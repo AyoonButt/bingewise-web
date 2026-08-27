@@ -49,7 +49,7 @@ export function ConsentBanner() {
   if (!mounted || hasDecided) return null;
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-[80] p-4 bg-card border-t border-border shadow-2xl">
+    <div className="fixed bottom-0 inset-x-0 z-[80] p-4 pb-20 sm:pb-4 bg-card border-t border-border shadow-2xl">
       <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <p className="text-xs sm:text-sm text-muted-foreground flex-1 leading-relaxed">
           We use cookies to serve ads and optional analytics. By continuing to
@@ -72,13 +72,13 @@ export function ConsentBanner() {
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setConsent(true, false)}
-            className="btn-outline h-9 px-4 text-xs sm:text-sm whitespace-nowrap"
+            className="btn-outline h-11 px-4 text-xs sm:text-sm whitespace-nowrap"
           >
             Disable analytics
           </button>
           <button
             onClick={() => setConsent(true, true)}
-            className="btn-primary h-9 px-4 text-xs sm:text-sm whitespace-nowrap"
+            className="btn-primary h-11 px-4 text-xs sm:text-sm whitespace-nowrap"
           >
             Accept all
           </button>

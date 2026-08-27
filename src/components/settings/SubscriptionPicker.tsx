@@ -258,7 +258,7 @@ export function SubscriptionPicker({ userId }: SubscriptionPickerProps) {
                   ) : (
                     <div className="h-8 w-8 rounded bg-muted shrink-0" />
                   )}
-                  <span className="flex-1 font-medium">{sub.providerName}</span>
+                  <span className="flex-1 font-medium truncate min-w-0">{sub.providerName}</span>
                   <span className="text-xs text-muted-foreground font-mono">#{idx + 1}</span>
                   <button
                     onClick={() => removeProvider(sub.providerId)}

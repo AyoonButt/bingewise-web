@@ -46,13 +46,15 @@ export function isVideoKeyFailed(key: string): boolean {
 /**
  * Load known-failed video keys from the backend so they persist across sessions.
  * Call once on app init (e.g., in TrailerFeed mount).
+ * Uses raw fetch (not apiClient) so 401s never trigger a refresh loop.
  */
 export async function loadFailedVideoKeys(): Promise<void> {
   if (failedKeysLoaded) return;
   failedKeysLoaded = true;
   try {
-    const { apiClient } = await import("@/lib/api-client");
-    const keys = await apiClient<string[]>("/api/video-keys/failed");
+    const res = await fetch("/api/backend/api/video-keys/failed");
+    if (!res.ok) return; // 401 for guests — silently skip
+    const keys = await res.json();
     if (Array.isArray(keys)) {
       for (const k of keys) failedVideoKeys.add(k);
     }
@@ -63,6 +65,7 @@ export async function loadFailedVideoKeys(): Promise<void> {
 
 /**
  * Report a failed video key to the backend for persistence.
+ * Uses raw fetch (not apiClient) so 401s never trigger a refresh loop.
  */
 export async function reportVideoKeyFailed(
   key: string,
@@ -70,9 +73,9 @@ export async function reportVideoKeyFailed(
 ): Promise<void> {
   markVideoKeyFailed(key);
   try {
-    const { apiClient } = await import("@/lib/api-client");
-    await apiClient("/api/video-keys/failed", {
+    await fetch("/api/backend/api/video-keys/failed", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ videoKey: key, errorReason }),
     });
   } catch {
@@ -498,20 +501,37 @@ class YoutubePlayerPool {
     // is never asked to render while hidden or zero-sized.
     this.reposition();
 
-    const resumeAt = opts.startSeconds ?? this.getLastKnownPosition(opts.videoKey);
-    if (opts.autoPlay) {
-      this.player.loadVideoById({
-        videoId: opts.videoKey,
-        startSeconds: resumeAt,
-      });
-    } else {
-      this.player.cueVideoById({
-        videoId: opts.videoKey,
-        startSeconds: resumeAt,
-      });
+    // After the await points above, React may have unmounted the scroll
+    // container (e.g. during fast scrolling or navigation), detaching the
+    // host from the document. Re-insert if possible; bail if the container
+    // itself is gone.
+    if (!this.host?.isConnected) {
+      if (opts.containerEl.isConnected) {
+        this.ensureHost(opts.containerEl);
+      } else {
+        return;
+      }
     }
-    if (this.muted) this.player.mute();
-    else this.player.unMute();
+
+    const resumeAt = opts.startSeconds ?? this.getLastKnownPosition(opts.videoKey);
+    try {
+      if (opts.autoPlay) {
+        this.player.loadVideoById({
+          videoId: opts.videoKey,
+          startSeconds: resumeAt,
+        });
+      } else {
+        this.player.cueVideoById({
+          videoId: opts.videoKey,
+          startSeconds: resumeAt,
+        });
+      }
+      if (this.muted) this.player.mute();
+      else this.player.unMute();
+    } catch {
+      // Player iframe not attached to DOM — safe to ignore; the next
+      // acquire will re-attach via ensureHost.
+    }
 
     this.reposition();
     this.attachLayoutListeners();
