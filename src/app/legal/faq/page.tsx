@@ -10,11 +10,11 @@ export const metadata: Metadata = {
     title: "FAQ: BingeWise",
     description:
       "Common questions about BingeWise personalized TV & movie recommendations.",
-    url: "https://bingewise.net/legal/faq",
+    url: "https://www.bingewise.net/legal/faq",
     siteName: "BingeWise",
     type: "website",
   },
-  alternates: { canonical: "https://bingewise.net/legal/faq" },
+  alternates: { canonical: "https://www.bingewise.net/legal/faq" },
 };
 
 const faqs = [

@@ -22,6 +22,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
       },
     ],
-    sitemap: "https://bingewise.net/sitemap.xml",
+    sitemap: "https://www.bingewise.net/sitemap.xml",
   };
 }

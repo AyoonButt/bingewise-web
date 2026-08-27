@@ -27,11 +27,11 @@ export const metadata: Metadata = {
     title: "BingeWise: Find Your Next Binge",
     description:
       "Discover your next favorite TV show and movie. BingeWise learns what you love and serves personalized recommendations across all your streaming services.",
-    url: "https://bingewise.net",
+    url: "https://www.bingewise.net",
     siteName: "BingeWise",
     images: [
       {
-        url: "https://bingewise.net/images/bingewise_appicon.png",
+        url: "https://www.bingewise.net/images/bingewise_appicon.png",
         width: 512,
         height: 512,
         alt: "BingeWise",
@@ -44,10 +44,10 @@ export const metadata: Metadata = {
     title: "BingeWise: Find Your Next Binge",
     description:
       "Discover your next favorite TV show and movie. Personalized recommendations across all your streaming services.",
-    images: ["https://bingewise.net/images/bingewise_appicon.png"],
+    images: ["https://www.bingewise.net/images/bingewise_appicon.png"],
   },
   alternates: {
-    canonical: "https://bingewise.net",
+    canonical: "https://www.bingewise.net",
   },
 };
 

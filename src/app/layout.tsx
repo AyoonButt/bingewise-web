@@ -27,12 +27,12 @@ export const metadata: Metadata = {
     siteName: "BingeWise",
     type: "website",
     locale: "en_US",
-    url: "https://bingewise.net",
+    url: "https://www.bingewise.net",
   },
   twitter: {
     card: "summary_large_image",
   },
-  metadataBase: new URL("https://bingewise.net"),
+  metadataBase: new URL("https://www.bingewise.net"),
 };
 
 export const viewport: Viewport = {

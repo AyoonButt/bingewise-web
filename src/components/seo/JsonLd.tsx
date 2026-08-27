@@ -1,4 +1,4 @@
-const SITE_URL = "https://bingewise.net";
+const SITE_URL = "https://www.bingewise.net";
 
 const ORG_ID = `${SITE_URL}/#organization`;
 const WEBSITE_ID = `${SITE_URL}/#website`;

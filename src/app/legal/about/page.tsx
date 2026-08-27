@@ -10,11 +10,11 @@ export const metadata: Metadata = {
     title: "About BingeWise",
     description:
       "Free personalized TV & movie recommendations powered by AI taste profiling.",
-    url: "https://bingewise.net/legal/about",
+    url: "https://www.bingewise.net/legal/about",
     siteName: "BingeWise",
     type: "website",
   },
-  alternates: { canonical: "https://bingewise.net/legal/about" },
+  alternates: { canonical: "https://www.bingewise.net/legal/about" },
 };
 
 export default function AboutPage() {
@@ -28,7 +28,7 @@ export default function AboutPage() {
 
       <PersonJsonLd
         name="BingeWise Team"
-        url="https://bingewise.net"
+        url="https://www.bingewise.net"
         description="The team behind BingeWise, a free personalized TV and movie recommendation platform."
       />
 

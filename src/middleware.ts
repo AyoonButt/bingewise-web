@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ACCESS_TOKEN_MAX_AGE, REFRESH_TOKEN_MAX_AGE } from "@/lib/session";
 
-const CANONICAL_HOST = "bingewise.net";
-
 const publicPaths = ["/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password"];
 
 /**
@@ -20,15 +18,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get("host")?.toLowerCase().split(":")[0] ?? "";
 
-  // 1) Canonicalize www -> apex with a permanent redirect so Google indexes a
-  //    single host instead of treating www + apex as duplicates.
-  if (process.env.NODE_ENV === "production" && host === `www.${CANONICAL_HOST}`) {
-    const url = request.nextUrl.clone();
-    url.protocol = "https";
-    url.host = CANONICAL_HOST;
-    url.port = "";
-    return NextResponse.redirect(url, 308);
-  }
+  // Vercel is configured to redirect the apex (bingewise.net) to
+  // www.bingewise.net, so www is the canonical host. We intentionally avoid an
+  // app-level host redirect here (it would conflict with Vercel's edge redirect);
+  // we only keep Vercel preview/production subdomains out of search indexes.
 
   // 2) Auth / guest routing.
   const response = await handleRequest(request, pathname);

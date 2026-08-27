@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Check, Share2 } from "lucide-react";
 
 const SITE_URL =
-  typeof window !== "undefined" ? window.location.origin : "https://bingewise.net";
+  typeof window !== "undefined" ? window.location.origin : "https://www.bingewise.net";
 
 /**
  * "Preferred source" recommend-CTA. Placed where users are already in a
