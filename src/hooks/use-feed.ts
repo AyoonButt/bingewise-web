@@ -28,7 +28,7 @@ export function useFeed(
       // array fallback just in case.
       const [lang] = language.split("-");
       const guestData = await fetch(
-        `/api/recommendations/guest?language=${lang}&region=${region}&contentType=posts&limit=25`
+        `/api/backend/api/recommendations/guest?language=${lang}&region=${region}&contentType=posts&limit=25`
       ).then((r) => {
         if (!r.ok) throw new Error(`Guest feed error: ${r.status}`);
         return r.json();

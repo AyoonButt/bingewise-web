@@ -79,7 +79,7 @@ export function TrailerFeed() {
       // array fallback just in case.
       const [lang] = language.split("-");
       const guestData = await fetch(
-        `/api/recommendations/guest?language=${lang}&region=${region}&contentType=trailers&limit=15`
+        `/api/backend/api/recommendations/guest?language=${lang}&region=${region}&contentType=trailers&limit=15`
       ).then((r) => {
         if (!r.ok) throw new Error(`Guest trailers error: ${r.status}`);
         return r.json();
@@ -363,7 +363,7 @@ export function TrailerFeed() {
   return (
     <div
       ref={scrollRef}
-      className="w-full h-[calc(100vh-4rem)] overflow-y-scroll snap-y snap-mandatory snap-scroll"
+      className="w-full h-[calc(100dvh-8rem-env(safe-area-inset-bottom,0px))] lg:h-[calc(100vh-4rem)] overflow-y-scroll snap-y snap-mandatory snap-scroll"
       style={{ scrollBehavior: "auto", overscrollBehavior: "contain" }}
     >
       <div

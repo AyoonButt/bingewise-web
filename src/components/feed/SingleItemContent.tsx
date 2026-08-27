@@ -73,7 +73,7 @@ export function SingleItemContent() {
       <TrailerPager
         posts={[post]}
         endMessage=""
-        className="w-full h-[calc(100vh-8rem)] overflow-y-scroll snap-y snap-mandatory snap-scroll rounded-xl overflow-hidden"
+        className="w-full h-[calc(100dvh-8rem-env(safe-area-inset-bottom,0px))] lg:h-[calc(100vh-8rem)] overflow-y-scroll snap-y snap-mandatory snap-scroll rounded-xl overflow-hidden"
       />
     );
   }

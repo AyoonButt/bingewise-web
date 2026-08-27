@@ -231,7 +231,7 @@ export function TrailerPager({
         ref={scrollRef}
         className={
           className ??
-          "w-full h-[calc(100vh-4rem)] overflow-y-scroll snap-y snap-mandatory snap-scroll"
+          "w-full h-[calc(100dvh-8rem-env(safe-area-inset-bottom,0px))] lg:h-[calc(100vh-4rem)] overflow-y-scroll snap-y snap-mandatory snap-scroll"
         }
         style={{ scrollBehavior: "auto", overscrollBehavior: "contain" }}
       >

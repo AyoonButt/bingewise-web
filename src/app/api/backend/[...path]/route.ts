@@ -32,6 +32,10 @@ export async function DELETE(
   return proxyRequest(request, await params, "DELETE");
 }
 
+// Public backend endpoints that must work for signed-out visitors (guests)
+// without an access token. Forwarded anonymously (no Authorization header).
+const PUBLIC_GET_PATHS = ["api/recommendations/guest"];
+
 async function proxyRequest(
   request: NextRequest,
   params: { path: string[] },
@@ -40,7 +44,11 @@ async function proxyRequest(
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value;
 
-  if (!accessToken) {
+  const path = params.path.join("/");
+  const isPublicGet =
+    method === "GET" && PUBLIC_GET_PATHS.some((p) => path.startsWith(p));
+
+  if (!accessToken && !isPublicGet) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
@@ -49,13 +57,13 @@ async function proxyRequest(
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
-  const path = params.path.join("/");
   const searchParams = request.nextUrl.searchParams.toString();
   const url = `${BACKEND_URL}/${path}${searchParams ? `?${searchParams}` : ""}`;
 
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${accessToken}`,
-  };
+  const headers: Record<string, string> = {};
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
 
   // Forward the real client IP so the backend's per-IP rate limiter buckets
   // each website user individually instead of sharing one server-IP bucket.

@@ -460,7 +460,7 @@ function WatchlistDetailInner() {
               endMessage="End of watchlist"
               emptyMessage="No trailers available for these titles yet."
               scrollRestorationKey={`/watchlist:${watchlistId}:VIDEOS`}
-              className="w-full h-[calc(100vh-8rem)] overflow-y-scroll snap-y snap-mandatory snap-scroll rounded-xl overflow-hidden"
+              className="w-full h-[calc(100dvh-8rem-env(safe-area-inset-bottom,0px))] lg:h-[calc(100vh-8rem)] overflow-y-scroll snap-y snap-mandatory snap-scroll rounded-xl overflow-hidden"
             />
           ) : (
             <div className="max-w-md mx-auto space-y-6 pb-6">
