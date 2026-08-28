@@ -13,6 +13,7 @@ const legalLinks = [
   { label: "FAQ", href: "/legal/faq" },
   { label: "Terms of Service", href: "/legal/terms" },
   { label: "Privacy Policy", href: "/legal/privacy" },
+  { label: "Account Deletion", href: "/legal/account-deletion" },
 ];
 
 export function Footer() {
