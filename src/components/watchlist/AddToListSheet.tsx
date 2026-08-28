@@ -31,7 +31,7 @@ export function AddToListSheet({
 
   const [newName, setNewName] = useState("");
   const [color, setColor] = useState(WATCHLIST_PALETTE[0]);
-  const [addedTo, setAddedTo] = useState<number | null>(null);
+  const [addedToIds, setAddedToIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -44,8 +44,7 @@ export function AddToListSheet({
   const handleAdd = async (watchlistId: number) => {
     try {
       await addItemToList(watchlistId, candidate);
-      setAddedTo(watchlistId);
-      setTimeout(onClose, 600);
+      setAddedToIds((prev) => new Set(prev).add(watchlistId));
     } catch {
       // error surfaced via hook state
     }
@@ -54,8 +53,11 @@ export function AddToListSheet({
   const handleCreateAndAdd = async () => {
     if (!newName.trim() || isCreating) return;
     try {
-      await createList(newName.trim(), null, color, candidate);
-      onClose();
+      const res = await createList(newName.trim(), null, color, candidate);
+      if (res?.watchlist?.id) {
+        setAddedToIds((prev) => new Set(prev).add(res.watchlist.id));
+      }
+      setNewName("");
     } catch {
       // error surfaced via hook state
     }
@@ -100,7 +102,7 @@ export function AddToListSheet({
             <div className="space-y-1">
               {watchlists.map((w) => {
                 const busy = isAddingTo === w.id;
-                const done = addedTo === w.id;
+                const done = addedToIds.has(w.id);
                 return (
                   <button
                     key={w.id}
@@ -177,12 +179,20 @@ export function AddToListSheet({
 
           {error && <p className="text-sm text-destructive text-center">{error}</p>}
 
-          <button
-            onClick={onManageLists}
-            className="w-full text-sm text-primary hover:underline py-1"
-          >
-            Manage My Watchlists
-          </button>
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={onClose}
+              className="btn-primary flex-1 h-10 text-sm font-medium"
+            >
+              Done
+            </button>
+            <button
+              onClick={onManageLists}
+              className="btn-outline flex-1 h-10 text-sm font-medium"
+            >
+              Manage Lists
+            </button>
+          </div>
         </div>
       </div>
     </div>

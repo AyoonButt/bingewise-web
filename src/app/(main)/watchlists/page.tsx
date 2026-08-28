@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { Bookmark, ChevronLeft, Compass, Plus, Search } from "lucide-react";
+import { Bookmark, Compass, Plus, Search } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useUiStore } from "@/stores/ui-store";
 import { useWatchlists } from "@/hooks/use-watchlists";
@@ -49,21 +48,17 @@ export default function WatchlistsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Link
-          href="/feed"
-          className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-accent transition-colors"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Link>
-        <h2 className="text-xl font-bold tracking-tight flex-1">Watchlists</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+          Watchlists
+        </h1>
         {tab === "mine" && (
           <button
             onClick={handleCreateClick}
-            className="btn-primary h-10 px-4 flex items-center gap-2 text-sm"
+            className="btn-primary h-10 px-3.5 sm:px-4 flex items-center gap-2 text-sm whitespace-nowrap shrink-0"
           >
             <Plus className="h-4 w-4" />
-            New List
+            <span>New List</span>
           </button>
         )}
       </div>

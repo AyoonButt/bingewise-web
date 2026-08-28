@@ -56,9 +56,13 @@ export function MobileSidebar() {
           </button>
         </div>
 
-        <div className="px-5 pt-5 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <Link
+          href="/settings"
+          onClick={() => setOpen(false)}
+          className="block px-5 pt-5 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+        >
           Settings
-        </div>
+        </Link>
         <nav className="p-2 space-y-1">
           {settingsLinks.map((link) => {
             const Icon = link.icon;

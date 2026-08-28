@@ -121,8 +121,15 @@ function WatchlistDetailInner() {
   const [showManage, setShowManage] = useState(false);
 
   const watchlist = detail?.watchlist;
+  const collaborators = detail?.collaborators ?? [];
   const isOwner =
-    !!watchlist && (watchlist.isOwner || watchlist.userId === user?.userId);
+    !!watchlist &&
+    (watchlist.isOwner ||
+      watchlist.userId === user?.userId ||
+      watchlist.ownerId === user?.userId);
+  const isCollaborator =
+    !!user && collaborators.some((c) => c.userId === user.userId);
+  const isMember = isOwner || isCollaborator;
 
   // Resolves the share URL for notifications: owners mint a secret link;
   // other viewers reuse the current URL (which already carries ?st=).
@@ -340,15 +347,17 @@ function WatchlistDetailInner() {
       )}
 
       {/* Actions */}
-      {isOwner ? (
+      {isMember ? (
         <div className="flex gap-3">
-          <button
-            onClick={() => setShowEdit(true)}
-            className="btn-outline flex-1 h-10 flex items-center justify-center gap-2 text-xs sm:text-sm whitespace-nowrap"
-          >
-            <Pencil className="h-4 w-4" />
-            Edit
-          </button>
+          {isOwner && (
+            <button
+              onClick={() => setShowEdit(true)}
+              className="btn-outline flex-1 h-10 flex items-center justify-center gap-2 text-xs sm:text-sm whitespace-nowrap"
+            >
+              <Pencil className="h-4 w-4" />
+              Edit
+            </button>
+          )}
           <button
             onClick={handleShare}
             className="btn-outline flex-1 h-10 flex items-center justify-center gap-2 text-xs sm:text-sm whitespace-nowrap"
@@ -356,18 +365,20 @@ function WatchlistDetailInner() {
             <Share2 className="h-4 w-4" />
             Share Link
           </button>
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            disabled={isDeleting}
-            className="flex-1 h-10 rounded-xl border border-destructive/30 text-destructive text-xs sm:text-sm font-medium flex items-center justify-center gap-2 hover:bg-destructive/5 transition-colors disabled:opacity-50"
-          >
-            {isDeleting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Trash2 className="h-4 w-4" />
-            )}
-            Delete
-          </button>
+          {isOwner && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={isDeleting}
+              className="flex-1 h-10 rounded-xl border border-destructive/30 text-destructive text-xs sm:text-sm font-medium flex items-center justify-center gap-2 hover:bg-destructive/5 transition-colors disabled:opacity-50"
+            >
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+              Delete
+            </button>
+          )}
         </div>
       ) : (
         <button
@@ -418,11 +429,11 @@ function WatchlistDetailInner() {
             <Bookmark className="h-6 w-6 text-muted-foreground" />
           </div>
           <p className="text-muted-foreground">
-            {isOwner
+            {isMember
               ? "Nothing in this list yet. Add titles from any poster page."
               : "This watchlist is empty."}
           </p>
-          {isOwner && (
+          {isMember && (
             <Link href="/explore" className="btn-primary inline-flex">
               Explore titles
             </Link>
@@ -480,15 +491,18 @@ function WatchlistDetailInner() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {detail.items.map((item) => (
-            <WatchlistItemCard
-              key={item.id}
-              item={item}
-              isOwner={isOwner}
-              onRemove={removeItem}
-              feedHref={`/watchlist/${watchlistId}?view=feed&itemId=${item.id}`}
-            />
-          ))}
+          {detail.items.map((item) => {
+            const canRemove = isOwner || (!!user && item.addedBy === user.userId);
+            return (
+              <WatchlistItemCard
+                key={item.id}
+                item={item}
+                canRemove={canRemove}
+                onRemove={removeItem}
+                feedHref={`/watchlist/${watchlistId}?view=feed&itemId=${item.id}`}
+              />
+            );
+          })}
         </div>
       )}
 

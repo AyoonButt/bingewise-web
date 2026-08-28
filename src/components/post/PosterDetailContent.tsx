@@ -118,7 +118,7 @@ export function PosterDetailContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showComments, setShowComments] = useState(false);
-  const [isCreatingPost, setIsCreatingPost] = useState(false);
+  const [creatingAction, setCreatingAction] = useState<"post" | "trailer" | null>(null);
   const [showAddToList, setShowAddToList] = useState(false);
 
   const {
@@ -199,7 +199,6 @@ export function PosterDetailContent() {
           .join(",")
       : "";
 
-    setIsCreatingPost(true);
     try {
       const res = await apiClient<{ postId?: number; id?: number }>(
         `/api/posts/${isMovie ? "movie" : "tv"}/${languageRegion}/${providerIds}/${language}`,
@@ -245,8 +244,6 @@ export function PosterDetailContent() {
       return null;
     } catch {
       return null;
-    } finally {
-      setIsCreatingPost(false);
     }
   }, [media, id, isMovie, languageRegion, language, region]);
 
@@ -256,8 +253,13 @@ export function PosterDetailContent() {
       useUiStore.getState().openSignupPrompt();
       return;
     }
-    const postId = await ensurePost();
-    if (postId != null) router.push(`/activity/item/${postId}`);
+    setCreatingAction("post");
+    try {
+      const postId = await ensurePost();
+      if (postId != null) router.push(`/activity/item/${postId}`);
+    } finally {
+      setCreatingAction(null);
+    }
   }, [ensurePost, router]);
 
   const handleWatchTrailer = useCallback(async () => {
@@ -266,8 +268,13 @@ export function PosterDetailContent() {
       useUiStore.getState().openSignupPrompt();
       return;
     }
-    const postId = await ensurePost();
-    if (postId != null) router.push(`/activity/item/${postId}?video=1`);
+    setCreatingAction("trailer");
+    try {
+      const postId = await ensurePost();
+      if (postId != null) router.push(`/activity/item/${postId}?video=1`);
+    } finally {
+      setCreatingAction(null);
+    }
   }, [ensurePost, router]);
 
   const handleAddToWatchlist = useCallback(() => {
@@ -388,7 +395,7 @@ export function PosterDetailContent() {
           />
 
           <PosterActions
-            isLoading={isCreatingPost}
+            creatingAction={creatingAction}
             hasVideo={hasVideo}
             onViewAsPost={handleViewAsPost}
             onWatchTrailer={handleWatchTrailer}

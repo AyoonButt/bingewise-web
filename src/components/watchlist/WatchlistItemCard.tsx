@@ -9,7 +9,8 @@ import type { WatchlistItem } from "@/types/watchlist";
 
 interface WatchlistItemCardProps {
   item: WatchlistItem;
-  isOwner: boolean;
+  isOwner?: boolean;
+  canRemove?: boolean;
   onRemove: (itemId: number) => Promise<void> | void;
   feedHref?: string;
 }
@@ -17,11 +18,13 @@ interface WatchlistItemCardProps {
 export function WatchlistItemCard({
   item,
   isOwner,
+  canRemove,
   onRemove,
   feedHref,
 }: WatchlistItemCardProps) {
   const [confirming, setConfirming] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const allowRemove = canRemove ?? isOwner ?? false;
 
   const handleRemove = async () => {
     setRemoving(true);
@@ -60,7 +63,7 @@ export function WatchlistItemCard({
             {item.releaseYear ?? ""}
           </p>
         </Link>
-        {isOwner && (
+        {allowRemove && (
           <button
             onClick={() => setConfirming(true)}
             aria-label={`Remove ${item.title}`}
