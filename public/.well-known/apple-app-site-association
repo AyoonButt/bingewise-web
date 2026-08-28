@@ -10,6 +10,9 @@
             "/": "/watchlist/*"
           },
           {
+            "/": "/activity/item/*"
+          },
+          {
             "/": "/reset-password"
           }
         ]

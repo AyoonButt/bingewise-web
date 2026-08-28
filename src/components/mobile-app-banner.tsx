@@ -35,7 +35,7 @@ export function MobileAppBanner() {
   const storeLabel = platform === "ios" ? "App Store" : "Google Play";
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-50 p-3 sm:hidden">
+    <div className="fixed inset-x-0 z-50 p-3 sm:hidden bottom-[calc(4rem+env(safe-area-inset-bottom))]">
       <div className="bg-card border border-border rounded-2xl shadow-lg p-4 space-y-3">
         <div className="flex items-start gap-3">
           <div className="relative h-12 w-12 shrink-0 rounded-xl overflow-hidden">

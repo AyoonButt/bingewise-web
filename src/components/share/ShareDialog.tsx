@@ -5,6 +5,7 @@ import { X, Link2 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/auth-store";
+import { useUiStore } from "@/stores/ui-store";
 import { userAvatarUrl } from "@/lib/avatar";
 import { PreferredSourceBadge } from "./PreferredSourceBadge";
 
@@ -146,38 +147,59 @@ export function ShareDialog({
         ) : (
           <>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Search users..."
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            {searching && (
-              <p className="text-xs text-muted-foreground">Searching...</p>
-            )}
-            <div className="max-h-60 overflow-y-auto space-y-2">
-              {results.map((u) => (
+            {!user ? (
+              <div className="rounded-lg border border-border bg-accent/40 p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-medium">Share with friends by link</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Share the link with anyone. To send it directly to a
+                    BingeWise friend, create a free account or sign in.
+                  </p>
+                </div>
                 <button
-                  key={u.userId}
-                  onClick={() => handleShare(u.userId)}
-                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-accent text-left"
+                  type="button"
+                  onClick={() => useUiStore.getState().openSignupPrompt()}
+                  className="w-full h-10 rounded-lg btn-primary text-sm"
                 >
-                  <div className="h-8 w-8 rounded-full overflow-hidden shrink-0">
-                    <Image
-                      src={userAvatarUrl(u.userId, 64)}
-                      alt={u.username}
-                      width={32}
-                      height={32}
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{u.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">@{u.username}</p>
-                  </div>
+                  Sign up / Sign in
                 </button>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  placeholder="Search users..."
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                {searching && (
+                  <p className="text-xs text-muted-foreground">Searching...</p>
+                )}
+                <div className="max-h-60 overflow-y-auto space-y-2">
+                  {results.map((u) => (
+                    <button
+                      key={u.userId}
+                      onClick={() => handleShare(u.userId)}
+                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-accent text-left"
+                    >
+                      <div className="h-8 w-8 rounded-full overflow-hidden shrink-0">
+                        <Image
+                          src={userAvatarUrl(u.userId, 64)}
+                          alt={u.username}
+                          width={32}
+                          height={32}
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{u.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">@{u.username}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
             <div className="pt-3 border-t border-border space-y-3">
               <PreferredSourceBadge />
               <button

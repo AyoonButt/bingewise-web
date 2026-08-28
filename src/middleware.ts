@@ -8,7 +8,7 @@ const publicPaths = ["/auth/login", "/auth/register", "/auth/forgot-password", "
  * to login. Keep this list to read-only discovery surfaces — any page that renders
  * personal data must stay behind auth.
  */
-const guestPaths = ["/", "/feed", "/explore", "/post", "/legal", "/watchlists", "/watchlist", "/search", "/following"];
+const guestPaths = ["/", "/feed", "/explore", "/post", "/legal", "/watchlists", "/watchlist", "/search", "/following", "/activity/item"];
 
 function isGuestAllowed(pathname: string): boolean {
   return guestPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));

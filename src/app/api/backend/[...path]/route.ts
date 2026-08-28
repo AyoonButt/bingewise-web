@@ -36,6 +36,17 @@ export async function DELETE(
 // without an access token. Forwarded anonymously (no Authorization header).
 const PUBLIC_GET_PATHS = ["api/recommendations/guest"];
 
+/**
+ * True for GETs that must succeed without an access token. Guests may open a
+ * shared single-post link (/activity/item/{postId}): a post is public social
+ * content and the backend endpoint itself allows anonymous access. Matches
+ * exactly `api/posts/{postId}/{language}` so other post routes stay protected.
+ */
+function isPublicGetPath(path: string): boolean {
+  if (PUBLIC_GET_PATHS.some((p) => path.startsWith(p))) return true;
+  return /^api\/posts\/\d+\/[^/]+$/.test(path);
+}
+
 async function proxyRequest(
   request: NextRequest,
   params: { path: string[] },
@@ -45,8 +56,7 @@ async function proxyRequest(
   const accessToken = cookieStore.get("accessToken")?.value;
 
   const path = params.path.join("/");
-  const isPublicGet =
-    method === "GET" && PUBLIC_GET_PATHS.some((p) => path.startsWith(p));
+  const isPublicGet = method === "GET" && isPublicGetPath(path);
 
   if (!accessToken && !isPublicGet) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
