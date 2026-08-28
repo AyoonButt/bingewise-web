@@ -53,9 +53,9 @@ export function AddToListSheet({
   const handleCreateAndAdd = async () => {
     if (!newName.trim() || isCreating) return;
     try {
-      const res = await createList(newName.trim(), null, color, candidate);
-      if (res?.watchlist?.id) {
-        setAddedToIds((prev) => new Set(prev).add(res.watchlist.id));
+      const created = await createList(newName.trim(), null, color, candidate);
+      if (created?.id) {
+        setAddedToIds((prev) => new Set(prev).add(created.id));
       }
       setNewName("");
     } catch {

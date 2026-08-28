@@ -34,6 +34,7 @@ import { cn, siteUrl } from "@/lib/utils";
 import { MobileAppBanner } from "@/components/mobile-app-banner";
 import { CollaboratorsRow } from "@/components/watchlist/CollaboratorsRow";
 import { ManageMembersModal } from "@/components/watchlist/ManageMembersModal";
+import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 
 export default function WatchlistDetailPage() {
   return (
@@ -239,8 +240,9 @@ function WatchlistDetailInner() {
   const color = parseCoverColor(watchlist.coverColor);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
+    <PullToRefresh onRefresh={refresh} refreshing={isLoading}>
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
         <Link
           href="/watchlists"
           className="p-2 -ml-2 rounded-lg hover:bg-accent transition-colors"
@@ -559,5 +561,6 @@ function WatchlistDetailInner() {
       />
       {(shareToken || !isOwner) && <MobileAppBanner />}
     </div>
+    </PullToRefresh>
   );
 }
