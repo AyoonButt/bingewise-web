@@ -6,6 +6,7 @@ const productLinks = [
   { label: "Explore", href: "/explore" },
   { label: "Search", href: "/search" },
   { label: "Watchlists", href: "/watchlists" },
+  { label: "Following", href: "/following" },
 ];
 
 const legalLinks = [

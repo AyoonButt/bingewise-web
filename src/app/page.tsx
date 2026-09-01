@@ -6,10 +6,6 @@ import {
   Search,
   Users,
   Bookmark,
-  Tv,
-  ListChecks,
-  Heart,
-  Clapperboard,
 } from "lucide-react";
 import {
   OrganizationJsonLd,
@@ -76,27 +72,6 @@ const faqs = [
     question: "Can I share my watchlist with friends?",
     answer:
       "For sure. You can follow other users, see what they are watching, and share your own lists. You can also make public watchlists that anyone can browse and save.",
-  },
-];
-
-const features = [
-  {
-    icon: Tv,
-    title: "Personalized Feed",
-    description:
-      "Every rating, watchlist add, and browse shapes your feed. The more you use it, the better it gets at finding stuff you will actually want to watch.",
-  },
-  {
-    icon: ListChecks,
-    title: "Cross-Service Watchlists",
-    description:
-      "Keep track of shows and movies across Netflix, Hulu, Disney+, and more, all in one place. No more jumping between apps to remember what to watch next.",
-  },
-  {
-    icon: Users,
-    title: "Community",
-    description:
-      "Follow people with similar taste, stumble on hidden gems through trending lists, and share your own curated collections with others.",
   },
 ];
 
@@ -209,53 +184,10 @@ export default function Home() {
           <div className="h-px bg-border" />
         </div>
 
-        {/* Features: cool blue, contrast from orange */}
-        <section style={{ backgroundColor: "var(--section-features)" }}>
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
-            <span className="block text-xs font-semibold tracking-widest uppercase text-primary text-center mb-3">
-              Core Features
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-center">
-              How BingeWise Works
-            </h2>
-            <div className="mt-10 grid gap-5 sm:grid-cols-3">
-              {features.map((feature, i) => {
-                const Icon = feature.icon;
-                const accentStyle: React.CSSProperties = i === 0
-                  ? { backgroundColor: "color-mix(in srgb, var(--primary) 15%, transparent)", color: "var(--primary)" }
-                  : i === 1
-                    ? { backgroundColor: "color-mix(in srgb, var(--secondary) 15%, transparent)", color: "var(--secondary)" }
-                    : { backgroundColor: "color-mix(in srgb, var(--genre-scifi) 15%, transparent)", color: "var(--genre-scifi)" };
-                return (
-                  <div key={feature.title} className="card p-6 space-y-3">
-                    <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={accentStyle}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <h3 className="font-semibold">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* Divider */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="h-px bg-border" />
-        </div>
-
         {/* Social Proof / Trust */}
         <section style={{ backgroundColor: "var(--section-trust)" }}>
           <div className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
             <div className="relative card overflow-hidden p-8 sm:p-10 text-center space-y-4">
-              <div className="relative flex justify-center">
-                <div className="h-12 w-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: "color-mix(in srgb, var(--secondary) 15%, transparent)" }}>
-                  <Clapperboard className="h-6 w-6" style={{ color: "var(--secondary)" }} />
-                </div>
-              </div>
               <h2 className="relative text-2xl sm:text-3xl font-bold tracking-tight">
                 Built for Binge-Watchers
               </h2>
@@ -313,12 +245,6 @@ export default function Home() {
         >
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full blur-3xl pointer-events-none" style={{ backgroundColor: "var(--hero-blob-secondary)" }} />
           <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-16 text-center">
-            <div className="flex items-center justify-center gap-1.5 mb-4">
-              <Heart className="h-5 w-5 text-secondary" />
-              <span className="text-sm font-medium text-secondary">
-                No credit card required
-              </span>
-            </div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
               Ready to start bingeing?
             </h2>
