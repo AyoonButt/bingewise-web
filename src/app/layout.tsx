@@ -18,13 +18,13 @@ export const metadata: Metadata = {
   },
   description:
     "Discover your next favorite TV show and movie. BingeWise learns what you love and serves personalized recommendations across all your streaming services.",
-  applicationName: "BingeWise",
+  applicationName: "BingeWise - Movies and TV",
   icons: {
     icon: "/images/bingewise_appicon.png",
     apple: "/images/bingewise_appicon.png",
   },
   openGraph: {
-    siteName: "BingeWise",
+    siteName: "BingeWise - Movies and TV",
     type: "website",
     locale: "en_US",
     url: "https://www.bingewise.net",
