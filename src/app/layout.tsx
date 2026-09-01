@@ -20,7 +20,10 @@ export const metadata: Metadata = {
     "Discover your next favorite TV show and movie. BingeWise learns what you love and serves personalized recommendations across all your streaming services.",
   applicationName: "BingeWise - Movies and TV",
   icons: {
-    icon: "/images/bingewise_appicon.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/images/bingewise_appicon.png", type: "image/png" },
+    ],
     apple: "/images/bingewise_appicon.png",
   },
   openGraph: {

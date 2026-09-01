@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Account Deletion Request — BingeWise",
+  description: "Learn how to delete your BingeWise account and personal data. Follow our step-by-step guide for account deletion.",
   robots: { index: true, follow: true },
+  alternates: {
+    canonical: "https://www.bingewise.net/legal/account-deletion",
+  },
 };
 
 export default function AccountDeletionPage() {
