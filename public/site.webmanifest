@@ -1,0 +1,12 @@
+{
+  "name": "BingeWise",
+  "short_name": "BingeWise",
+  "icons": [
+    {
+      "src": "/images/bingewise_appicon.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#121212"
+}
