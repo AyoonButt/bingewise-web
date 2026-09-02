@@ -53,11 +53,21 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const adClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
+  const verifyMode = process.env.ADSENSE_VERIFY === "true";
+
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <OrganizationJsonLd />
         <WebSiteJsonLd />
+        {verifyMode && adClient && (
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
+            crossOrigin="anonymous"
+          />
+        )}
       </head>
       <body className={`${inter.className} min-h-screen`}>
         <Providers>
