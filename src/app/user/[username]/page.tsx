@@ -573,7 +573,8 @@ function PreferencesCard({
   }));
 
   const recentDateDisplay =
-    prefs.recentDate === "CURRENT" ? "Up to Today" : prefs.recentDate;
+    prefs.recentDate === "CURRENT" ? "Up to Today" : prefs.recentDate?.slice(0, 4);
+  const oldestDateDisplay = prefs.oldestDate?.slice(0, 4);
 
   const contentRatingLabel = CONTENT_RATING_LABELS[prefs.contentRatingAge ?? 99];
 
@@ -592,8 +593,8 @@ function PreferencesCard({
         value={`${prefs.minTv ?? 0} - ${prefs.maxTv ?? 120} min`}
       />
       <PreferenceRow
-        label="Date Range:"
-        value={`${prefs.oldestDate} - ${recentDateDisplay}`}
+        label="Release Year Range:"
+        value={`${oldestDateDisplay} - ${recentDateDisplay}`}
       />
       <PreferenceRow label="Content Rating:" value={contentRatingLabel} />
 

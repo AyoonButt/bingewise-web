@@ -177,12 +177,12 @@ export default function OnboardingBasicsPage() {
         </div>
       </div>
 
-      {/* Date Range */}
+      {/* Release Year Range */}
       <div className="card p-5 space-y-4">
-        <h3 className="text-base font-semibold">Release Date Range</h3>
+        <h3 className="text-base font-semibold">Release Year Range</h3>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-medium text-muted-foreground">From (oldest)</label>
+            <label className="text-xs font-medium text-muted-foreground">From Year</label>
             <select
               value={oldestYear}
               onChange={(e) => setOldestYear(e.target.value)}
@@ -195,7 +195,7 @@ export default function OnboardingBasicsPage() {
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground">To (newest)</label>
+            <label className="text-xs font-medium text-muted-foreground">To Year</label>
             <select
               value={recentYear}
               onChange={(e) => setRecentYear(e.target.value)}

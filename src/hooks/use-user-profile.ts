@@ -97,10 +97,34 @@ export function useProfileFollow(
         `/api/users/${currentUserId}/following/${targetUserId}`,
         { method: "POST" }
       ),
-    onSuccess: () => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["followStatus"] });
       queryClient.invalidateQueries({ queryKey: ["followStats"] });
       queryClient.invalidateQueries({ queryKey: ["followList"] });
+
+      // Send NEW_FOLLOWER notification to target user (public accounts)
+      const message = response?.message ?? "";
+      const treatedAsRequest =
+        message.toLowerCase().includes("request") ||
+        message.toLowerCase().includes("pending");
+      if (!treatedAsRequest && currentUserId && targetUserId) {
+        const me = useAuthStore.getState().user;
+        if (me) {
+          apiClient("/api/notifications/send", {
+            method: "POST",
+            body: JSON.stringify({
+              userId: targetUserId,
+              type: "NEW_FOLLOWER",
+              title: "New follower",
+              message: `${me.name || me.username} (@${me.username}) started following you`,
+              referenceId: me.userId,
+              contentId: me.userId,
+              senderName: me.name || me.username,
+              senderUserId: me.userId,
+            }),
+          }).catch(() => {});
+        }
+      }
     },
   });
 

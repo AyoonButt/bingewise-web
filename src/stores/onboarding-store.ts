@@ -265,10 +265,12 @@ export const useOnboardingStore = create<OnboardingState>()(
         const movieRange = formatDuration(state.minMovieDuration, state.maxMovieDuration, 300);
         const tvRange = formatDuration(state.minTvDuration, state.maxTvDuration, 90);
 
-        const dateRange =
-          !state.oldestDate && !state.recentDate
-            ? "Any Date"
-            : `${state.oldestDate || "Any"} – ${state.recentDate === "CURRENT" ? "Today" : state.recentDate || "Any"}`;
+        const dateRange = (() => {
+          if (!state.oldestDate && !state.recentDate) return "Any Date";
+          const oldest = state.oldestDate ? state.oldestDate.slice(0, 4) : "Any";
+          const recent = state.recentDate === "CURRENT" ? "Today" : state.recentDate ? state.recentDate.slice(0, 4) : "Any";
+          return `${oldest} – ${recent}`;
+        })();
 
         const preferred = state.preferredGenres
           .map((id) => GENRES.find((g) => g.id === id)?.name ?? state.genreNames[id])

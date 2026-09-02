@@ -152,7 +152,7 @@ export default function OnboardingReviewPage() {
               <span className="font-medium">{summary.tvDuration}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Dates</span>
+              <span className="text-muted-foreground">Release Years</span>
               <span className="font-medium">{summary.dateRange}</span>
             </div>
           </div>
