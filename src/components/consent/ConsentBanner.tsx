@@ -74,7 +74,7 @@ export function ConsentBanner() {
             onClick={() => setConsent(true, false)}
             className="btn-outline h-11 px-4 text-xs sm:text-sm whitespace-nowrap"
           >
-            Disable analytics
+            Accept essential only
           </button>
           <button
             onClick={() => setConsent(true, true)}
