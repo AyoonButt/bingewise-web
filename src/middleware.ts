@@ -8,15 +8,37 @@ const publicPaths = ["/auth/login", "/auth/register", "/auth/forgot-password", "
  * to login. Keep this list to read-only discovery surfaces — any page that renders
  * personal data must stay behind auth.
  */
-const guestPaths = ["/", "/feed", "/explore", "/post", "/legal", "/watchlists", "/watchlist", "/search", "/following", "/activity/item"];
+const guestPaths = ["/", "/feed", "/explore", "/post", "/legal", "/watchlists", "/watchlist", "/user", "/search", "/following", "/activity/item"];
 
 function isGuestAllowed(pathname: string): boolean {
   return guestPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+// Public assets must never be auth-gated: the web manifest and PWA icons,
+// robots.txt/sitemap.xml, ads.txt, llms.txt, the FCM service worker and any
+// .well-known files are fetched by browsers/crawlers before tokens exist.
+// Matching by extension here (full-syntax regex) keeps anything new dropped
+// into /public reachable too. The matcher below still short-circuits the
+// hot paths (_next, favicon, images) before middleware even runs.
+const staticAssetPath =
+  /\.(?:png|jpe?g|gif|svg|webp|ico|css|js|mjs|map|woff2?|ttf|otf|txt|xml|json|html|pdf)$/;
+export function isStaticAsset(pathname: string): boolean {
+  return (
+    staticAssetPath.test(pathname) ||
+    pathname.startsWith("/.well-known/") ||
+    pathname === "/site.webmanifest" ||
+    pathname === "/manifest.webmanifest"
+  );
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get("host")?.toLowerCase().split(":")[0] ?? "";
+
+  // 1) Static/public asset passthrough (no auth, no redirects).
+  if (isStaticAsset(pathname)) {
+    return NextResponse.next();
+  }
 
   // Vercel is configured to redirect the apex (bingewise.net) to
   // www.bingewise.net, so www is the canonical host. We intentionally avoid an

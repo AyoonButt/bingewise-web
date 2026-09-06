@@ -18,13 +18,18 @@ export const metadata: Metadata = {
   },
   description:
     "Discover your next favorite TV show and movie. BingeWise learns what you love and serves personalized recommendations across all your streaming services.",
-  applicationName: "BingeWise - Movies and TV",
+  applicationName: "BingeWise",
+  manifest: "/site.webmanifest",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
-      { url: "/images/bingewise_appicon.png", type: "image/png" },
+      { url: "/images/bingewise_192.png", type: "image/png", sizes: "192x192" },
+      { url: "/images/bingewise_512.png", type: "image/png", sizes: "512x512" },
     ],
-    apple: "/images/bingewise_appicon.png",
+    apple: [
+      { url: "/images/bingewise_180.png", sizes: "180x180", type: "image/png" },
+      { url: "/images/bingewise_appicon.png", sizes: "1024x1024" },
+    ],
   },
   openGraph: {
     siteName: "BingeWise - Movies and TV",

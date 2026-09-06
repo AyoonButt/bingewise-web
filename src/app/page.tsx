@@ -15,10 +15,11 @@ import {
 import { BrandLogo } from "@/components/ui/brand-logo";
 
 export const metadata: Metadata = {
-  title:
-    "BingeWise: Find Your Next Binge | Personalized TV & Movie Recommendations",
-    description:
-      "Discover your next favorite TV show and movie. BingeWise learns what you love and serves personalized recommendations across all your streaming services.",
+  title: {
+    absolute: "BingeWise: Find Your Next Binge",
+  },
+  description:
+    "Discover your next favorite TV show and movie. BingeWise learns what you love and serves personalized recommendations across all your streaming services.",
   openGraph: {
     title: "BingeWise: Find Your Next Binge",
     description:

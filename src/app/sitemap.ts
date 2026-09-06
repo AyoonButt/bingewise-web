@@ -18,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   let userPages: MetadataRoute.Sitemap = [];
+  let watchlistPages: MetadataRoute.Sitemap = [];
   try {
     const res = await fetch(`${process.env.BACKEND_URL ?? "https://api-bingewise.com"}/api/seo/users`, {
       next: { revalidate: 3600 },
@@ -38,5 +39,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // backend unreachable — return static only
   }
 
-  return [...staticPages, ...userPages];
+  try {
+    const res = await fetch(
+      `${process.env.BACKEND_URL ?? "https://api-bingewise.com"}/api/seo/watchlists`,
+      { next: { revalidate: 3600 } }
+    );
+    if (res.ok) {
+      const watchlists: Array<{ id: number; name?: string; updatedAt?: string }> = await res.json();
+      watchlistPages = watchlists.map((wl) => {
+        const parsed = wl.updatedAt ? new Date(wl.updatedAt) : new Date();
+        return {
+          url: `${BASE_URL}/watchlist/${wl.id}`,
+          lastModified: Number.isNaN(parsed.getTime()) ? new Date() : parsed,
+          changeFrequency: "weekly" as const,
+          priority: 0.5,
+        };
+      });
+    }
+  } catch {
+    // backend unreachable for watchlists — keep already-collected pages
+  }
+
+  return [...staticPages, ...userPages, ...watchlistPages];
 }
