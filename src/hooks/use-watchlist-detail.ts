@@ -17,16 +17,26 @@ import type {
 
 export function useWatchlistDetail(
   watchlistId: number,
-  shareToken?: string | null
+  shareToken?: string | null,
+  initialData?: WatchlistDetailResponse | null
 ) {
   const queryClient = useQueryClient();
-  const [detail, setDetail] = useState<WatchlistDetailResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [detail, setDetail] = useState<WatchlistDetailResponse | null>(
+    initialData ?? null
+  );
+  const [isLoading, setIsLoading] = useState(!initialData);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!watchlistId) return;
+    // Server-rendered data is already in hand — skip the client refetch and let
+    // PullToRefresh / watchlist events drive any fresh reads. Guests fetching a
+    // failure fall back to the client fetch below.
+    if (initialData) {
+      setIsLoading(false);
+      return;
+    }
     let cancelled = false;
     setIsLoading(true);
     setError(null);
@@ -44,6 +54,7 @@ export function useWatchlistDetail(
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchlistId, shareToken]);
 
   useEffect(() => {

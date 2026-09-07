@@ -4,6 +4,13 @@ import {
   notifyWatchlistsInvalidated,
 } from "./watchlist-events";
 import { useAuthStore } from "@/stores/auth-store";
+import {
+  normalizeDetail,
+  normalizeWatchlist,
+  normalizeWatchlists,
+  type WatchlistDTO,
+  type WatchlistDetailDTO,
+} from "./watchlist-normalize";
 import type { ApiResponse } from "@/types/post";
 import type {
   AddWatchlistItemRequest,
@@ -17,56 +24,10 @@ import type {
   WatchlistCollaborator,
 } from "@/types/watchlist";
 
-interface WatchlistDTO extends Omit<Watchlist, "isPublic" | "isOwner" | "collaboratorCount"> {
-  isPublic?: boolean;
-  isOwner?: boolean;
-  public?: boolean;
-  owner?: boolean;
-  collaboratorCount?: number;
-}
-
-interface WatchlistDetailDTO {
-  watchlist: WatchlistDTO;
-  items: WatchlistItem[];
-  collaborators?: WatchlistCollaborator[];
-}
-
 interface CloneWatchlistDTO {
   watchlist: WatchlistDTO;
   addedItems: number;
   alreadyPresent: number;
-}
-
-function normalizeWatchlist(dto: WatchlistDTO): Watchlist {
-  return {
-    id: dto.id,
-    userId: dto.userId,
-    name: dto.name,
-    description: dto.description ?? null,
-    coverColor: dto.coverColor ?? null,
-    isPublic: dto.isPublic ?? dto.public ?? false,
-    isOwner: dto.isOwner ?? dto.owner ?? false,
-    ownerId: dto.ownerId,
-    ownerUsername: dto.ownerUsername ?? null,
-    ownerName: dto.ownerName ?? null,
-    ownerAvatarUrl: dto.ownerAvatarUrl ?? null,
-    itemCount: dto.itemCount,
-    collaboratorCount: dto.collaboratorCount ?? 0,
-    createdAt: dto.createdAt,
-    updatedAt: dto.updatedAt,
-  };
-}
-
-function normalizeWatchlists(dtos: WatchlistDTO[]): Watchlist[] {
-  return dtos.map(normalizeWatchlist);
-}
-
-function normalizeDetail(dto: WatchlistDetailDTO): WatchlistDetailResponse {
-  return {
-    watchlist: normalizeWatchlist(dto.watchlist),
-    items: dto.items,
-    collaborators: dto.collaborators ?? [],
-  };
 }
 
 function toWriteBody(
