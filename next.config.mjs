@@ -19,17 +19,17 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      // AdSense + Next.js inline/eval requirements + YouTube IFrame API.
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://www.googletagmanager.com https://fcmregistrations.google.com https://www.youtube.com",
+      // AdSense + Next.js inline/eval requirements + YouTube IFrame API + AdSense safeframes.
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://www.googletagmanager.com https://fcmregistrations.google.com https://www.youtube.com https://*.adtrafficquality.google",
       "style-src 'self' 'unsafe-inline'",
-      // TMDB posters, dicebear avatars, ad creative images.
-      "img-src 'self' data: blob: https:",
-      "media-src 'self' blob: https:",
-      "font-src 'self' data:",
-      // Backend API + Firebase + any websocket notifications channel.
-      "connect-src 'self' https: wss:",
+      // TMDB posters, avatars, dicebear images, ad creative images.
+      "img-src 'self' data: blob: https://image.tmdb.org https://*.tmdb.org https://media.tmdb.org https://api.dicebear.com https://*.googleusercontent.com",
+      "media-src 'self' blob: https://image.tmdb.org https://*.tmdb.org",
+      "font-src 'self' data: https://cdn.jsdelivr.net",
+      // Backend API + Firebase + TMDB + any websocket notifications channel.
+      "connect-src 'self' https://api-bingewise.com https://api.tmdb.org https://www.themoviedb.org https://*.googleapis.com https://*.firebaseio.com wss:",
       // YouTube trailer embeds and AdSense safeframes.
-      "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://googleads.g.doubleclick.net https://*.safeframe.googlesyndication.com",
+      "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://googleads.g.doubleclick.net https://*.safeframe.googlesyndication.com https://pagead2.googlesyndication.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -52,12 +52,17 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "api.dicebear.com",
-        pathname: "/**",
+        hostname: "media.tmdb.org",
+        pathname: "/t/p/**",
       },
       {
         protocol: "https",
         hostname: "www.themoviedb.org",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "api.dicebear.com",
         pathname: "/**",
       },
       {
