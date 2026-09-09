@@ -46,11 +46,20 @@ export async function generateMetadata({
       url: canonical,
       siteName: "BingeWise",
       type: "website",
+      images: [
+        {
+          url: `${BASE_URL}/api/og/${watchlistId}`,
+          width: 1200,
+          height: 630,
+          alt: `${watchlist.name} – BingeWise watchlist`,
+        },
+      ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: `${watchlist.name} | Watchlist`,
       description,
+      images: [`${BASE_URL}/api/og/${watchlistId}`],
     },
   };
 }
