@@ -9,9 +9,13 @@ const productLinks = [
   { label: "Following", href: "/following" },
 ];
 
-const legalLinks = [
+const companyLinks = [
   { label: "About", href: "/legal/about" },
   { label: "FAQ", href: "/legal/faq" },
+  { label: "Support", href: "/legal/support" },
+];
+
+const legalLinks = [
   { label: "Terms of Service", href: "/legal/terms" },
   { label: "Privacy Policy", href: "/legal/privacy" },
   { label: "Account Deletion", href: "/legal/account-deletion" },
@@ -35,6 +39,22 @@ export function Footer() {
             </h3>
             <ul className="space-y-0.5">
               {productLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors py-1.5 inline-block"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-zinc-200 mb-3">Company</h3>
+            <ul className="space-y-0.5">
+              {companyLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
