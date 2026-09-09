@@ -322,7 +322,7 @@ export default function UserProfileClient({ initialUser }: UserProfileClientProp
             </div>
             {!isOwnProfile && (
               <p className="text-xs text-muted-foreground text-center">
-                Use "Save a copy" to add a list to your account.
+                Use &ldquo;Save a copy&rdquo; to add a list to your account.
               </p>
             )}
           </div>
