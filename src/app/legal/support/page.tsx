@@ -81,7 +81,7 @@ export default function SupportPage() {
           </li>
         </ul>
         <p>
-          When emailing, please include your account's registered email address
+          When emailing, please include your account&apos;s registered email address
           and a detailed description of the issue so we can help you faster.
         </p>
       </section>

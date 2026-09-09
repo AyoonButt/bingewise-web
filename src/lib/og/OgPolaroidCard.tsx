@@ -1,5 +1,7 @@
 import React from 'react'
 
+/* eslint-disable @next/next/no-img-element -- Satori renders this component to a PNG; next/image is unsupported */
+
 export interface OgWatchlistItem {
   title: string
   posterPath: string | null
@@ -92,6 +94,7 @@ function Polaroid({
       {src ? (
         <img
           src={src}
+          alt={item.title}
           width={layout.imageW}
           height={layout.imageH}
           style={{ borderRadius: 4, objectFit: 'cover' }}
