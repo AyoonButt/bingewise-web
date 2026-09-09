@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.ico", sizes: "32x32" },
       { url: "/images/bingewise_192.png", type: "image/png", sizes: "192x192" },
       { url: "/images/bingewise_512.png", type: "image/png", sizes: "512x512" },
     ],
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    siteName: "BingeWise - Movies and TV",
+    siteName: "BingeWise",
     type: "website",
     locale: "en_US",
     url: "https://www.bingewise.net",
