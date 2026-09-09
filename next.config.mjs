@@ -22,8 +22,8 @@ const securityHeaders = [
       // AdSense + Next.js inline/eval requirements + YouTube IFrame API.
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://www.googletagmanager.com https://fcmregistrations.google.com https://www.youtube.com https://*.adtrafficquality.google",
       "style-src 'self' 'unsafe-inline'",
-      // TMDB posters, avatars, dicebear images, ad creative images.
-      "img-src 'self' data: blob: https://image.tmdb.org https://*.tmdb.org https://media.tmdb.org https://api.dicebear.com https://*.googleusercontent.com",
+      // TMDB posters, avatars, dicebear images, ad creative images, Google Ads / AdSense tracking pixels.
+      "img-src 'self' data: blob: https://image.tmdb.org https://*.tmdb.org https://media.tmdb.org https://api.dicebear.com https://*.googleusercontent.com https://*.adtrafficquality.google https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com https://*.gstatic.com",
       "media-src 'self' blob: https://image.tmdb.org https://*.tmdb.org",
       "font-src 'self' data: https://cdn.jsdelivr.net",
       // Backend API + Firebase + TMDB + Google Ads tracking + any websocket notifications channel.
