@@ -26,8 +26,8 @@ const securityHeaders = [
       "img-src 'self' data: blob: https://image.tmdb.org https://*.tmdb.org https://media.tmdb.org https://api.dicebear.com https://*.googleusercontent.com",
       "media-src 'self' blob: https://image.tmdb.org https://*.tmdb.org",
       "font-src 'self' data: https://cdn.jsdelivr.net",
-      // Backend API + Firebase + TMDB + any websocket notifications channel.
-      "connect-src 'self' https://api-bingewise.com https://api.tmdb.org https://www.themoviedb.org https://*.googleapis.com https://*.firebaseio.com wss:",
+      // Backend API + Firebase + TMDB + Google Ads tracking + any websocket notifications channel.
+      "connect-src 'self' https://api-bingewise.com https://api.tmdb.org https://www.themoviedb.org https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://*.googleapis.com https://*.firebaseio.com https://*.doubleclick.net wss:",
       // YouTube trailer embeds and AdSense safeframes.
       "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://googleads.g.doubleclick.net https://*.safeframe.googlesyndication.com https://pagead2.googlesyndication.com",
       "object-src 'none'",
