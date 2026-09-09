@@ -47,10 +47,6 @@ const commonIssues = [
 export default function SupportPage() {
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 space-y-8 bg-background text-foreground text-base leading-relaxed">
-      <Link href="/" className="text-sm text-muted-foreground hover:underline">
-        &larr; Back to BingeWise
-      </Link>
-
       <h1 className="text-3xl font-bold">Contact Support</h1>
 
       <p>

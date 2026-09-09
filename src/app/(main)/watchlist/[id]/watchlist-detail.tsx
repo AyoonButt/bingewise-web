@@ -239,8 +239,12 @@ function WatchlistDetailInner({
     return (
       <div className="text-center py-16 space-y-3">
         <p className="text-muted-foreground">{error || "Watchlist not found"}</p>
-        <Link href="/watchlists" className="btn-primary inline-flex">
-          Back to Watchlists
+        <Link
+          href="/watchlists"
+          aria-label="Back to Watchlists"
+          className="p-2 rounded-lg hover:bg-accent transition-colors inline-flex"
+        >
+          <ChevronLeft className="h-5 w-5" />
         </Link>
       </div>
     );

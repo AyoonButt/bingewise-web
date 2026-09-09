@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { FAQPageJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
@@ -73,10 +72,6 @@ const faqs = [
 export default function FAQPage() {
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 space-y-8 bg-background text-foreground text-base leading-relaxed">
-      <Link href="/" className="text-sm text-muted-foreground hover:underline">
-        &larr; Back to BingeWise
-      </Link>
-
       <h1 className="text-3xl font-bold">Frequently Asked Questions</h1>
 
       <FAQPageJsonLd faqs={faqs} />

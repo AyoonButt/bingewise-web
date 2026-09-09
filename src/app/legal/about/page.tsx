@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { PersonJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
@@ -20,10 +19,6 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 space-y-8 bg-background text-foreground text-base leading-relaxed">
-      <Link href="/" className="text-sm text-muted-foreground hover:underline">
-        &larr; Back to BingeWise
-      </Link>
-
       <h1 className="text-3xl font-bold">About BingeWise</h1>
 
       <PersonJsonLd

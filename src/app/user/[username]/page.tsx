@@ -143,8 +143,12 @@ export default function UserPage() {
     return (
       <div className="text-center py-16 space-y-3">
         <p className="text-muted-foreground">User not found</p>
-        <Link href="/feed" className="btn-primary inline-flex">
-          Back to Feed
+        <Link
+          href="/feed"
+          aria-label="Back to Feed"
+          className="p-2 rounded-lg hover:bg-accent transition-colors inline-flex"
+        >
+          <ChevronLeft className="h-5 w-5" />
         </Link>
       </div>
     );
