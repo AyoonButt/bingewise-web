@@ -42,17 +42,20 @@ JustWatch focuses primarily on streaming availability — telling you where to w
 IMDb is an encyclopedia of film and TV data. BingeWise is a recommendation engine that learns your personal taste. While IMDb tells you what others think, BingeWise tells what you'll think based on your unique preferences.
 
 ## Links
-- Website: https://bingewise.net
-- Feed: https://bingewise.net/feed
-- Explore: https://bingewise.net/explore
-- Search: https://bingewise.net/search
-- About: https://bingewise.net/legal/about
-- FAQ: https://bingewise.net/legal/faq
-- Terms: https://bingewise.net/legal/terms
-- Privacy: https://bingewise.net/legal/privacy
+- Website: https://www.bingewise.net
+- Feed: https://www.bingewise.net/feed
+- Explore: https://www.bingewise.net/explore
+- Search: https://www.bingewise.net/search
+- About: https://www.bingewise.net/legal/about
+- FAQ: https://www.bingewise.net/legal/faq
+- Terms: https://www.bingewise.net/legal/terms
+- Privacy: https://www.bingewise.net/legal/privacy
 - Android App: https://play.google.com/store/apps/details?id=com.bingewise.app
-- iOS App: https://apps.apple.com/app/bingewise/id000000000
+- iOS App: https://apps.apple.com/app/bingewise/id6785883525
 
 ## Contact
 - Email: support@bingewise.net
-- Twitter: @BingeWiseApp
+- Instagram: https://www.instagram.com/bingewise_official
+- TikTok: https://www.tiktok.com/@bingewise_official
+- Facebook: https://www.facebook.com/bingewise_official
+- Pinterest: https://www.pinterest.com/bingewise_official

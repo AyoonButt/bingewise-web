@@ -11,6 +11,18 @@ export const metadata: Metadata = {
     url: "https://www.bingewise.net/search",
     siteName: "BingeWise",
     type: "website",
+    images: [
+      {
+        url: "https://www.bingewise.net/api/og/static/search",
+        width: 1200,
+        height: 630,
+        alt: "BingeWise – Search",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["https://www.bingewise.net/api/og/static/search"],
   },
   alternates: { canonical: "https://www.bingewise.net/search" },
 };

@@ -12,6 +12,18 @@ export const metadata: Metadata = {
     url: "https://www.bingewise.net/legal/about",
     siteName: "BingeWise",
     type: "website",
+    images: [
+      {
+        url: "https://www.bingewise.net/api/og/static/about",
+        width: 1200,
+        height: 630,
+        alt: "BingeWise – About",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["https://www.bingewise.net/api/og/static/about"],
   },
   alternates: { canonical: "https://www.bingewise.net/legal/about" },
 };
@@ -117,14 +129,36 @@ export default function AboutPage() {
             </a>
           </li>
           <li>
-            Twitter:{" "}
+            Instagram:{" "}
             <a
               className="underline"
-              href="https://twitter.com/BingeWiseApp"
+              href="https://www.instagram.com/bingewise_official"
               target="_blank"
               rel="noopener noreferrer"
             >
-              @BingeWiseApp
+              @bingewise_official
+            </a>
+          </li>
+          <li>
+            TikTok:{" "}
+            <a
+              className="underline"
+              href="https://www.tiktok.com/@bingewise_official"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              @bingewise_official
+            </a>
+          </li>
+          <li>
+            Facebook:{" "}
+            <a
+              className="underline"
+              href="https://www.facebook.com/bingewise_official"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              @bingewise_official
             </a>
           </li>
         </ul>

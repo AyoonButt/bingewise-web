@@ -65,14 +65,25 @@ export default function SupportPage() {
             </a>
           </li>
           <li>
-            Twitter:{" "}
+            Instagram:{" "}
             <a
               className="underline"
-              href="https://twitter.com/BingeWiseApp"
+              href="https://www.instagram.com/bingewise_official"
               target="_blank"
               rel="noopener noreferrer"
             >
-              @BingeWiseApp
+              @bingewise_official
+            </a>
+          </li>
+          <li>
+            TikTok:{" "}
+            <a
+              className="underline"
+              href="https://www.tiktok.com/@bingewise_official"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              @bingewise_official
             </a>
           </li>
         </ul>

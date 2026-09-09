@@ -7,11 +7,7 @@ import {
   Users,
   Bookmark,
 } from "lucide-react";
-import {
-  OrganizationJsonLd,
-  WebSiteJsonLd,
-  FAQPageJsonLd,
-} from "@/components/seo/JsonLd";
+import { FAQPageJsonLd } from "@/components/seo/JsonLd";
 import { BrandLogo } from "@/components/ui/brand-logo";
 
 export const metadata: Metadata = {
@@ -28,10 +24,10 @@ export const metadata: Metadata = {
     siteName: "BingeWise",
     images: [
       {
-        url: "https://www.bingewise.net/images/bingewise_appicon.png",
-        width: 512,
-        height: 512,
-        alt: "BingeWise",
+        url: "https://www.bingewise.net/api/og/static/home",
+        width: 1200,
+        height: 630,
+        alt: "BingeWise – Find Your Next Binge",
       },
     ],
     type: "website",
@@ -41,7 +37,7 @@ export const metadata: Metadata = {
     title: "BingeWise: Find Your Next Binge",
     description:
       "Discover your next favorite TV show and movie. Personalized recommendations across all your streaming services.",
-    images: ["https://www.bingewise.net/images/bingewise_appicon.png"],
+    images: ["https://www.bingewise.net/api/og/static/home"],
   },
   alternates: {
     canonical: "https://www.bingewise.net",
@@ -87,8 +83,6 @@ const guestLinks = [
 export default function Home() {
   return (
     <>
-      <OrganizationJsonLd />
-      <WebSiteJsonLd />
       <FAQPageJsonLd faqs={faqs} />
 
       <div className="min-h-screen bg-background text-foreground">

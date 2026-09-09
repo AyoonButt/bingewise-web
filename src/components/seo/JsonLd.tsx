@@ -17,7 +17,7 @@ interface OrganizationJsonLdProps {
   url?: string;
   logo?: string;
   email?: string;
-  twitter?: string;
+  sameAs?: string[];
 }
 
 export function OrganizationJsonLd({
@@ -25,7 +25,14 @@ export function OrganizationJsonLd({
   url = SITE_URL,
   logo = `${SITE_URL}/images/bingewise_appicon.png`,
   email = "support@bingewise.net",
-  twitter = "#",
+  sameAs = [
+    "https://www.instagram.com/bingewise_official",
+    "https://www.tiktok.com/@bingewise_official",
+    "https://www.facebook.com/bingewise_official",
+    "https://www.pinterest.com/bingewise_official",
+    "https://play.google.com/store/apps/details?id=com.bingewise.app",
+    "https://apps.apple.com/app/bingewise/id6785883525",
+  ],
 }: OrganizationJsonLdProps) {
   return (
     <JsonLdScript
@@ -37,7 +44,7 @@ export function OrganizationJsonLd({
         url,
         logo,
         email,
-        sameAs: [twitter],
+        sameAs,
       }}
     />
   );
