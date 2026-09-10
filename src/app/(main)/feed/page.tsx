@@ -71,6 +71,15 @@ export default function FeedPage() {
           <h1 className="text-xl font-bold tracking-tight">Your Feed</h1>
         </header>
 
+        <div className="hidden md:block space-y-4">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Your personalized recommendations feed, curated by BingeWise&apos;s
+            AI taste engine. Each post is ranked by predicted fit based on your
+            genre preferences, viewing history, and the choices of fans with
+            similar taste. Like and save titles to refine your profile over time.
+          </p>
+        </div>
+
         <FeedList
           posts={visiblePosts}
           isLoading={isLoading}

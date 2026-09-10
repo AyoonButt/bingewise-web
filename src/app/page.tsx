@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     siteName: "BingeWise",
     images: [
       {
-        url: "https://www.bingewise.net/api/og/static/home",
+        url: "https://www.bingewise.net/api/og/static/home.jpg",
         width: 1200,
         height: 630,
         alt: "BingeWise – Find Your Next Binge",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     title: "BingeWise: Find Your Next Binge",
     description:
       "Discover your next favorite TV show and movie. Personalized recommendations across all your streaming services.",
-    images: ["https://www.bingewise.net/api/og/static/home"],
+    images: ["https://www.bingewise.net/api/og/static/home.jpg"],
   },
   alternates: {
     canonical: "https://www.bingewise.net",
@@ -99,7 +99,7 @@ export default function Home() {
               <BrandLogo size="lg" />
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-              Find Your Next Binge
+              BingeWise: Find Your Next Binge
             </h1>
             <p className="mt-5 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               BingeWise learns what you love and recommends TV shows and movies
@@ -130,12 +130,53 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Editorial content section */}
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              A platform built for people who love watching
+            </h2>
+            <p className="mt-4 text-muted-foreground max-w-xl mx-auto leading-relaxed">
+              Whether you are in the mood for a prestige drama after work,
+              a weekend movie marathon, or just want to see what your friends
+              are watching, BingeWise gives you a curated feed tailored
+              to your taste — not just whatever is popular right now.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="card p-6 space-y-3">
+              <h3 className="font-semibold text-lg">Personalized Feed</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Our recommendation engine learns from your ratings, watchlists,
+                and browsing patterns to surface titles you will genuinely enjoy.
+                The more you use BingeWise, the better it gets.
+              </p>
+            </div>
+            <div className="card p-6 space-y-3">
+              <h3 className="font-semibold text-lg">Cross-Service Watchlists</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Track shows and movies across Netflix, Hulu, Disney+, and dozens
+                of other services in one place. See streaming availability
+                instantly so you never have to search twice.
+              </p>
+            </div>
+            <div className="card p-6 space-y-3">
+              <h3 className="font-semibold text-lg">Community Insights</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Follow users with similar taste, discover what fans are watching,
+                and share your own recommendations. BingeWise is better when
+                it is shared.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Divider */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="h-px bg-border" />
         </div>
 
-        {/* Guest Mode Links: warm orange, high contrast after blue hero */}
+        {/* Guest Mode Links */}
         <section style={{ backgroundColor: "var(--section-guest)" }}>
           <div className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
             <div className="text-center mb-10">
@@ -146,7 +187,9 @@ export default function Home() {
                 Explore as Guest
               </h2>
               <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-                Look around and see what the app is all about.
+                Look around and see what the app is all about. Browse the
+                feed, search for titles, and check out public watchlists —
+                all without signing up.
               </p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">

@@ -48,10 +48,17 @@ export default function WatchlistsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-          Watchlists
-        </h1>
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Watchlists
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Organize movies and TV shows into collections. Create watchlists
+            for date nights, weekend marathons, or themed favorites — keep
+            them private or publish them so others can discover and clone them.
+          </p>
+        </div>
         {tab === "mine" && (
           <button
             onClick={handleCreateClick}

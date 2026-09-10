@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://www.bingewise.net/api/og/static/about",
+        url: "https://www.bingewise.net/api/og/static/about.jpg",
         width: 1200,
         height: 630,
         alt: "BingeWise – About",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    images: ["https://www.bingewise.net/api/og/static/about"],
+    images: ["https://www.bingewise.net/api/og/static/about.jpg"],
   },
   alternates: { canonical: "https://www.bingewise.net/legal/about" },
 };
@@ -90,6 +90,24 @@ export default function AboutPage() {
       </section>
 
       <section className="space-y-4">
+        <h2 className="text-2xl font-semibold">Why BingeWise Is Different</h2>
+        <p>
+          Most streaming services recommend titles based on what other people are watching.
+          BingeWise is different: we build a taste profile around what <em>you</em> have
+          explicitly rated, saved, and watched to completion — not just what you
+          accidentally clicked on. This means our recommendations get more accurate the
+          longer you use the platform, and they surface titles the mainstream algorithms
+          often bury.
+        </p>
+        <p>
+          We also pull from every streaming service you subscribe to, so you are not
+          limited to the catalog of a single platform. Netflix users see Hulu recommendations.
+          Disney+ subscribers discover Prime Video originals. The entire streaming
+          landscape becomes available from one place.
+        </p>
+      </section>
+
+      <section className="space-y-4">
         <h2 className="text-2xl font-semibold">Our Data Sources</h2>
         <ul className="list-disc pl-5 space-y-2">
           <li>
@@ -117,6 +135,15 @@ export default function AboutPage() {
             . Streaming availability data provided by JustWatch.
           </li>
         </ul>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-2xl font-semibold">What to Read Next</h2>
+        <p>
+          Visit the <a href="/blog" className="underline text-primary hover:text-primary/80">BingeWise Blog</a> for
+          movie recommendations, watchlist strategies, and streaming tips from the team
+          behind the platform.
+        </p>
       </section>
 
       <section className="space-y-4">

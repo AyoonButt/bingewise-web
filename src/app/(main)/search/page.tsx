@@ -117,6 +117,12 @@ export default function SearchPage() {
           <h1 className="text-xl font-bold tracking-tight">Search</h1>
         </header>
 
+        <p className="text-sm text-muted-foreground hidden md:block">
+          Search across thousands of movies and TV shows. Find any title by
+          name, check streaming availability, and add it to your watchlist —
+          all from one search bar.
+        </p>
+
         <SearchBar onSearch={handleSearch} />
 
         {/* Skeleton replaces everything while a search runs (no ghost rows). */}

@@ -25,6 +25,9 @@ export default function OnboardingLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <head>
+        <meta name="robots" content="noindex, nofollow" />
+      </head>
       <div className="flex items-center justify-between px-6 h-14 border-b border-border shrink-0">
         <Link href="/feed" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
           Skip

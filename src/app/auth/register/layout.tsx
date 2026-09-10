@@ -13,6 +13,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: { canonical: "https://www.bingewise.net/auth/register" },
+  robots: { index: false, follow: false },
 };
 
 export default function RegisterLayout({ children }: { children: React.ReactNode }) {

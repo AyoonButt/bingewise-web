@@ -102,9 +102,16 @@ export default function FollowingPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Users className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-bold tracking-tight">Following</h2>
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Users className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-bold tracking-tight">Following</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Follow fans with taste like yours and see what they are watching.
+          People you follow appear in your feed, helping you discover titles
+          you might not find on your own.
+        </p>
       </div>
 
       <div className="flex gap-1 p-1 rounded-xl bg-secondary/50">

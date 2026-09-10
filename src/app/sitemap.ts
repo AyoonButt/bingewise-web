@@ -2,63 +2,27 @@ import type { MetadataRoute } from "next";
 
 const BASE_URL = "https://www.bingewise.net";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: "daily", priority: 1.0 },
     { url: `${BASE_URL}/feed`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
     { url: `${BASE_URL}/explore`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },
     { url: `${BASE_URL}/search`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.6 },
-    { url: `${BASE_URL}/auth/login`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
-    { url: `${BASE_URL}/auth/register`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE_URL}/watchlists`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.6 },
+    { url: `${BASE_URL}/following`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.6 },
+    { url: `${BASE_URL}/blog`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
+    { url: `${BASE_URL}/blog/best-movies-2026`, lastModified: new Date("2026-01-15"), changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE_URL}/blog/building-the-perfect-watchlist`, lastModified: new Date("2026-01-10"), changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE_URL}/blog/streaming-fatigue-solutions`, lastModified: new Date("2025-12-28"), changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE_URL}/blog/hidden-gems-on-netflix`, lastModified: new Date("2025-12-20"), changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE_URL}/blog/tv-series-to-binge-this-year`, lastModified: new Date("2025-12-15"), changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE_URL}/legal/about`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE_URL}/legal/faq`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.7 },
+    { url: `${BASE_URL}/legal/support`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE_URL}/legal/terms`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
     { url: `${BASE_URL}/legal/privacy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
     { url: `${BASE_URL}/legal/account-deletion`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
   ];
 
-  let userPages: MetadataRoute.Sitemap = [];
-  let watchlistPages: MetadataRoute.Sitemap = [];
-  try {
-    const res = await fetch(`${process.env.BACKEND_URL ?? "https://api-bingewise.com"}/api/seo/users`, {
-      next: { revalidate: 3600 },
-    });
-    if (res.ok) {
-      const users: Array<{ username: string; updatedAt?: string }> = await res.json();
-      userPages = users.map((u) => {
-        const parsed = u.updatedAt ? new Date(u.updatedAt) : new Date();
-        return {
-          url: `${BASE_URL}/user/${u.username}`,
-          lastModified: Number.isNaN(parsed.getTime()) ? new Date() : parsed,
-          changeFrequency: "weekly" as const,
-          priority: 0.6,
-        };
-      });
-    }
-  } catch {
-    // backend unreachable — return static only
-  }
-
-  try {
-    const res = await fetch(
-      `${process.env.BACKEND_URL ?? "https://api-bingewise.com"}/api/seo/watchlists`,
-      { next: { revalidate: 3600 } }
-    );
-    if (res.ok) {
-      const watchlists: Array<{ id: number; name?: string; updatedAt?: string }> = await res.json();
-      watchlistPages = watchlists.map((wl) => {
-        const parsed = wl.updatedAt ? new Date(wl.updatedAt) : new Date();
-        return {
-          url: `${BASE_URL}/watchlist/${wl.id}`,
-          lastModified: Number.isNaN(parsed.getTime()) ? new Date() : parsed,
-          changeFrequency: "weekly" as const,
-          priority: 0.5,
-        };
-      });
-    }
-  } catch {
-    // backend unreachable for watchlists — keep already-collected pages
-  }
-
-  return [...staticPages, ...userPages, ...watchlistPages];
+  return staticPages;
 }

@@ -51,6 +51,7 @@ const productLinks = [
 ];
 
 const companyLinks = [
+  { label: "Blog", href: "/blog" },
   { label: "About", href: "/legal/about" },
   { label: "FAQ", href: "/legal/faq" },
   { label: "Support", href: "/legal/support" },

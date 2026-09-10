@@ -6,7 +6,16 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/auth/", "/settings/", "/onboarding/", "/notifications/"],
+        disallow: [
+          "/api/",
+          "/auth/",
+          "/settings/",
+          "/onboarding/",
+          "/notifications/",
+          "/activity",
+          "/activity/",
+          "/user/",
+        ],
       },
       {
         userAgent: [

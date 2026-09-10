@@ -13,6 +13,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: { canonical: "https://www.bingewise.net/auth/login" },
+  robots: { index: false, follow: false },
 };
 
 export default function LoginLayout({ children }: { children: React.ReactNode }) {
