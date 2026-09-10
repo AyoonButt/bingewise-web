@@ -73,10 +73,9 @@ export default function FeedPage() {
 
         <div className="hidden md:block space-y-4">
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Your personalized recommendations feed, curated by BingeWise&apos;s
-            AI taste engine. Each post is ranked by predicted fit based on your
-            genre preferences, viewing history, and the choices of fans with
-            similar taste. Like and save titles to refine your profile over time.
+Your personalized feed, ranked by predicted fit from your genre
+          preferences, viewing history, and fans with similar taste. Like and
+          save titles to make future picks sharper.
           </p>
         </div>
 

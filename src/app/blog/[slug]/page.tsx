@@ -21,27 +21,27 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const slugs: Record<string, { title: string; description: string }> = {
     "best-movies-2026": {
-      title: "The Best Movies to Watch in 2026 — BingeWise",
+      title: "The Best Movies to Watch in 2026",
       description:
         "From sci-fi epics to intimate dramas, here are the most anticipated films of 2026 and how to plan your watchlist before they hit streaming platforms.",
     },
     "building-the-perfect-watchlist": {
-      title: "How to Build the Perfect Watchlist — BingeWise",
+      title: "How to Build the Perfect Watchlist",
       description:
         "Stop endlessly scrolling and start curating. Learn the framework BingeWise uses to organize recommendations by mood, genre, and viewing occasion.",
     },
     "streaming-fatigue-solutions": {
-      title: "Beat Streaming Fatigue — BingeWise",
+      title: "Beat Streaming Fatigue with Smarter Recommendations",
       description:
         "With dozens of services and thousands of titles, choosing what to watch can feel impossible. Here is how AI-powered taste profiling cuts through the noise.",
     },
     "hidden-gems-on-netflix": {
-      title: "Hidden Gems on Netflix You Missed — BingeWise",
+      title: "Hidden Gems on Netflix You Missed Last Month",
       description:
         "The algorithm pushes you toward the obvious. These under-the-radar titles are what BingeWise users are quietly adding to their watchlists right now.",
     },
     "tv-series-to-binge-this-year": {
-      title: "TV Series Worth Binge-Watching This Year — BingeWise",
+      title: "TV Series Worth Binge-Watching This Year",
       description:
         "From comeback seasons of fan favorites to debut series generating buzz, these are the shows that dominated conversations on BingeWise this winter.",
     },
@@ -112,7 +112,7 @@ const articles: Record<
     content: [
       "The paradox of streaming is that more content means harder choices. With every major platform offering thousands of titles, the average viewer spends more time browsing than watching. This is streaming fatigue, and it is getting worse.",
       "The root cause is simple: recommendation algorithms are built for engagement, not for your actual taste. They push what is popular and what keeps you scrolling, not what you will genuinely enjoy. This creates a feedback loop where you see the same titles everywhere and miss the hidden gems that match your unique preferences.",
-      "BingeWise approaches this differently. Our recommendation engine builds a taste profile based on what you actually rate, save, and watch to completion — not just what you click on. By combining collaborative filtering with content-based analysis, we surface titles that fit your profile but might not appear in the top ten of any single streaming service.",
+      "BingeWise approaches this differently. Our recommendation engine builds a taste profile based on what you actually rate, save, and watch to completion, not just what you click on. By combining collaborative filtering with content-based analysis, we surface titles that fit your profile but might not appear in the top ten of any single streaming service.",
       "The result is a feed that feels personally curated rather than algorithmically generated. Users report spending less time browsing and more time watching, which is exactly the goal.",
     ],
   },
@@ -125,7 +125,7 @@ const articles: Record<
     content: [
       "Netflix rotates its catalog constantly, and the algorithm's main row is designed to keep you on the platform, not necessarily to show you the best content. BingeWise users have been quietly adding these under-the-radar titles to their watchlists, and they are worth discovering.",
       "These are not the obvious recommendations that appear in the Top 10 row. They are the smaller films, international releases, and genre-specific picks that the algorithm buries but that BingeWise users have rated highly. The common thread is strong writing, compelling performances, and a freshness that mainstream algorithms often miss.",
-      "If you have been feeling like Netflix has nothing new to offer, the problem is probably not the catalog. It is the way the platform surfaces content. Try searching for titles in different genres and languages — you might be surprised what is available that you have never seen.",
+      "If you have been feeling like Netflix has nothing new to offer, the problem is probably not the catalog. It is the way the platform surfaces content. Try searching for titles in different genres and languages. You might be surprised what is available that you have never seen.",
     ],
   },
   "tv-series-to-binge-this-year": {

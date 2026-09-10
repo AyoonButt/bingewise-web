@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { BlogPostCard } from "@/components/blog/BlogPostCard";
 
 export const metadata: Metadata = {
-  title: "Blog — BingeWise",
+  title: "Blog",
   description:
     "Read movie and TV show recommendations, streaming tips, and watchlist ideas from the BingeWise team. Discover what to watch next with expert picks and editorial coverage.",
   openGraph: {

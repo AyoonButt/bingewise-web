@@ -118,9 +118,8 @@ export default function SearchPage() {
         </header>
 
         <p className="text-sm text-muted-foreground hidden md:block">
-          Search across thousands of movies and TV shows. Find any title by
-          name, check streaming availability, and add it to your watchlist —
-          all from one search bar.
+          Search thousands of movies and TV shows. Check where a title streams
+          and add it to your watchlist.
         </p>
 
         <SearchBar onSearch={handleSearch} />

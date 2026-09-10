@@ -94,7 +94,7 @@ export default function AboutPage() {
         <p>
           Most streaming services recommend titles based on what other people are watching.
           BingeWise is different: we build a taste profile around what <em>you</em> have
-          explicitly rated, saved, and watched to completion — not just what you
+          explicitly rated, saved, and watched to completion, not just what you
           accidentally clicked on. This means our recommendations get more accurate the
           longer you use the platform, and they surface titles the mainstream algorithms
           often bury.

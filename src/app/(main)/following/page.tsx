@@ -108,9 +108,8 @@ export default function FollowingPage() {
           <h2 className="text-xl font-bold tracking-tight">Following</h2>
         </div>
         <p className="text-sm text-muted-foreground">
-          Follow fans with taste like yours and see what they are watching.
-          People you follow appear in your feed, helping you discover titles
-          you might not find on your own.
+          Follow fans with taste like yours. Their picks appear in your feed,
+          so you see titles you might not find on your own.
         </p>
       </div>
 

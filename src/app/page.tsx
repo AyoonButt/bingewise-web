@@ -137,10 +137,9 @@ export default function Home() {
               A platform built for people who love watching
             </h2>
             <p className="mt-4 text-muted-foreground max-w-xl mx-auto leading-relaxed">
-              Whether you are in the mood for a prestige drama after work,
-              a weekend movie marathon, or just want to see what your friends
-              are watching, BingeWise gives you a curated feed tailored
-              to your taste — not just whatever is popular right now.
+              Whether you want a prestige drama, a weekend marathon, or
+              whatever your friends are watching, BingeWise builds a feed
+              around your taste, not just what is popular right now.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -187,9 +186,8 @@ export default function Home() {
                 Explore as Guest
               </h2>
               <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-                Look around and see what the app is all about. Browse the
-                feed, search for titles, and check out public watchlists —
-                all without signing up.
+                Browse the feed, search for titles, and check out public
+                watchlists, all without signing up.
               </p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">

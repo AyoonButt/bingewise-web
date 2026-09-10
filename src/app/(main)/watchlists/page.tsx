@@ -54,9 +54,8 @@ export default function WatchlistsPage() {
             Watchlists
           </h1>
           <p className="text-sm text-muted-foreground">
-            Organize movies and TV shows into collections. Create watchlists
-            for date nights, weekend marathons, or themed favorites — keep
-            them private or publish them so others can discover and clone them.
+            Organize movies and TV shows into collections. Keep watchlists
+            private or publish them so others can discover and clone them.
           </p>
         </div>
         {tab === "mine" && (

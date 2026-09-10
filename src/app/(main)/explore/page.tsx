@@ -16,15 +16,12 @@ export default function ExplorePage() {
 
       <div className="hidden md:block space-y-4">
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Scroll through trending movie trailers, new TV show releases, and
-          fan-picked recommendations. Swipe through the full-screen feed to
-          discover titles worth watching — tap &quot;like&quot; to let the algorithm
-          learn your taste, or save a title straight to your watchlist.
+          Browse trending trailers, new TV releases, and fan favorites. Swipe
+          the full-screen feed, like titles to train the algorithm, or save
+          them straight to your watchlist.
         </p>
         <p className="text-xs text-muted-foreground">
-          Titles are ranked by community engagement and personalized to your
-          viewing preferences. The more you interact, the better the picks
-          become.
+          Picks are ranked by community engagement and sharpen as you interact.
         </p>
       </div>
 
