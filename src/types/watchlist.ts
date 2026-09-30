@@ -28,6 +28,7 @@ export interface WatchlistItem {
   releaseYear: number | null;
   addedAt: number;
   addedBy: number | null;
+  position?: number | null;
 }
 
 export interface WatchlistCollaborator {

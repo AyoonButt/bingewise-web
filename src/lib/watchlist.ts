@@ -190,6 +190,26 @@ export function removeWatchlistItem(
   });
 }
 
+// ── Reordering ────────────────────────────────────────────────────────
+// Returns the full, position-ordered item list so callers can adopt the
+// server's order as truth. Deliberately skips notifyWatchlistChanged: the
+// detail view applies the response directly, and a broadcast refetch would
+// race with optimistic updates during rapid drags.
+
+/** Persist a full new ordering. Positions are reassigned 1..N server-side. */
+export function reorderWatchlistItems(
+  watchlistId: number,
+  orderedItemIds: number[]
+): Promise<WatchlistItem[]> {
+  return apiClient<WatchlistItem[]>(
+    `/api/watchlists/${watchlistId}/items/reorder`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ orderedItemIds: orderedItemIds }),
+    }
+  );
+}
+
 export function cloneWatchlist(
   watchlistId: number,
   shareToken?: string

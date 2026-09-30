@@ -1,14 +1,23 @@
 "use client";
 
-import { Suspense, useCallback, useMemo, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type DragEvent,
+} from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   Bookmark,
+  Check,
   ChevronLeft,
   Clapperboard,
   Copy,
   Globe,
+  GripVertical,
   LayoutGrid,
   Loader2,
   Lock,
@@ -96,8 +105,10 @@ function WatchlistDetailInner({
     isDeleting,
     error,
     updateError,
+    reorderError,
     metaSaving,
     removeItem,
+    reorderItems,
     togglePublic,
     updateMeta,
     deleteList,
@@ -140,6 +151,53 @@ function WatchlistDetailInner({
   const isCollaborator =
     !!user && collaborators.some((c) => c.userId === user.userId);
   const isMember = isOwner || isCollaborator;
+
+  // ── Reorder mode ────────────────────────────────────────────────────
+  // Owner/collaborator-only mode on the grid view: cards become draggable
+  // and gain move-up/move-down buttons. Persisting is handled by the hook
+  // (optimistic + serialized requests); failures surface via reorderError.
+  const [reorderMode, setReorderMode] = useState(false);
+  const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+
+  // Reordering is a grid-view mode — leave it when switching views.
+  useEffect(() => {
+    if (view !== "grid") setReorderMode(false);
+  }, [view]);
+
+  const handleDragStart = useCallback((id: number, e: DragEvent<HTMLDivElement>) => {
+    setDraggingId(id);
+    e.dataTransfer.effectAllowed = "move";
+  }, []);
+
+  const handleDragOver = useCallback((id: number, e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverId(id);
+  }, []);
+
+  const handleDrop = useCallback(
+    (id: number, e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      const fromId = draggingId;
+      setDraggingId(null);
+      setDragOverId(null);
+      if (fromId == null || fromId === id) return;
+      const from = items.findIndex((i) => i.id === fromId);
+      const to = items.findIndex((i) => i.id === id);
+      if (from < 0 || to < 0) return;
+      const next = [...items];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      void reorderItems(next.map((i) => i.id)).catch(() => {});
+    },
+    [draggingId, items, reorderItems]
+  );
+
+  const handleDragEnd = useCallback(() => {
+    setDraggingId(null);
+    setDragOverId(null);
+  }, []);
 
   // Resolves the share URL for notifications: owners mint a secret link;
   // other viewers reuse the current URL (which already carries ?st=).
@@ -288,6 +346,25 @@ function WatchlistDetailInner({
           >
             <Clapperboard className="h-4 w-4" />
           </button>
+          {isMember && view === "grid" && items.length > 1 && (
+            <button
+              onClick={() => setReorderMode((v) => !v)}
+              aria-label={reorderMode ? "Done reordering" : "Reorder items"}
+              aria-pressed={reorderMode}
+              className={cn(
+                "p-1.5 rounded-lg transition-colors",
+                reorderMode
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {reorderMode ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <GripVertical className="h-4 w-4" />
+              )}
+            </button>
+          )}
         </div>
       </div>
 
@@ -412,6 +489,9 @@ function WatchlistDetailInner({
 
       {notice && <p className="text-sm text-center text-primary">{notice}</p>}
       {error && <p className="text-sm text-destructive text-center">{error}</p>}
+      {reorderError && (
+        <p className="text-sm text-destructive text-center">{reorderError}</p>
+      )}
 
       {/* Send via notification — any signed-in viewer */}
       {user && (
@@ -505,20 +585,42 @@ function WatchlistDetailInner({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {detail.items.map((item) => {
-            const canRemove = isOwner || (!!user && item.addedBy === user.userId);
-            return (
-              <WatchlistItemCard
-                key={item.id}
-                item={item}
-                canRemove={canRemove}
-                onRemove={removeItem}
-                feedHref={`/watchlist/${watchlistId}?view=feed&itemId=${item.id}`}
-              />
-            );
-          })}
-        </div>
+        <>
+          {reorderMode && (
+            <p className="text-xs text-muted-foreground text-center">
+              Drag cards to reorder &mdash; order saves automatically.
+            </p>
+          )}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {detail.items.map((item, index) => {
+              const canRemove =
+                isOwner || (!!user && item.addedBy === user.userId);
+              return (
+                <WatchlistItemCard
+                  key={item.id}
+                  item={item}
+                  canRemove={canRemove}
+                  onRemove={removeItem}
+                  feedHref={`/watchlist/${watchlistId}?view=feed&itemId=${item.id}`}
+                  reorder={
+                    reorderMode
+                      ? {
+                          rank: index + 1,
+                          dragging: draggingId === item.id,
+                          dragOver:
+                            dragOverId === item.id && draggingId !== item.id,
+                          onDragStart: (e) => handleDragStart(item.id, e),
+                          onDragOver: (e) => handleDragOver(item.id, e),
+                          onDrop: (e) => handleDrop(item.id, e),
+                          onDragEnd: handleDragEnd,
+                        }
+                      : undefined
+                  }
+                />
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* Delete confirm */}
@@ -562,6 +664,7 @@ function WatchlistDetailInner({
       <EditWatchlistDialog
         open={showEdit}
         name={detail?.watchlist.name ?? ""}
+        description={detail?.watchlist.description ?? null}
         coverColor={detail?.watchlist.coverColor ?? null}
         isSaving={metaSaving}
         error={updateError}

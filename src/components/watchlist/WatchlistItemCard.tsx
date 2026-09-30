@@ -1,11 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, DragEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Loader2, Trash2, X } from "lucide-react";
+import { GripVertical, Loader2, Trash2, X } from "lucide-react";
 import { tmdbImage } from "@/lib/tmdb";
+import { cn } from "@/lib/utils";
 import type { WatchlistItem } from "@/types/watchlist";
+
+/** Drag-and-drop wiring for a card in reorder mode. */
+export interface WatchlistCardReorder {
+  rank: number;
+  dragging: boolean;
+  dragOver: boolean;
+  onDragStart: (e: DragEvent<HTMLDivElement>) => void;
+  onDragOver: (e: DragEvent<HTMLDivElement>) => void;
+  onDrop: (e: DragEvent<HTMLDivElement>) => void;
+  onDragEnd: () => void;
+}
 
 interface WatchlistItemCardProps {
   item: WatchlistItem;
@@ -13,6 +25,8 @@ interface WatchlistItemCardProps {
   canRemove?: boolean;
   onRemove: (itemId: number) => Promise<void> | void;
   feedHref?: string;
+  /** When present the card renders in reorder mode: draggable + move controls. */
+  reorder?: WatchlistCardReorder;
 }
 
 export function WatchlistItemCard({
@@ -21,10 +35,11 @@ export function WatchlistItemCard({
   canRemove,
   onRemove,
   feedHref,
+  reorder,
 }: WatchlistItemCardProps) {
   const [confirming, setConfirming] = useState(false);
   const [removing, setRemoving] = useState(false);
-  const allowRemove = canRemove ?? isOwner ?? false;
+  const allowRemove = (canRemove ?? isOwner ?? false) && !reorder;
 
   const handleRemove = async () => {
     setRemoving(true);
@@ -38,10 +53,23 @@ export function WatchlistItemCard({
 
   return (
     <>
-      <div className="relative group">
+      <div
+        draggable={!!reorder}
+        onDragStart={reorder?.onDragStart}
+        onDragOver={reorder?.onDragOver}
+        onDrop={reorder?.onDrop}
+        onDragEnd={reorder?.onDragEnd}
+        className={cn(
+          "relative group",
+          reorder && "cursor-grab active:cursor-grabbing select-none",
+          reorder?.dragging && "opacity-40",
+          reorder?.dragOver && "ring-2 ring-primary ring-inset rounded-xl"
+        )}
+      >
         <Link
           href={feedHref ?? `/post/${item.tmdbId}?type=${item.mediaType}`}
           className="block"
+          draggable={!reorder}
         >
           <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-md bg-muted">
             {item.posterPath ? (
@@ -56,6 +84,12 @@ export function WatchlistItemCard({
               <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm p-2 text-center">
                 {item.title}
               </div>
+            )}
+            {reorder && (
+              <span className="absolute top-2 left-2 flex items-center gap-0.5 h-6 px-1.5 rounded-full bg-black/70 text-white text-xs font-semibold">
+                <GripVertical className="h-3.5 w-3.5" aria-hidden />
+                #{reorder.rank}
+              </span>
             )}
           </div>
           <p className="mt-2 text-sm font-medium truncate">{item.title}</p>

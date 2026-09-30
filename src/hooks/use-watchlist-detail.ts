@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   deleteWatchlist,
   getWatchlistDetail,
   removeWatchlistItem,
+  reorderWatchlistItems,
   updateWatchlist,
 } from "@/lib/watchlist";
 import { onWatchlistChanged } from "@/lib/watchlist-events";
@@ -13,7 +14,28 @@ import type {
   UpdateWatchlistRequest,
   Watchlist,
   WatchlistDetailResponse,
+  WatchlistItem,
 } from "@/types/watchlist";
+
+/** Reorder `items` to follow `orderedIds`; unlisted items keep their order. */
+function applyItemOrder(
+  items: WatchlistItem[],
+  orderedIds: number[]
+): WatchlistItem[] {
+  const remaining = new Map(items.map((i) => [i.id, i]));
+  const next: WatchlistItem[] = [];
+  for (const id of orderedIds) {
+    const item = remaining.get(id);
+    if (item) {
+      next.push(item);
+      remaining.delete(id);
+    }
+  }
+  for (const item of items) {
+    if (remaining.has(item.id)) next.push(item);
+  }
+  return next;
+}
 
 export function useWatchlistDetail(
   watchlistId: number,
@@ -111,6 +133,70 @@ export function useWatchlistDetail(
 
   const [metaSaving, setMetaSaving] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [reorderError, setReorderError] = useState<string | null>(null);
+
+  // Reorder mutations are serialized so responses can never interleave.
+  // Each public call applies its optimistic update immediately, then queues its
+  // API request. When the queue drains, the last server response is adopted as
+  // truth (or a refetch reconciles after a failure) — intermediate responses
+  // are dropped because adopting them would revert newer optimistic updates.
+  const reorderChain = useRef<Promise<unknown>>(Promise.resolve());
+  const pendingReorders = useRef(0);
+
+  const enqueueReorder = useCallback(
+    (request: () => Promise<WatchlistItem[]>): Promise<void> => {
+      pendingReorders.current += 1;
+      const run = reorderChain.current.then(async () => {
+        try {
+          const items = await request();
+          pendingReorders.current -= 1;
+          if (pendingReorders.current === 0) {
+            setDetail((prev) => (prev ? { ...prev, items } : prev));
+            setReorderError(null);
+          }
+        } catch (e) {
+          pendingReorders.current -= 1;
+          setReorderError(
+            e instanceof Error ? e.message : "Couldn't save the new order"
+          );
+          if (pendingReorders.current === 0) {
+            try {
+              const fresh = await getWatchlistDetail(watchlistId, shareToken);
+              setDetail(fresh);
+            } catch {
+              // keep optimistic state
+            }
+          }
+          throw e;
+        }
+      });
+      reorderChain.current = run.then(
+        () => undefined,
+        () => undefined
+      );
+      return run;
+    },
+    [watchlistId, shareToken]
+  );
+
+  /**
+   * Optimistically apply a full new ordering, then persist it. Rejects on
+   * failure — surfaces happen via `reorderError`, so UI callers can ignore it.
+   */
+  const reorderItems = useCallback(
+    async (orderedItemIds: number[]): Promise<void> => {
+      setReorderError(null);
+      setDetail((prev) =>
+        prev
+          ? { ...prev, items: applyItemOrder(prev.items, orderedItemIds) }
+          : prev
+      );
+      await enqueueReorder(() =>
+        reorderWatchlistItems(watchlistId, orderedItemIds)
+      );
+    },
+    [watchlistId, enqueueReorder]
+  );
 
   /**
    * Persist a metadata change (name/coverColor/isPublic) and adopt the server's
@@ -179,8 +265,10 @@ export function useWatchlistDetail(
     isDeleting,
     error,
     updateError,
+    reorderError,
     metaSaving,
     removeItem,
+    reorderItems,
     togglePublic,
     updateMeta,
     deleteList,

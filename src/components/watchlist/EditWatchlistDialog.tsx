@@ -7,17 +7,23 @@ import { WATCHLIST_PALETTE, parseCoverColor } from "./palette";
 interface EditWatchlistDialogProps {
   open: boolean;
   name: string;
+  description: string | null;
   coverColor: string | null;
   isSaving: boolean;
   error?: string | null;
   onClose: () => void;
-  onSave: (patch: { name?: string; coverColor?: string | null }) => void;
+  onSave: (patch: {
+    name?: string;
+    description?: string | null;
+    coverColor?: string | null;
+  }) => void;
 }
 
-/** Edit a watchlist's title and accent color. */
+/** Edit a watchlist's title, description, and accent color. */
 export function EditWatchlistDialog({
   open,
   name: initialName,
+  description: initialDescription,
   coverColor,
   isSaving,
   error,
@@ -25,11 +31,13 @@ export function EditWatchlistDialog({
   onSave,
 }: EditWatchlistDialogProps) {
   const [name, setName] = useState(initialName);
+  const [description, setDescription] = useState(initialDescription ?? "");
   const [color, setColor] = useState(parseCoverColor(coverColor));
 
   useEffect(() => {
     if (open) {
       setName(initialName);
+      setDescription(initialDescription ?? "");
       setColor(parseCoverColor(coverColor));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -46,13 +54,23 @@ export function EditWatchlistDialog({
 
   if (!open) return null;
 
-  const dirty = name.trim() !== initialName || color !== parseCoverColor(coverColor);
+  const dirty =
+    name.trim() !== initialName ||
+    description.trim() !== (initialDescription ?? "") ||
+    color !== parseCoverColor(coverColor);
   const canSave = name.trim().length > 0 && dirty && !isSaving;
 
   const handleSave = () => {
     if (!canSave) return;
-    const patch: { name?: string; coverColor?: string | null } = {};
+    const patch: {
+      name?: string;
+      description?: string | null;
+      coverColor?: string | null;
+    } = {};
     if (name.trim() !== initialName) patch.name = name.trim();
+    if (description.trim() !== (initialDescription ?? "")) {
+      patch.description = description.trim() || null;
+    }
     if (color !== parseCoverColor(coverColor)) patch.coverColor = color;
     onSave(patch);
   };
@@ -87,6 +105,20 @@ export function EditWatchlistDialog({
             onChange={(e) => setName(e.target.value)}
             className="input-base"
             maxLength={60}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium" htmlFor="edit-watchlist-description">
+            Description <span className="text-muted-foreground">(optional)</span>
+          </label>
+          <textarea
+            id="edit-watchlist-description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="What is this list about?"
+            className="input-base min-h-[70px] resize-none"
+            maxLength={200}
           />
         </div>
 
