@@ -3,7 +3,7 @@
 import { useState, DragEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { GripVertical, Loader2, Trash2, X } from "lucide-react";
+import { Move, Loader2, Trash2, X } from "lucide-react";
 import { tmdbImage } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
 import type { WatchlistItem } from "@/types/watchlist";
@@ -13,7 +13,7 @@ export interface WatchlistCardReorder {
   rank: number;
   dragging: boolean;
   dragOver: boolean;
-  onDragStart: (e: DragEvent<HTMLDivElement>) => void;
+  onDragStart: (e: DragEvent<HTMLSpanElement>) => void;
   onDragOver: (e: DragEvent<HTMLDivElement>) => void;
   onDrop: (e: DragEvent<HTMLDivElement>) => void;
   onDragEnd: () => void;
@@ -52,22 +52,18 @@ export function WatchlistItemCard({
   return (
     <>
       <div
-        draggable={!!reorder}
-        onDragStart={reorder?.onDragStart}
-        onDragOver={reorder?.onDragOver}
-        onDrop={reorder?.onDrop}
-        onDragEnd={reorder?.onDragEnd}
         className={cn(
           "relative group",
-          reorder && "cursor-grab active:cursor-grabbing select-none",
           reorder?.dragging && "opacity-40",
           reorder?.dragOver && "ring-2 ring-primary ring-inset rounded-xl"
         )}
+        onDragOver={reorder?.onDragOver}
+        onDrop={reorder?.onDrop}
       >
-<Link
+        <Link
             href={`/post/${item.tmdbId}?type=${item.mediaType}`}
             className="block"
-            draggable={!reorder}
+            draggable={false}
           >
           <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-md bg-muted">
             {item.posterPath ? (
@@ -75,6 +71,7 @@ export function WatchlistItemCard({
                 src={tmdbImage(item.posterPath, "w342")}
                 alt={item.title}
                 fill
+                draggable={false}
                 className="object-cover group-hover:scale-105 transition-transform"
                 sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
               />
@@ -84,8 +81,16 @@ export function WatchlistItemCard({
               </div>
             )}
             {reorder && (
-              <span className="absolute top-2 left-2 flex items-center gap-0.5 h-6 px-1.5 rounded-full bg-black/70 text-white text-xs font-semibold">
-                <GripVertical className="h-3.5 w-3.5" aria-hidden />
+              <span
+                draggable={true}
+                onDragStart={reorder?.onDragStart}
+                onDragEnd={reorder?.onDragEnd}
+                className="absolute top-2 left-2 flex items-center gap-0.5 h-6 px-1.5 rounded-full bg-black/70 text-white text-xs font-semibold cursor-grab active:cursor-grabbing select-none touch-none"
+                role="button"
+                tabIndex={0}
+                aria-label="Drag to reorder"
+              >
+                <Move className="h-3.5 w-3.5" aria-hidden />
                 #{reorder.rank}
               </span>
             )}

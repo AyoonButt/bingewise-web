@@ -110,7 +110,7 @@ function WatchlistDetailInner({
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
 
-  const handleDragStart = useCallback((id: number, e: DragEvent<HTMLDivElement>) => {
+  const handleDragStart = useCallback((id: number, e: DragEvent) => {
     setDraggingId(id);
     e.dataTransfer.effectAllowed = "move";
   }, []);
