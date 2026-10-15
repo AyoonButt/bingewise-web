@@ -3,7 +3,6 @@
 import {
   Suspense,
   useCallback,
-  useEffect,
   useMemo,
   useState,
   type DragEvent,
@@ -14,11 +13,9 @@ import {
   Bookmark,
   Check,
   ChevronLeft,
-  Clapperboard,
   Copy,
   Globe,
   GripVertical,
-  LayoutGrid,
   Loader2,
   Lock,
   Pencil,
@@ -28,13 +25,8 @@ import {
 import { useAuthStore } from "@/stores/auth-store";
 import { useUiStore } from "@/stores/ui-store";
 import { useWatchlistDetail } from "@/hooks/use-watchlist-detail";
-import { useInteractions } from "@/hooks/use-interactions";
-import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
-import { useWatchlistFeed } from "@/hooks/use-watchlist-feed";
 import { WatchlistItemCard } from "@/components/watchlist/WatchlistItemCard";
 import { EditWatchlistDialog } from "@/components/watchlist/EditWatchlistDialog";
-import { PostCard } from "@/components/feed/PostCard";
-import { TrailerPager } from "@/components/feed/TrailerPager";
 import { parseCoverColor } from "@/components/watchlist/palette";
 import { cloneWatchlist, getWatchlistShareInfo } from "@/lib/watchlist";
 import { ShareDialog } from "@/components/share/ShareDialog";
@@ -74,31 +66,8 @@ function WatchlistDetailInner({
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
   const watchlistId = Number(params.id);
-  // View and selected item live in the URL so that navigating from a grid item
-  // (same route, new query string) updates correctly - the component is not
-  // remounted on query-string changes.
-  const view: "grid" | "feed" =
-    searchParams.get("view") === "feed" ? "feed" : "grid";
-  const selectedItemId = Number(searchParams.get("itemId")) || null;
   // Secret share-link token — grants access to private shared lists.
   const shareToken = searchParams.get("st");
-  const [feedContentType, setFeedContentType] = useState<"POSTS" | "VIDEOS">(
-    "POSTS"
-  );
-
-  const setView = (next: "grid" | "feed") => {
-    const urlParams = new URLSearchParams(searchParams.toString());
-    if (next === "feed") {
-      urlParams.set("view", "feed");
-    } else {
-      urlParams.delete("view");
-      urlParams.delete("itemId");
-    }
-    const queryString = urlParams.toString();
-    router.push(`/watchlist/${watchlistId}${queryString ? `?${queryString}` : ""}`, {
-      scroll: false,
-    });
-  };
   const {
     detail,
     isLoading,
@@ -117,25 +86,6 @@ function WatchlistDetailInner({
   const [showEdit, setShowEdit] = useState(false);
 
   const items = useMemo(() => detail?.items ?? [], [detail]);
-  const { posts: feedPosts, isLoading: isLoadingFeedPosts } = useWatchlistFeed(
-    items,
-    view === "feed"
-  );
-
-  const { isLiked, isSaved, toggleLike, toggleSave } = useInteractions(
-    user?.userId
-  );
-
-  // Move the selected item to the top, like the mobile watchlist items feed
-  const displayPosts = useMemo(() => {
-    if (!selectedItemId || feedPosts.length === 0) return feedPosts;
-    const index = items.findIndex((item) => item.id === selectedItemId);
-    if (index <= 0) return feedPosts;
-    const next = [...feedPosts];
-    const [post] = next.splice(index, 1);
-    next.unshift(post);
-    return next;
-  }, [feedPosts, items, selectedItemId]);
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSend, setShowSend] = useState(false);
@@ -153,17 +103,12 @@ function WatchlistDetailInner({
   const isMember = isOwner || isCollaborator;
 
   // ── Reorder mode ────────────────────────────────────────────────────
-  // Owner/collaborator-only mode on the grid view: cards become draggable
-  // and gain move-up/move-down buttons. Persisting is handled by the hook
-  // (optimistic + serialized requests); failures surface via reorderError.
+  // Owner/collaborator-only mode: cards become draggable and gain a rank
+  // badge. Persisting is handled by the hook (optimistic + serialized
+  // requests); failures surface via reorderError.
   const [reorderMode, setReorderMode] = useState(false);
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
-
-  // Reordering is a grid-view mode — leave it when switching views.
-  useEffect(() => {
-    if (view !== "grid") setReorderMode(false);
-  }, [view]);
 
   const handleDragStart = useCallback((id: number, e: DragEvent<HTMLDivElement>) => {
     setDraggingId(id);
@@ -214,13 +159,6 @@ function WatchlistDetailInner({
   }, [isOwner, watchlistId]);
   const [isCloning, setIsCloning] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-
-  // Preserve feed scroll when navigating into a poster detail and back. The
-  // VIDEOS branch (TrailerPager) restores its own reel; here we cover POSTS.
-  useScrollRestoration(
-    feedContentType === "VIDEOS" ? "" : `/watchlist:${watchlistId}:POSTS`,
-    { ready: displayPosts.length > 0 }
-  );
 
   const showNotice = (message: string) => {
     setNotice(message);
@@ -321,32 +259,8 @@ function WatchlistDetailInner({
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <h2 className="text-xl font-bold tracking-tight flex-1">Watchlist</h2>
-        <div className="flex gap-1 p-1 rounded-xl bg-muted">
-          <button
-            onClick={() => setView("grid")}
-            aria-label="Grid view"
-            className={cn(
-              "p-1.5 rounded-lg transition-colors",
-              view === "grid"
-                ? "bg-background shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setView("feed")}
-            aria-label="Feed view"
-            className={cn(
-              "p-1.5 rounded-lg transition-colors",
-              view === "feed"
-                ? "bg-background shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Clapperboard className="h-4 w-4" />
-          </button>
-          {isMember && view === "grid" && items.length > 1 && (
+        {isMember && items.length > 1 && (
+          <div className="flex gap-1 p-1 rounded-xl bg-muted">
             <button
               onClick={() => setReorderMode((v) => !v)}
               aria-label={reorderMode ? "Done reordering" : "Reorder items"}
@@ -364,8 +278,8 @@ function WatchlistDetailInner({
                 <GripVertical className="h-4 w-4" />
               )}
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Cover banner */}
@@ -534,56 +448,6 @@ function WatchlistDetailInner({
             </Link>
           )}
         </div>
-      ) : view === "feed" ? (
-        <div className="space-y-4">
-          {/* Posts / Trailers toggle */}
-          <div className="card p-1 flex gap-1 max-w-md mx-auto">
-            {(["POSTS", "VIDEOS"] as const).map((option) => (
-              <button
-                key={option}
-                onClick={() => setFeedContentType(option)}
-                className={cn(
-                  "flex-1 h-9 rounded-lg text-sm font-medium transition-colors",
-                  feedContentType === option
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent"
-                )}
-              >
-                {option === "POSTS" ? "Posts" : "Trailers"}
-              </button>
-            ))}
-          </div>
-
-          {isLoadingFeedPosts && feedPosts.length === 0 ? (
-            <div className="flex justify-center py-16">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : feedContentType === "VIDEOS" ? (
-            <TrailerPager
-              posts={displayPosts}
-              loadingMore={isLoadingFeedPosts}
-              hasMore={false}
-              endMessage="End of watchlist"
-              emptyMessage="No trailers available for these titles yet."
-              scrollRestorationKey={`/watchlist:${watchlistId}:VIDEOS`}
-              className="w-full h-[calc(100dvh-8rem-env(safe-area-inset-bottom,0px))] lg:h-[calc(100vh-8rem)] overflow-y-scroll snap-y snap-mandatory snap-scroll rounded-xl overflow-hidden"
-            />
-          ) : (
-            <div className="max-w-md mx-auto space-y-6 pb-6">
-              {displayPosts.map((post, index) => (
-                <PostCard
-                  key={`${post.postId ?? "stub"}_${post.tmdbId}_${index}`}
-                  post={post}
-                  isLiked={post.postId ? isLiked(post.postId) : false}
-                  isSaved={post.postId ? isSaved(post.postId) : false}
-                  onLike={() => post.postId && toggleLike(post.postId)}
-                  onSave={() => post.postId && toggleSave(post.postId)}
-                  enablePosterDoubleTap
-                />
-              ))}
-            </div>
-          )}
-        </div>
       ) : (
         <>
           {reorderMode && (
@@ -596,12 +460,11 @@ function WatchlistDetailInner({
               const canRemove =
                 isOwner || (!!user && item.addedBy === user.userId);
               return (
-                <WatchlistItemCard
+<WatchlistItemCard
                   key={item.id}
                   item={item}
                   canRemove={canRemove}
                   onRemove={removeItem}
-                  feedHref={`/watchlist/${watchlistId}?view=feed&itemId=${item.id}`}
                   reorder={
                     reorderMode
                       ? {

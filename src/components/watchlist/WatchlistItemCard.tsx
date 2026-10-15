@@ -24,7 +24,6 @@ interface WatchlistItemCardProps {
   isOwner?: boolean;
   canRemove?: boolean;
   onRemove: (itemId: number) => Promise<void> | void;
-  feedHref?: string;
   /** When present the card renders in reorder mode: draggable + move controls. */
   reorder?: WatchlistCardReorder;
 }
@@ -34,7 +33,6 @@ export function WatchlistItemCard({
   isOwner,
   canRemove,
   onRemove,
-  feedHref,
   reorder,
 }: WatchlistItemCardProps) {
   const [confirming, setConfirming] = useState(false);
@@ -66,11 +64,11 @@ export function WatchlistItemCard({
           reorder?.dragOver && "ring-2 ring-primary ring-inset rounded-xl"
         )}
       >
-        <Link
-          href={feedHref ?? `/post/${item.tmdbId}?type=${item.mediaType}`}
-          className="block"
-          draggable={!reorder}
-        >
+<Link
+            href={`/post/${item.tmdbId}?type=${item.mediaType}`}
+            className="block"
+            draggable={!reorder}
+          >
           <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-md bg-muted">
             {item.posterPath ? (
               <Image
