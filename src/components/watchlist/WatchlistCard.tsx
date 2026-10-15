@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Globe, Lock, Users } from "lucide-react";
 import { parseCoverColor } from "./palette";
 import { userAvatarUrl } from "@/lib/avatar";
@@ -14,11 +15,15 @@ export function WatchlistCard({
   watchlist: Watchlist;
   showSharedBy?: boolean;
 }) {
+  const router = useRouter();
   const color = parseCoverColor(watchlist.coverColor);
+  const handleCardClick = () => {
+    router.push(`/watchlist/${watchlist.id}`);
+  };
   return (
-    <Link
-      href={`/watchlist/${watchlist.id}`}
-      className="card overflow-hidden hover:border-primary/40 transition-colors group block"
+    <div
+      onClick={handleCardClick}
+      className="card overflow-hidden hover:border-primary/40 transition-colors group block cursor-pointer"
     >
       <div
         className="h-20 relative"
@@ -89,6 +94,6 @@ export function WatchlistCard({
           )}
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
