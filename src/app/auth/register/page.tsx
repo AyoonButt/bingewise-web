@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { register as registerUser } from "@/lib/auth";
+import { acceptWatchlistInvite } from "@/lib/watchlist";
 import { useAuthStore } from "@/stores/auth-store";
 
 const schema = z.object({
@@ -27,9 +28,22 @@ type FormData = z.infer<typeof schema>;
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const setSession = useAuthStore((s) => s.setSession);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [inviteWatchlistId, setInviteWatchlistId] = useState<number | null>(null);
+  const [processingInvite, setProcessingInvite] = useState(false);
+
+  useEffect(() => {
+    const token = searchParams.get("invite");
+    const watchlistId = searchParams.get("watchlistId");
+    if (token && watchlistId) {
+      setInviteToken(token);
+      setInviteWatchlistId(Number(watchlistId));
+    }
+  }, [searchParams]);
 
   const {
     register,
@@ -51,6 +65,19 @@ export default function RegisterPage() {
       }
 
       setSession(user, tokenExpiresAt);
+
+      // Handle invite token after successful registration
+      if (inviteToken && inviteWatchlistId) {
+        setProcessingInvite(true);
+        try {
+          await acceptWatchlistInvite(inviteWatchlistId, inviteToken);
+        } catch (e) {
+          console.error("Failed to accept invite:", e);
+        } finally {
+          setProcessingInvite(false);
+        }
+      }
+
       router.push("/onboarding");
     } catch (err: any) {
       if (err.message?.includes("409") || err.message?.includes("already")) {

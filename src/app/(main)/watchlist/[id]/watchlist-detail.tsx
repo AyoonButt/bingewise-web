@@ -3,6 +3,7 @@
 import {
   Suspense,
   useCallback,
+  useEffect,
   useMemo,
   useState,
   type DragEvent,
@@ -28,7 +29,7 @@ import { useWatchlistDetail } from "@/hooks/use-watchlist-detail";
 import { WatchlistItemCard } from "@/components/watchlist/WatchlistItemCard";
 import { EditWatchlistDialog } from "@/components/watchlist/EditWatchlistDialog";
 import { parseCoverColor } from "@/components/watchlist/palette";
-import { cloneWatchlist, getWatchlistShareInfo } from "@/lib/watchlist";
+import { cloneWatchlist, getWatchlistShareInfo, acceptWatchlistInvite } from "@/lib/watchlist";
 import { ShareDialog } from "@/components/share/ShareDialog";
 import { Send as SendIcon } from "lucide-react";
 import { cn, siteUrl } from "@/lib/utils";
@@ -68,6 +69,8 @@ function WatchlistDetailInner({
   const watchlistId = Number(params.id);
   // Secret share-link token — grants access to private shared lists.
   const shareToken = searchParams.get("st");
+  // Invite token — auto-adds logged-in user as collaborator.
+  const inviteToken = searchParams.get("invite");
   const {
     detail,
     isLoading,
@@ -84,6 +87,22 @@ function WatchlistDetailInner({
     refresh,
   } = useWatchlistDetail(watchlistId, shareToken, initialData);
   const [showEdit, setShowEdit] = useState(false);
+
+  // Auto-accept invite for logged-in users
+  useEffect(() => {
+    if (inviteToken && user && !isLoading) {
+      const watchlist = detail?.watchlist;
+      const isAlreadyMember = watchlist?.isOwner || detail?.collaborators?.some((c) => c.userId === user.userId);
+      if (!isAlreadyMember) {
+        acceptWatchlistInvite(watchlistId, inviteToken).catch(console.error);
+        // Refresh to show updated collaborator list
+        refresh();
+      }
+      // Clean up URL to avoid re-processing on navigation
+      const newUrl = window.location.pathname;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [inviteToken, user, isLoading, detail, watchlistId, refresh, router]);
 
   const items = useMemo(() => detail?.items ?? [], [detail]);
 

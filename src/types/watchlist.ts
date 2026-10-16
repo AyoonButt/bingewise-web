@@ -78,6 +78,20 @@ export interface WatchlistShareInfo {
   shareText: string;
 }
 
+export interface WatchlistInviteInfo {
+  watchlistId: number;
+  name: string;
+  inviteToken: string;
+  inviteUrl: string;
+  expiresAt: number;
+}
+
+export interface AcceptInviteResult {
+  success: boolean;
+  watchlistId: number;
+  role: string;
+}
+
 export interface CloneWatchlistResult {
   watchlist: Watchlist;
   addedItems: number;

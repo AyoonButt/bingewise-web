@@ -22,6 +22,8 @@ import type {
   WatchlistItem,
   WatchlistShareInfo,
   WatchlistCollaborator,
+  WatchlistInviteInfo,
+  AcceptInviteResult,
 } from "@/types/watchlist";
 
 interface CloneWatchlistDTO {
@@ -279,5 +281,32 @@ export function removeCollaborator(
     invalidateCurrentUserWatchlists();
     invalidateUserWatchlists(userId);
     return res;
+  });
+}
+
+// ── Invite links ────────────────────────────────────────────────────────
+
+export function createWatchlistInvite(
+  watchlistId: number
+): Promise<WatchlistInviteInfo> {
+  return apiClient<WatchlistInviteInfo>(
+    `/api/watchlists/${watchlistId}/invite`,
+    { method: "POST" }
+  );
+}
+
+export function acceptWatchlistInvite(
+  watchlistId: number,
+  token: string
+): Promise<AcceptInviteResult> {
+  return apiClient<AcceptInviteResult>(
+    `/api/watchlists/${watchlistId}/accept-invite`,
+    {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    }
+  ).then((result) => {
+    invalidateCurrentUserWatchlists();
+    return result;
   });
 }

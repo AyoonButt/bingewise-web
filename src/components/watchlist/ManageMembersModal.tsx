@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { Loader2, Search, Trash2, UserPlus, X } from "lucide-react";
+import { Loader2, Search, Trash2, UserPlus, X, Link2, Copy } from "lucide-react";
 import { tmdbImage } from "@/lib/tmdb";
-import { addCollaborator, removeCollaborator } from "@/lib/watchlist";
+import { addCollaborator, removeCollaborator, createWatchlistInvite } from "@/lib/watchlist";
 import { useUserSearch } from "@/hooks/use-follow";
 import type { WatchlistCollaborator } from "@/types/watchlist";
 
@@ -184,6 +184,26 @@ export function ManageMembersModal({
           <div className="space-y-3 pt-1">
             <div className="border-t border-border pt-3">
               <p className="text-sm font-semibold mb-2">Add people</p>
+              
+              {/* Invite link button */}
+              <button
+                onClick={async () => {
+                  setError(null);
+                  try {
+                    const info = await createWatchlistInvite(watchlistId);
+                    await navigator.clipboard.writeText(info.inviteUrl);
+                    setError("Invite link copied to clipboard!");
+                    setTimeout(() => setError(null), 3000);
+                  } catch (e: unknown) {
+                    setError(e instanceof Error ? e.message : "Failed to create invite link");
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-border px-3 py-2 text-sm hover:bg-accent transition-colors"
+              >
+                <Link2 className="h-4 w-4" />
+                <span>Create invite link</span>
+              </button>
+
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
