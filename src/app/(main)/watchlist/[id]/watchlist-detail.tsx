@@ -163,19 +163,19 @@ function WatchlistDetailInner({
     setDragOverId(null);
   }, []);
 
-  // Resolves the share URL for notifications: owners mint a secret link;
+  // Resolves the share URL for notifications: owners/collaborators mint a secret link;
   // other viewers reuse the current URL (which already carries ?st=).
   const getShareLink = useCallback(async () => {
     const currentPath = window.location.pathname + window.location.search;
-    if (isOwner) {
-      // Owners MUST get a secret-link token for private lists. No silent
-      // fallback — a token-less link would 403 for recipients.
+    if (isMember) {
+      // Members (owner/collaborator) MUST get a secret-link token for private lists.
+      // No silent fallback — a token-less link would 403 for recipients.
       const info = await getWatchlistShareInfo(watchlistId);
       return info?.deepLink || siteUrl(currentPath);
     }
-    // Non-owners share their own access context (URL already carries ?st=).
+    // Non-members share their own access context (URL already carries ?st=).
     return siteUrl(currentPath);
-  }, [isOwner, watchlistId]);
+  }, [isMember, watchlistId]);
   const [isCloning, setIsCloning] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -446,6 +446,7 @@ function WatchlistDetailInner({
             id: watchlistId,
             name: watchlist.name,
             getLink: getShareLink,
+            isOwner,
           }}
         />
       )}

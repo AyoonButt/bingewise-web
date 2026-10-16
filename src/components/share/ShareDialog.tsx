@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Link2 } from "lucide-react";
+import { X, Link2, UserPlus } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/auth-store";
@@ -19,6 +19,7 @@ interface ShareDialogProps {
     id: number;
     name: string;
     getLink: () => Promise<string>;
+    isOwner?: boolean;
   };
 }
 
@@ -65,6 +66,8 @@ export function ShareDialog({
 
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [inviteInfo, setInviteInfo] = useState<{ inviteUrl: string } | null>(null);
+  const [creatingInvite, setCreatingInvite] = useState(false);
 
   const handleShare = async (userId: number) => {
     setError(null);
@@ -130,6 +133,28 @@ export function ShareDialog({
       if (e instanceof Error && e.name !== "AbortError") {
         setError(e.message || "Couldn't copy link");
       }
+    }
+  };
+
+  const handleCreateInvite = async () => {
+    if (!watchlistTarget?.isOwner) return;
+    setCreatingInvite(true);
+    setError(null);
+    try {
+      const res = await apiClient<{ inviteUrl: string }>(
+        `/api/watchlists/${watchlistTarget.id}/invite`,
+        { method: "POST" }
+      );
+      setInviteInfo({ inviteUrl: res.inviteUrl });
+      await navigator.clipboard.writeText(res.inviteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(e.message || "Failed to create invite link");
+      }
+    } finally {
+      setCreatingInvite(false);
     }
   };
 
@@ -202,6 +227,22 @@ export function ShareDialog({
             )}
             <div className="pt-3 border-t border-border space-y-3">
               <PreferredSourceBadge />
+              {watchlistTarget?.isOwner && !inviteInfo && (
+                <button
+                  type="button"
+                  onClick={handleCreateInvite}
+                  disabled={creatingInvite}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-accent transition-colors disabled:opacity-50"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  {creatingInvite ? "Creating invite..." : "Create invite link"}
+                </button>
+              )}
+              {inviteInfo && (
+                <div className="text-sm text-green-600 text-center">
+                  Invite link created & copied: {inviteInfo.inviteUrl}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={handleCopyLink}
