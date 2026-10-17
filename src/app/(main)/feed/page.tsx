@@ -8,6 +8,7 @@ import { useFeed } from "@/hooks/use-feed";
 import { useInteractions } from "@/hooks/use-interactions";
 import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
 import { getLanguageRegion } from "@/lib/locale";
+import { analytics } from "@/lib/analytics";
 import { FeedList } from "@/components/feed/FeedList";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { Sparkles } from "lucide-react";
@@ -51,20 +52,31 @@ export default function FeedPage() {
         return;
       }
       setHiddenIds((prev) => new Set(prev).add(postId));
+      const target = posts.find((p) => p.postId === postId);
+      analytics.logFeedNotInterested({
+        postId,
+        mediaType: target?.type,
+        tmdbId: target?.tmdbId,
+      });
       apiClient("/api/not-interested", {
         method: "POST",
         body: JSON.stringify({ userId: user.userId, postId }),
       }).catch(() => {});
     },
-    []
+    [posts]
   );
   const visiblePosts = useMemo(
     () => posts.filter((p) => p.postId == null || !hiddenIds.has(p.postId)),
     [posts, hiddenIds]
   );
 
+  const handleRefresh = useCallback(() => {
+    analytics.logFeedRefresh();
+    refresh();
+  }, [refresh]);
+
   return (
-    <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
+    <PullToRefresh onRefresh={handleRefresh} refreshing={isRefreshing}>
       <section aria-label="Personalized recommendations feed" className="space-y-6">
         <header className="hidden md:flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />

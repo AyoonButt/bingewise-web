@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { analytics } from "@/lib/analytics";
 
 interface Provider {
   provider_id: number;
@@ -64,6 +65,9 @@ function ProviderRow({
             target="_blank"
             rel="noopener noreferrer"
             title={p.provider_name}
+            onClick={() =>
+              analytics.logWatchProviderClick(p.provider_name, p.provider_id)
+            }
             className="w-9 h-9 rounded-lg overflow-hidden bg-muted border border-border hover:border-primary/50 transition-colors shrink-0"
           >
             <Image
@@ -118,6 +122,7 @@ export function WatchProviders({ regionProviders }: WatchProvidersProps) {
           href={regionProviders.link || "#"}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => analytics.logWatchProviderClick("JustWatch")}
           className="text-muted-foreground/70 hover:text-muted-foreground transition-colors shrink-0"
           aria-label="JustWatch"
         >

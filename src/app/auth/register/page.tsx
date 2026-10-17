@@ -11,6 +11,7 @@ import { BrandLogo } from "@/components/ui/brand-logo";
 import { register as registerUser } from "@/lib/auth";
 import { acceptWatchlistInvite } from "@/lib/watchlist";
 import { useAuthStore } from "@/stores/auth-store";
+import { analytics } from "@/lib/analytics";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -55,6 +56,7 @@ function RegisterForm() {
   });
 
   const onSubmit = async (data: FormData) => {
+    analytics.registerAttempt();
     try {
       setError("");
       const { user, tokenExpiresAt } = await registerUser(data);
@@ -65,6 +67,7 @@ function RegisterForm() {
       }
 
       setSession(user, tokenExpiresAt);
+      analytics.registerSuccess(user.userId);
 
       // Handle invite token after successful registration
       if (inviteToken && inviteWatchlistId) {
@@ -80,6 +83,9 @@ function RegisterForm() {
 
       router.push("/onboarding");
     } catch (err: any) {
+      const message = err?.message ?? "Registration failed";
+      const code = Number(message.match?.(/\d{3}/)?.[0]) || 0;
+      analytics.registerFailure(code, message);
       if (err.message?.includes("409") || err.message?.includes("already")) {
         setError("An account with this username or email already exists");
       } else {

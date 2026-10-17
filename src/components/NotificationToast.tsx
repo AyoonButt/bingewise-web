@@ -22,6 +22,7 @@ export function NotificationToastHost() {
           message={toast.message}
           referenceId={toast.referenceId}
           senderName={toast.senderName}
+          mediaType={toast.mediaType}
           onDismiss={dismiss}
         />
       ))}
@@ -36,6 +37,7 @@ function NotificationToast({
   message,
   referenceId,
   senderName,
+  mediaType,
   onDismiss,
 }: {
   id: number;
@@ -44,6 +46,7 @@ function NotificationToast({
   message: string;
   referenceId: number;
   senderName: string;
+  mediaType?: string;
   onDismiss: (id: number) => void;
 }) {
   useEffect(() => {
@@ -52,7 +55,7 @@ function NotificationToast({
   }, [id, onDismiss]);
 
   const href = isPostNotification(type) && referenceId
-    ? `/post/${referenceId}`
+    ? `/post/${referenceId}${mediaType ? `?type=${mediaType}` : ""}`
     : type === "MESSAGE" || type.startsWith("FOLLOW") || type === "NEW_FOLLOWER"
       ? `/user/${senderName}`
       : null;

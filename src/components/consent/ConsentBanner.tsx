@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useConsentStore } from "@/stores/consent-store";
+import { analytics, enableAnalytics } from "@/lib/analytics";
 
 /**
  * Implied-consent cookie/ad banner:
@@ -48,6 +49,14 @@ export function ConsentBanner() {
 
   if (!mounted || hasDecided) return null;
 
+  // Analytics is only ever enabled after the user opts in, so "obtained" is the
+  // one consent-flow event we can legitimately emit.
+  const acceptAll = async () => {
+    setConsent(true, true);
+    await enableAnalytics();
+    analytics.logAdConsentObtained();
+  };
+
   return (
     <div className="fixed bottom-0 inset-x-0 z-[80] p-4 pb-20 sm:pb-4 bg-card border-t border-border shadow-2xl">
       <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -77,7 +86,7 @@ export function ConsentBanner() {
             Accept essential only
           </button>
           <button
-            onClick={() => setConsent(true, true)}
+            onClick={acceptAll}
             className="btn-primary h-11 px-4 text-xs sm:text-sm whitespace-nowrap"
           >
             Accept all

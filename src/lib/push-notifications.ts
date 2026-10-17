@@ -13,6 +13,7 @@ export interface WebPushPayload {
   senderName: string;
   senderUserId: number;
   posterUrl?: string;
+  mediaType?: string;
 }
 
 export function getStoredToken(): string | null {
@@ -169,6 +170,7 @@ export function onForegroundMessage(
       senderName: data.senderName ?? "",
       senderUserId: Number(data.senderUserId ?? 0) || 0,
       posterUrl: data.posterUrl ?? undefined,
+      mediaType: data.mediaType ?? undefined,
     });
   });
 }

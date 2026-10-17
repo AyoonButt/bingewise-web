@@ -30,6 +30,7 @@ export interface NotificationEntity {
   senderName: string;
   senderUserId: number | null;
   posterUrl: string | null;
+  mediaType?: string | null;
   read: boolean;
   createdAt: number;
 }

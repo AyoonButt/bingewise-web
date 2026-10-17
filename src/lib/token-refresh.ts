@@ -68,6 +68,10 @@ async function doRefreshInner(): Promise<RefreshResult> {
 }
 
 export async function forceLogout(): Promise<void> {
+  // Dynamic import so the analytics/Firebase SDK never enters a server bundle
+  // that pulls in this module (api-client -> token-refresh).
+  const { analytics } = await import("./analytics");
+  analytics.sessionEnd();
   try {
     await fetch("/api/auth/logout", { method: "POST" });
   } catch {

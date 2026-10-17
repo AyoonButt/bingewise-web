@@ -44,6 +44,7 @@ export function NotificationInitializer() {
           message: payload.message,
           referenceId: payload.referenceId,
           senderName: payload.senderName,
+          mediaType: payload.mediaType,
         });
       });
 

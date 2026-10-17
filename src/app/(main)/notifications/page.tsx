@@ -53,7 +53,9 @@ function notificationHref(notification: NotificationEntity): string | null {
     return notification.posterUrl;
   }
   if (isPostNotification(notification.type) && notification.referenceId > 0) {
-    return `/post/${notification.referenceId}`;
+    return `/post/${notification.referenceId}${
+      notification.mediaType ? `?type=${notification.mediaType}` : ""
+    }`;
   }
   // Follow-type notifications: senderName is a display name, not a username.
   // The app embeds the username in the message ("Jane (@jane) started following you"),

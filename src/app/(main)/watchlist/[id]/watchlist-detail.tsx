@@ -441,6 +441,7 @@ function WatchlistDetailInner({
         <ShareDialog
           postId={0}
           postTitle={watchlist.name}
+          postMediaType={null}
           onClose={() => setShowSend(false)}
           watchlistTarget={{
             id: watchlistId,

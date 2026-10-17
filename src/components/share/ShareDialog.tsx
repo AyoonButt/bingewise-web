@@ -12,6 +12,9 @@ import { PreferredSourceBadge } from "./PreferredSourceBadge";
 interface ShareDialogProps {
   postId: number;
   postTitle: string;
+  /** Media type of the post ("movie" | "tv") so the notification can deep-link
+   *  back to the correct detail page. */
+  postMediaType?: string | null;
   onClose: () => void;
   /** When set, shares a watchlist instead of a post. getLink resolves the
    *  share URL (owner → minted secret-link; others → current URL incl. st). */
@@ -35,6 +38,7 @@ function toRelativePath(link: string): string {
 export function ShareDialog({
   postId,
   postTitle,
+  postMediaType,
   onClose,
   watchlistTarget,
 }: ShareDialogProps) {
@@ -79,6 +83,7 @@ export function ShareDialog({
     let message = `${user?.name ?? user?.username ?? "Someone"} shared "${postTitle}" with you`;
     let contentId = postId;
     let referenceId = 0;
+    let mediaType: string | null = postMediaType ?? null;
 
     if (watchlistTarget) {
       type = "WATCHLIST_SHARE";
@@ -86,6 +91,7 @@ export function ShareDialog({
       message = `${user?.name ?? user?.username ?? "Someone"} shared the watchlist "${watchlistTarget.name}" with you`;
       contentId = watchlistTarget.id;
       referenceId = watchlistTarget.id;
+      mediaType = null;
       try {
         posterUrl = toRelativePath(await watchlistTarget.getLink());
       } catch (e) {
@@ -110,6 +116,7 @@ export function ShareDialog({
         senderName: user?.name ?? user?.username ?? "",
         senderUserId: user?.userId ?? 0,
         posterUrl,
+        mediaType,
         scheduledFor: null,
       }),
     });

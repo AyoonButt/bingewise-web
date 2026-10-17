@@ -10,6 +10,7 @@ import type { PostDto } from "@/types/post";
 import { useEffect, useRef, useState } from "react";
 import { CommentBottomSheet } from "@/components/comments/CommentBottomSheet";
 import { ShareDialog } from "@/components/share/ShareDialog";
+import { analytics } from "@/lib/analytics";
 
 interface PostCardProps {
   post: PostDto;
@@ -21,6 +22,7 @@ interface PostCardProps {
   enablePosterDoubleTap?: boolean;
   initialShowComments?: boolean;
   highlightCommentIds?: number[];
+  position?: number;
 }
 
 export function PostCard({
@@ -33,11 +35,14 @@ export function PostCard({
   enablePosterDoubleTap = true,
   initialShowComments = false,
   highlightCommentIds,
+  position,
 }: PostCardProps) {
   const router = useRouter();
   const [showComments, setShowComments] = useState(initialShowComments);
   const [showShare, setShowShare] = useState(false);
   const [showLikeAnimation, setShowLikeAnimation] = useState(false);
+  const cardRef = useRef<HTMLElement | null>(null);
+  const impressedRef = useRef(false);
   const commentAnchorRef = useRef<HTMLElement | null>(null);
   const posterClickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const likeAnimationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -50,6 +55,29 @@ export function PostCard({
       if (likeAnimationTimeoutRef.current) clearTimeout(likeAnimationTimeoutRef.current);
     };
   }, []);
+
+  // Fire a single impression once the card is at least half visible.
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || impressedRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !impressedRef.current) {
+          impressedRef.current = true;
+          analytics.logFeedPostImpression({
+            postId: post.postId,
+            mediaType: post.type,
+            tmdbId: post.tmdbId,
+            position,
+          });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [post.postId, post.type, post.tmdbId, position]);
 
   const showLikeFeedback = () => {
     setShowLikeAnimation(true);
@@ -64,6 +92,11 @@ export function PostCard({
     if (!isLiked && !posterLikeTriggeredRef.current) {
       posterLikeTriggeredRef.current = true;
       onLike();
+      analytics.logFeedDoubleTapLike({
+        postId: post.postId,
+        mediaType: post.type,
+        tmdbId: post.tmdbId,
+      });
     }
     showLikeFeedback();
   };
@@ -97,11 +130,12 @@ export function PostCard({
   const openComments = (e: React.MouseEvent) => {
     commentAnchorRef.current =
       (e.currentTarget as HTMLElement).closest("[data-post-card]") ?? null;
+    analytics.logFeedCommentTap(post.postId);
     setShowComments(true);
   };
 
   return (
-    <article data-post-card className="rounded-xl border border-border bg-card overflow-hidden">
+    <article ref={cardRef} data-post-card className="rounded-xl border border-border bg-card overflow-hidden">
       <Link
         href={posterHref}
         onClick={handlePosterClick}
@@ -171,7 +205,7 @@ export function PostCard({
         />
       )}
       {showShare && (
-        <ShareDialog postId={post.postId ?? 0} postTitle={post.title} onClose={() => setShowShare(false)} />
+        <ShareDialog postId={post.postId ?? 0} postTitle={post.title} postMediaType={post.type} onClose={() => setShowShare(false)} />
       )}
     </article>
   );

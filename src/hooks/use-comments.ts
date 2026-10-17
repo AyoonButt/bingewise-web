@@ -4,6 +4,7 @@ import { useEffect, useCallback, useRef, useState } from "react";
 import { connectComments, subscribeToPost, unsubscribeFromPost } from "@/lib/websocket";
 import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
+import { analytics } from "@/lib/analytics";
 import type { CommentDto, CommentEvent, CommentResponse, ReplyCountDto } from "@/types/comment";
 
 const REPLIES_PAGE_SIZE = 20;
@@ -255,6 +256,11 @@ export function useComments(postId: number) {
         const res = await apiClient<CommentResponse>("/api/comments/insert", {
           method: "POST",
           body: JSON.stringify(body),
+        });
+        analytics.logCommentSubmit({
+          postId,
+          isReply: parentCommentId != null,
+          commentType: "post",
         });
         if (res.commentId) {
           const optimistic: CommentDto = {

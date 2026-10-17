@@ -7,6 +7,7 @@ export interface PushToast {
   message: string;
   referenceId: number;
   senderName: string;
+  mediaType?: string;
 }
 
 interface PushToastState {

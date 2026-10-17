@@ -151,7 +151,6 @@ export function PosterDetailContent() {
           }
           isMovieFlag = wantMovie;
         } catch {
-          if (explicitIsMovie === null) throw new Error("not found");
           if (wantMovie) {
             data = (await getTvDetail(id, languageRegion)) as unknown as MediaDetail;
           } else {
@@ -409,6 +408,30 @@ export function PosterDetailContent() {
                 : []),
               ...(runtime
                 ? [{ label: "Runtime:", value: formatRuntime(runtime) }]
+                : []),
+              ...(!isMovie && (media as MediaDetail).number_of_seasons
+                ? [
+                    {
+                      label: "Seasons:",
+                      value: String((media as MediaDetail).number_of_seasons),
+                    },
+                  ]
+                : []),
+              ...(!isMovie && (media as MediaDetail).number_of_episodes
+                ? [
+                    {
+                      label: "Episodes:",
+                      value: String((media as MediaDetail).number_of_episodes),
+                    },
+                  ]
+                : []),
+              ...(!isMovie && (media as MediaDetail).status
+                ? [
+                    {
+                      label: "Status:",
+                      value: (media as MediaDetail).status!,
+                    },
+                  ]
                 : []),
               ...(genres.length > 0
                 ? [{ label: "Genres:", value: genres.join(", ") }]

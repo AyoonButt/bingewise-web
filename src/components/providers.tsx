@@ -15,6 +15,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { forceLogout, getRefreshResult } from "@/lib/token-refresh";
 import { apiClient } from "@/lib/api-client";
 import { NotificationInitializer } from "./NotificationInitializer";
+import { AnalyticsInitializer } from "./AnalyticsInitializer";
 import {
   DEFAULT_TOKEN_TTL_SECONDS,
   SESSION_KEY,
@@ -190,6 +191,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
         <AuthInitializer />
         <NotificationInitializer />
+        <AnalyticsInitializer />
         {children}
       </ThemeProvider>
     </QueryClientProvider>

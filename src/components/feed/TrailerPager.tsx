@@ -340,6 +340,7 @@ export function TrailerPager({
         <ShareDialog
           postId={sharePost.postId ?? 0}
           postTitle={sharePost.title}
+          postMediaType={sharePost.type}
           onClose={() => setSharePost(null)}
         />
       )}

@@ -47,6 +47,7 @@ messaging.onBackgroundMessage((payload) => {
       contentId: parseInt(data.contentId || "0", 10) || 0,
       senderName,
       senderUserId: parseInt(data.senderUserId || "0", 10) || 0,
+      mediaType: data.mediaType || "",
     },
   };
 
@@ -54,7 +55,7 @@ messaging.onBackgroundMessage((payload) => {
 });
 
 function notificationUrl(notificationData) {
-  const { type, referenceId, senderName } = notificationData || {};
+  const { type, referenceId, senderName, mediaType } = notificationData || {};
   const postTypes = [
     "REPLY",
     "SHARE",
@@ -70,7 +71,7 @@ function notificationUrl(notificationData) {
     "new_release",
   ];
   if (postTypes.includes(type) && referenceId) {
-    return `/post/${referenceId}`;
+    return `/post/${referenceId}${mediaType ? `?type=${mediaType}` : ""}`;
   }
   if (senderName && (type === "MESSAGE" || type === "FOLLOW_REQUEST" || type === "FOLLOW_REQUEST_ACCEPTED" || type === "NEW_FOLLOWER" || type === "follow")) {
     return `/user/${senderName}`;

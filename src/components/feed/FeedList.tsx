@@ -9,7 +9,10 @@ import { AdUnit } from "@/components/ads/AdUnit";
 import { AD_INTERVALS, isPlacementEnabled } from "@/lib/ads";
 import type { PostDto } from "@/types/post";
 
-const FEED_ADS = isPlacementEnabled("feed");
+// Feed display ads are currently disabled. Flip FEED_ADS_DISABLED to false to
+// reintroduce them — the AdUnit component, slots, and interval logic are intact.
+const FEED_ADS_DISABLED = true;
+const FEED_ADS = !FEED_ADS_DISABLED && isPlacementEnabled("feed");
 
 interface FeedListProps {
   posts: PostDto[];
@@ -87,6 +90,7 @@ export function FeedList({
                   onNotInterested ? () => onNotInterested(pid) : undefined
                 }
                 enablePosterDoubleTap
+                position={index}
               />
               {FEED_ADS && index > 0 && index % AD_INTERVALS.feed === AD_INTERVALS.feed - 1 && (
                 <AdUnit placement="feed" className="my-4" />

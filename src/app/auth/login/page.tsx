@@ -12,6 +12,7 @@ import { login } from "@/lib/auth";
 import { clearScrollMemory } from "@/hooks/use-scroll-restoration";
 import { acceptWatchlistInvite } from "@/lib/watchlist";
 import { useAuthStore } from "@/stores/auth-store";
+import { analytics } from "@/lib/analytics";
 
 const schema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -48,6 +49,7 @@ function LoginForm() {
   });
 
   const onSubmit = async (data: FormData) => {
+    analytics.loginAttempt();
     try {
       setError("");
       const { user, tokenExpiresAt } = await login(data);
@@ -58,6 +60,7 @@ function LoginForm() {
       }
 
       setSession(user, tokenExpiresAt);
+      analytics.loginSuccess(user.userId);
 
       // Handle invite token after successful login
       if (inviteToken && inviteWatchlistId) {
@@ -73,6 +76,9 @@ function LoginForm() {
 
       router.push("/feed");
     } catch (err: any) {
+      const message = err?.message ?? "Login failed";
+      const code = Number(message.match?.(/\d{3}/)?.[0]) || 0;
+      analytics.loginFailure(code, message);
       if (err.message?.includes("401") || err.message?.includes("Unauthorized")) {
         setError("Invalid username or password");
       } else if (err.message?.includes("429")) {

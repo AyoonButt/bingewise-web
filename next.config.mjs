@@ -22,12 +22,12 @@ const securityHeaders = [
       // AdSense + Next.js inline/eval requirements + YouTube IFrame API.
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://www.googletagmanager.com https://fcmregistrations.google.com https://www.youtube.com https://*.adtrafficquality.google",
       "style-src 'self' 'unsafe-inline'",
-      // TMDB posters, avatars, dicebear images, ad creative images, Google Ads / AdSense tracking pixels.
-      "img-src 'self' data: blob: https://image.tmdb.org https://*.tmdb.org https://media.tmdb.org https://api.dicebear.com https://*.googleusercontent.com https://*.adtrafficquality.google https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com https://*.gstatic.com",
+      // TMDB posters, avatars, dicebear images, ad creative images, Google Ads / AdSense tracking pixels, GA4 beacons.
+      "img-src 'self' data: blob: https://image.tmdb.org https://*.tmdb.org https://media.tmdb.org https://api.dicebear.com https://*.googleusercontent.com https://*.adtrafficquality.google https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com https://*.gstatic.com https://*.google-analytics.com https://www.googletagmanager.com",
       "media-src 'self' blob: https://image.tmdb.org https://*.tmdb.org",
       "font-src 'self' data: https://cdn.jsdelivr.net",
-      // Backend API + Firebase + TMDB + Google Ads tracking + any websocket notifications channel.
-      "connect-src 'self' https://api-bingewise.com https://api.tmdb.org https://www.themoviedb.org https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://www.google.com https://*.googleapis.com https://*.firebaseio.com https://*.doubleclick.net wss:",
+      // Backend API + Firebase + Firebase Analytics (GA4) + TMDB + Google Ads tracking + any websocket notifications channel.
+      "connect-src 'self' https://api-bingewise.com https://api.tmdb.org https://www.themoviedb.org https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://www.google.com https://*.googleapis.com https://*.firebaseio.com https://*.doubleclick.net https://*.google-analytics.com https://*.analytics.google.com wss:",
       // YouTube trailer embeds, AdSense safeframes, reCAPTCHA iframes.
       "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://googleads.g.doubleclick.net https://*.safeframe.googlesyndication.com https://pagead2.googlesyndication.com https://*.adtrafficquality.google https://www.google.com",
       "object-src 'none'",

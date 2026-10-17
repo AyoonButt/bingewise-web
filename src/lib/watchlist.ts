@@ -3,6 +3,7 @@ import {
   notifyWatchlistChanged,
   notifyWatchlistsInvalidated,
 } from "./watchlist-events";
+import { analytics } from "./analytics";
 import { useAuthStore } from "@/stores/auth-store";
 import {
   normalizeDetail,
@@ -123,6 +124,7 @@ export function createWatchlist(
     body: JSON.stringify(toWriteBody(data)),
   }).then((dto) => {
     const watchlist = normalizeWatchlist(dto);
+    analytics.logWatchlistCreated(watchlist.id, watchlist.itemCount);
     notifyWatchlistChanged(watchlist.id);
     return watchlist;
   });
@@ -150,6 +152,7 @@ export function updateWatchlist(
     body: JSON.stringify(toWriteBody(data)),
   }).then((dto) => {
     const watchlist = normalizeWatchlist(dto);
+    analytics.logWatchlistUpdated(watchlistId);
     notifyWatchlistChanged(watchlistId);
     return watchlist;
   });
@@ -159,6 +162,7 @@ export function deleteWatchlist(watchlistId: number): Promise<ApiResponse> {
   return apiClient<ApiResponse>(`/api/watchlists/${watchlistId}`, {
     method: "DELETE",
   }).then((res) => {
+    analytics.logWatchlistDeleted(watchlistId);
     notifyWatchlistChanged(watchlistId);
     // Collection changed — refresh My Lists everywhere.
     invalidateCurrentUserWatchlists();
@@ -174,6 +178,11 @@ export function addWatchlistItem(
     method: "POST",
     body: JSON.stringify(item),
   }).then((created) => {
+    analytics.logWatchlistItemAdded({
+      watchlistId,
+      tmdbId: item.tmdbId,
+      mediaType: item.mediaType,
+    });
     notifyWatchlistChanged(watchlistId);
     return created;
   });
@@ -187,6 +196,7 @@ export function removeWatchlistItem(
     `/api/watchlists/${watchlistId}/items/${itemId}`,
     { method: "DELETE" }
   ).then(async (res) => {
+    analytics.logWatchlistItemRemoved({ watchlistId });
     notifyWatchlistChanged(watchlistId);
     return res;
   });
@@ -209,7 +219,10 @@ export function reorderWatchlistItems(
       method: "PUT",
       body: JSON.stringify({ orderedItemIds: orderedItemIds }),
     }
-  );
+  ).then((items) => {
+    analytics.logWatchlistReordered(watchlistId);
+    return items;
+  });
 }
 
 export function cloneWatchlist(
@@ -221,6 +234,7 @@ export function cloneWatchlist(
     `/api/watchlists/${watchlistId}/clone${qs}`,
     { method: "POST" }
   ).then(async (result) => {
+    analytics.logWatchlistCloned(watchlistId, result.watchlist.id);
     notifyWatchlistChanged(result.watchlist.id);
     // The clone adds a new list to the caller's collection — refresh any
     // mounted My Lists / profile-list views immediately.
@@ -292,7 +306,10 @@ export function createWatchlistInvite(
   return apiClient<WatchlistInviteInfo>(
     `/api/watchlists/${watchlistId}/invite`,
     { method: "POST" }
-  );
+  ).then((info) => {
+    analytics.logWatchlistLinkShared(watchlistId);
+    return info;
+  });
 }
 
 export function acceptWatchlistInvite(

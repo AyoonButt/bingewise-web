@@ -13,6 +13,7 @@ import { AD_INTERVALS, isPlacementEnabled } from "@/lib/ads";
 import { CommentBottomSheet } from "@/components/comments/CommentBottomSheet";
 import { ShareDialog } from "@/components/share/ShareDialog";
 import { useTrailerInteractionTracker } from "@/hooks/use-trailer-interactions";
+import { analytics } from "@/lib/analytics";
 import {
   isVideoKeyFailed,
   loadFailedVideoKeys,
@@ -33,7 +34,11 @@ export function TrailerFeed() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const reelHeight = useReelHeight(scrollRef);
 
-  const EXPLORE_ADS = isPlacementEnabled("explore");
+  // Explore display ads are currently disabled. Flip EXPLORE_ADS_DISABLED to
+  // false to reintroduce them — the AdUnit component, slots, and interval logic
+  // are intact.
+  const EXPLORE_ADS_DISABLED = true;
+  const EXPLORE_ADS = !EXPLORE_ADS_DISABLED && isPlacementEnabled("explore");
 
   // Videos that failed to play are hidden for the rest of the session.
   const removedIdsRef = useRef<Set<number>>(new Set());
@@ -143,6 +148,7 @@ export function TrailerFeed() {
 
   const refresh = useCallback(async () => {
     removedIdsRef.current = new Set();
+    analytics.logTrailerFeedRefresh();
     await query.refetch();
     setActiveIndex(0);
     requestAnimationFrame(() => scrollRef.current?.scrollTo({ top: 0 }));
@@ -245,24 +251,44 @@ export function TrailerFeed() {
     return post ? (post.postId ?? post.tmdbId) : null;
   }, [items, activeIndex]);
 
+  // Impression for the active (on-screen) trailer slide.
+  useEffect(() => {
+    const post = items[activeIndex];
+    if (!post) return;
+    analytics.logTrailerImpression({
+      postId: post.postId,
+      mediaType: post.type,
+      tmdbId: post.tmdbId,
+      position: activeIndex,
+    });
+    // Only re-fire when the active slide actually changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIndex, activeId]);
+
   useEffect(() => {
     if (activeId == null) endSession();
   }, [activeId, endSession]);
 
   const handleStarted = useCallback(
     (postId: number) => {
-      if (postId) beginSession(postId, muted);
+      if (postId) {
+        const post = items.find((p) => (p.postId ?? p.tmdbId) === postId);
+        analytics.logTrailerPlay(postId, post?.type);
+        beginSession(postId, muted);
+      }
     },
-    [beginSession, muted]
+    [beginSession, muted, items]
   );
 
   const handleToggleMute = useCallback(() => {
     setMuted((m) => {
       const next = !m;
+      const post = items[activeIndex];
+      analytics.logTrailerMute(post?.postId, next);
       updateMuted(next);
       return next;
     });
-  }, [updateMuted]);
+  }, [updateMuted, items, activeIndex]);
 
   const handleLikeClick = useCallback(
     (post: PostDto) => {
@@ -273,6 +299,9 @@ export function TrailerFeed() {
         const liked = !next.has(postId);
         if (liked) next.add(postId);
         else next.delete(postId);
+        const ref = { postId, mediaType: post.type, tmdbId: post.tmdbId };
+        if (liked) analytics.logTrailerLike(ref);
+        else analytics.logTrailerUnlike(ref);
         updateLikeState(liked);
         return next;
       });
@@ -289,6 +318,9 @@ export function TrailerFeed() {
         const saved = !next.has(postId);
         if (saved) next.add(postId);
         else next.delete(postId);
+        const ref = { postId, mediaType: post.type, tmdbId: post.tmdbId };
+        if (saved) analytics.logTrailerSave(ref);
+        else analytics.logTrailerUnsave(ref);
         updateSaveState(saved);
         return next;
       });
@@ -300,6 +332,7 @@ export function TrailerFeed() {
     (post: PostDto, anchor: HTMLElement | null) => {
       const postId = post.postId;
       if (!postId || !user) return;
+      analytics.logTrailerCommentTap(postId);
       updateCommentPressed(true);
       commentAnchorRef.current = anchor;
       setCommentPostId(postId);
@@ -347,6 +380,11 @@ export function TrailerFeed() {
     if (post.postId == null) return;
     removedIdsRef.current.add(post.postId);
     setRemovedVersion((v) => v + 1);
+    analytics.logTrailerNotInterested({
+      postId: post.postId,
+      mediaType: post.type,
+      tmdbId: post.tmdbId,
+    });
     apiClient("/api/not-interested", {
       method: "POST",
       body: JSON.stringify({ userId: user.userId, postId: post.postId }),
@@ -457,6 +495,7 @@ export function TrailerFeed() {
         <ShareDialog
           postId={sharePost.postId ?? 0}
           postTitle={sharePost.title}
+          postMediaType={sharePost.type}
           onClose={() => setSharePost(null)}
         />
       )}

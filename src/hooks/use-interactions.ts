@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
 import { useUiStore } from "@/stores/ui-store";
+import { analytics } from "@/lib/analytics";
 import type { InteractionStates, UserPostInteractionDto } from "@/types/interactions";
 
 export function useInteractions(userId: number | undefined) {
@@ -103,6 +104,8 @@ export function useInteractions(userId: number | undefined) {
         likeState: !isCurrentlyLiked,
         saveState: isCurrentlySaved,
       });
+      if (isCurrentlyLiked) analytics.logFeedPostUnlike({ postId });
+      else analytics.logFeedPostLike({ postId });
     },
     [stateMutations, saveInteraction]
   );
@@ -120,6 +123,8 @@ export function useInteractions(userId: number | undefined) {
         likeState: isCurrentlyLiked,
         saveState: !isCurrentlySaved,
       });
+      if (isCurrentlySaved) analytics.logFeedPostUnsave({ postId });
+      else analytics.logFeedPostSave({ postId });
     },
     [stateMutations, saveInteraction]
   );
