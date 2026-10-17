@@ -71,7 +71,8 @@ function notificationUrl(notificationData) {
     "new_release",
   ];
   if (postTypes.includes(type) && referenceId) {
-    return `/post/${referenceId}${mediaType ? `?type=${mediaType}` : ""}`;
+    // referenceId is a post_id; the post page resolves it to the media (tmdbId)
+    return `/activity/item/${referenceId}`;
   }
   if (senderName && (type === "MESSAGE" || type === "FOLLOW_REQUEST" || type === "FOLLOW_REQUEST_ACCEPTED" || type === "NEW_FOLLOWER" || type === "follow")) {
     return `/user/${senderName}`;

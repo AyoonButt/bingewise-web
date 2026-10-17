@@ -53,9 +53,8 @@ function notificationHref(notification: NotificationEntity): string | null {
     return notification.posterUrl;
   }
   if (isPostNotification(notification.type) && notification.referenceId > 0) {
-    return `/post/${notification.referenceId}${
-      notification.mediaType ? `?type=${notification.mediaType}` : ""
-    }`;
+    // referenceId is a post_id; the post page resolves it to the media (tmdbId)
+    return `/activity/item/${notification.referenceId}`;
   }
   // Follow-type notifications: senderName is a display name, not a username.
   // The app embeds the username in the message ("Jane (@jane) started following you"),

@@ -54,8 +54,9 @@ function NotificationToast({
     return () => clearTimeout(timer);
   }, [id, onDismiss]);
 
+  // referenceId is a post_id; the post page resolves it to the media (tmdbId)
   const href = isPostNotification(type) && referenceId
-    ? `/post/${referenceId}${mediaType ? `?type=${mediaType}` : ""}`
+    ? `/activity/item/${referenceId}`
     : type === "MESSAGE" || type.startsWith("FOLLOW") || type === "NEW_FOLLOWER"
       ? `/user/${senderName}`
       : null;
