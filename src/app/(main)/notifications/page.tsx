@@ -52,9 +52,16 @@ function notificationHref(notification: NotificationEntity): string | null {
   ) {
     return notification.posterUrl;
   }
-  if (isPostNotification(notification.type) && notification.referenceId > 0) {
-    // referenceId is a post_id; the post page resolves it to the media (tmdbId)
-    return `/activity/item/${notification.referenceId}`;
+  if (isPostNotification(notification.type)) {
+    // Prefer opening the poster detail (media) screen using the tmdbId carried in
+    // contentId; fall back to the post page for older notifications.
+    if (notification.contentId > 0) {
+      const typeParam = notification.mediaType === "movie" ? "movie" : "tv";
+      return `/post/${notification.contentId}?type=${typeParam}`;
+    }
+    if (notification.referenceId > 0) {
+      return `/activity/item/${notification.referenceId}`;
+    }
   }
   // Follow-type notifications: senderName is a display name, not a username.
   // The app embeds the username in the message ("Jane (@jane) started following you"),

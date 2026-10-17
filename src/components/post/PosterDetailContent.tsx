@@ -42,8 +42,16 @@ type MediaDetail = TmdbMovieDetail & {
   next_episode_to_air?: {
     season_number: number;
     episode_number: number;
-    name: string;
+    name?: string;
+    air_date?: string;
   } | null;
+  last_episode_to_air?: {
+    season_number: number;
+    episode_number: number;
+    name?: string;
+    air_date?: string;
+  } | null;
+  seasons?: { season_number: number; episode_count: number; air_date?: string }[];
   number_of_episodes?: number;
   number_of_seasons?: number;
   origin_country?: string[];
@@ -330,6 +338,23 @@ export function PosterDetailContent() {
     : media?.episode_run_time?.[0];
 
   const genres = media?.genres?.map((g) => g.name) || [];
+  // TMDB's number_of_episodes counts aired + announced episodes (and mishandles specials),
+  // so for an in-progress show it overstates reality. Derive the aired count from
+  // last_episode_to_air + the prior seasons' episode counts instead.
+  const tvMedia = media as MediaDetail | null;
+  const airedEpisodes = (() => {
+    if (isMovie || !tvMedia?.last_episode_to_air) return null;
+    const last = tvMedia.last_episode_to_air;
+    const prior = (tvMedia.seasons ?? [])
+      .filter((s) => s.season_number >= 1 && s.season_number < last.season_number)
+      .reduce((sum, s) => sum + (s.episode_count ?? 0), 0);
+    return prior + last.episode_number;
+  })();
+  const airedSeasons = isMovie
+    ? null
+    : (tvMedia?.seasons ?? []).filter(
+        (s) => s.season_number >= 1 && !!s.air_date && new Date(s.air_date) <= new Date()
+      ).length;
   const cast = isMovie
     ? (media as TmdbMovieDetail)?.credits?.cast
     : (media as unknown as TmdbTvDetail)?.credits?.cast;
@@ -409,30 +434,46 @@ export function PosterDetailContent() {
               ...(runtime
                 ? [{ label: "Runtime:", value: formatRuntime(runtime) }]
                 : []),
-              ...(!isMovie && (media as MediaDetail).number_of_seasons
-                ? [
-                    {
-                      label: "Seasons:",
-                      value: String((media as MediaDetail).number_of_seasons),
-                    },
-                  ]
-                : []),
-              ...(!isMovie && (media as MediaDetail).number_of_episodes
-                ? [
-                    {
-                      label: "Episodes:",
-                      value: String((media as MediaDetail).number_of_episodes),
-                    },
-                  ]
-                : []),
-              ...(!isMovie && (media as MediaDetail).status
-                ? [
-                    {
-                      label: "Status:",
-                      value: (media as MediaDetail).status!,
-                    },
-                  ]
-                : []),
+               ...(!isMovie && airedSeasons
+                 ? [
+                     {
+                       label: "Seasons:",
+                       value: airedSeasons === (media as MediaDetail).number_of_seasons
+                         ? String(airedSeasons)
+                         : `${airedSeasons} aired (${(media as MediaDetail).number_of_seasons} total)`,
+                     },
+                   ]
+                 : !isMovie && (media as MediaDetail).number_of_seasons
+                   ? [
+                       {
+                         label: "Seasons:",
+                         value: String((media as MediaDetail).number_of_seasons),
+                       },
+                     ]
+                   : []),
+               ...(!isMovie && (airedEpisodes ?? (media as MediaDetail).number_of_episodes)
+                 ? [
+                     {
+                       label: "Episodes:",
+                       value:
+                         airedEpisodes != null
+                           ? `${airedEpisodes} aired${(media as MediaDetail).number_of_episodes && (media as MediaDetail).number_of_episodes! > airedEpisodes ? ` (${(media as MediaDetail).number_of_episodes} total)` : ""}`
+                           : String((media as MediaDetail).number_of_episodes),
+                     },
+                   ]
+                 : []),
+               ...(!isMovie && (media as MediaDetail).status
+                 ? [
+                     {
+                       label: "Status:",
+                       value: (media as MediaDetail).in_production
+                         ? "Returning Series"
+                         : (media as MediaDetail).last_air_date
+                           ? "Ended"
+                           : (media as MediaDetail).status!,
+                     },
+                   ]
+                 : []),
               ...(genres.length > 0
                 ? [{ label: "Genres:", value: genres.join(", ") }]
                 : []),

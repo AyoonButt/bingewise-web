@@ -127,10 +127,18 @@ export interface TmdbTvDetail {
   poster_path: string | null;
   backdrop_path: string | null;
   first_air_date: string;
+  last_air_date?: string;
   vote_average: number;
   vote_count?: number;
   episode_run_time: number[];
+  number_of_seasons?: number;
+  number_of_episodes?: number;
+  in_production?: boolean;
+  status?: string;
   genres: { id: number; name: string }[];
+  seasons?: { season_number: number; episode_count: number; air_date?: string }[];
+  last_episode_to_air?: { season_number: number; episode_number: number; name?: string; air_date?: string } | null;
+  next_episode_to_air?: { season_number: number; episode_number: number; name?: string; air_date?: string } | null;
   videos: { results: TmdbVideo[] };
   credits: { cast: TmdbCastMember[] };
   recommendations: { results: TmdbTv[] };

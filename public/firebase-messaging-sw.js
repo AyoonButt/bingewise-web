@@ -55,7 +55,7 @@ messaging.onBackgroundMessage((payload) => {
 });
 
 function notificationUrl(notificationData) {
-  const { type, referenceId, senderName, mediaType } = notificationData || {};
+  const { type, referenceId, contentId, senderName, mediaType } = notificationData || {};
   const postTypes = [
     "REPLY",
     "SHARE",
@@ -70,8 +70,13 @@ function notificationUrl(notificationData) {
     "share",
     "new_release",
   ];
+  // Content notifications: open the poster detail (media) screen using the tmdbId
+  // carried in contentId; fall back to the post page for older notifications.
+  if (postTypes.includes(type) && contentId && contentId > 0) {
+    const typeParam = mediaType === "movie" ? "movie" : "tv";
+    return `/post/${contentId}?type=${typeParam}`;
+  }
   if (postTypes.includes(type) && referenceId) {
-    // referenceId is a post_id; the post page resolves it to the media (tmdbId)
     return `/activity/item/${referenceId}`;
   }
   if (senderName && (type === "MESSAGE" || type === "FOLLOW_REQUEST" || type === "FOLLOW_REQUEST_ACCEPTED" || type === "NEW_FOLLOWER" || type === "follow")) {
