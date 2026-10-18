@@ -43,6 +43,7 @@ export function NotificationInitializer() {
           title: payload.title,
           message: payload.message,
           referenceId: payload.referenceId,
+          contentId: payload.contentId,
           senderName: payload.senderName,
           mediaType: payload.mediaType,
         });

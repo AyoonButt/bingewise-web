@@ -54,30 +54,47 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(title, notificationOptions);
 });
 
-function notificationUrl(notificationData) {
+const postTypes = [
+  "REPLY",
+  "SHARE",
+  "UPCOMING_RELEASE",
+  "SEQUEL_RELEASE",
+  "NEW_COLLECTION_MOVIE",
+  "NEW_SEASON",
+  "SHOW_STATUS_CHANGE",
+  "NEW_FRANCHISE_SHOW",
+  "STREAMING_AVAILABLE",
+  "comment",
+  "share",
+  "new_release",
+];
+
+// Content notifications open poster detail (media) via the TMDB id carried in
+// contentId; when only the post id (referenceId) is known, fetch the post and
+// use its tmdbId/type — the same resolution the post card performs — falling
+// back to the post page only if that lookup fails.
+async function notificationUrl(notificationData) {
   const { type, referenceId, contentId, senderName, mediaType } = notificationData || {};
-  const postTypes = [
-    "REPLY",
-    "SHARE",
-    "UPCOMING_RELEASE",
-    "SEQUEL_RELEASE",
-    "NEW_COLLECTION_MOVIE",
-    "NEW_SEASON",
-    "SHOW_STATUS_CHANGE",
-    "NEW_FRANCHISE_SHOW",
-    "STREAMING_AVAILABLE",
-    "comment",
-    "share",
-    "new_release",
-  ];
-  // Content notifications: open the poster detail (media) screen using the tmdbId
-  // carried in contentId; fall back to the post page for older notifications.
-  if (postTypes.includes(type) && contentId && contentId > 0) {
-    const typeParam = mediaType === "movie" ? "movie" : "tv";
-    return `/post/${contentId}?type=${typeParam}`;
-  }
-  if (postTypes.includes(type) && referenceId) {
-    return `/activity/item/${referenceId}`;
+  if (postTypes.includes(type)) {
+    if (contentId && contentId > 0) {
+      const typeParam = mediaType === "movie" ? "movie" : "tv";
+      return `/post/${contentId}?type=${typeParam}`;
+    }
+    if (referenceId) {
+      try {
+        const res = await fetch(`/api/backend/api/posts/${referenceId}/en-US`);
+        if (res.ok) {
+          const post = await res.json();
+          if (post.tmdbId && post.tmdbId > 0) {
+            const typeParam = (post.type || mediaType) === "movie" ? "movie" : "tv";
+            return `/post/${post.tmdbId}?type=${typeParam}`;
+          }
+        }
+      } catch {
+        // fall through to the post page
+      }
+      return `/activity/item/${referenceId}`;
+    }
   }
   if (senderName && (type === "MESSAGE" || type === "FOLLOW_REQUEST" || type === "FOLLOW_REQUEST_ACCEPTED" || type === "NEW_FOLLOWER" || type === "follow")) {
     return `/user/${senderName}`;
@@ -87,15 +104,21 @@ function notificationUrl(notificationData) {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = notificationUrl(event.notification.data);
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-      for (const client of clients) {
-        if ("focus" in client && "url" in client && new URL(client.url).pathname === url) {
-          return client.focus();
-        }
-      }
-      return self.clients.openWindow(url);
-    })
+    notificationUrl(event.notification.data)
+      .then((url) =>
+        self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+          for (const client of clients) {
+            if ("focus" in client && "url" in client) {
+              const clientUrl = new URL(client.url);
+              if (clientUrl.pathname + clientUrl.search === url) {
+                return client.focus();
+              }
+            }
+          }
+          return self.clients.openWindow(url);
+        })
+      )
+      .catch(() => self.clients.openWindow("/feed"))
   );
 });

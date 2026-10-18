@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/auth-store";
 import { useNotifications } from "@/hooks/use-notifications";
 import { apiClient } from "@/lib/api-client";
+import { resolvePostNotificationHref } from "@/lib/notification-navigation";
 import { removePendingFollowRequest } from "@/hooks/use-user-profile";
 import {
   Bell,
@@ -53,9 +55,7 @@ function notificationHref(notification: NotificationEntity): string | null {
     return notification.posterUrl;
   }
   if (isPostNotification(notification.type)) {
-    // Prefer opening the poster detail (media) screen using the tmdbId carried in
-    // contentId; fall back to the post page for older notifications.
-    if (notification.contentId > 0) {
+    if (notification.contentId && notification.contentId > 0) {
       const typeParam = notification.mediaType === "movie" ? "movie" : "tv";
       return `/post/${notification.contentId}?type=${typeParam}`;
     }
@@ -93,6 +93,27 @@ function NotificationItem({
   const Icon = typeConfig.icon;
   const href =
     notification.type === "FOLLOW_REQUEST" ? null : notificationHref(notification);
+
+  const router = useRouter();
+
+  const handleNavigate = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      onClick();
+      // Content notifications open poster detail: resolve the referenced post
+      // to its tmdbId/type when the payload doesn't carry one.
+      if (isPostNotification(notification.type) && href) {
+        e.preventDefault();
+        resolvePostNotificationHref({
+          referenceId: notification.referenceId,
+          contentId: notification.contentId,
+          mediaType: notification.mediaType,
+        }).then((target) => {
+          router.push(target ?? href);
+        });
+      }
+    },
+    [notification, onClick, router, href]
+  );
 
   const content = (
     <div className="flex items-start gap-3">
@@ -160,11 +181,11 @@ function NotificationItem({
   );
 
   return href ? (
-    <Link href={href} onClick={onClick} className={classes}>
+    <Link href={href} onClick={handleNavigate} className={classes}>
       {content}
     </Link>
   ) : (
-    <button onClick={onClick} className={classes}>
+    <button onClick={handleNavigate} className={classes}>
       {content}
     </button>
   );

@@ -2,9 +2,11 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Bell, X } from "lucide-react";
 import { usePushToastStore } from "@/stores/push-toast-store";
 import { isPostNotification } from "@/types/notification";
+import { resolvePostNotificationHref } from "@/lib/notification-navigation";
 
 const TOAST_DURATION_MS = 6000;
 
@@ -21,6 +23,7 @@ export function NotificationToastHost() {
           title={toast.title}
           message={toast.message}
           referenceId={toast.referenceId}
+          contentId={toast.contentId}
           senderName={toast.senderName}
           mediaType={toast.mediaType}
           onDismiss={dismiss}
@@ -36,6 +39,7 @@ function NotificationToast({
   title,
   message,
   referenceId,
+  contentId,
   senderName,
   mediaType,
   onDismiss,
@@ -45,6 +49,7 @@ function NotificationToast({
   title: string;
   message: string;
   referenceId: number;
+  contentId?: number;
   senderName: string;
   mediaType?: string;
   onDismiss: (id: number) => void;
@@ -54,12 +59,39 @@ function NotificationToast({
     return () => clearTimeout(timer);
   }, [id, onDismiss]);
 
-  // referenceId is a post_id; the post page resolves it to the media (tmdbId)
-  const href = isPostNotification(type) && referenceId
-    ? `/activity/item/${referenceId}`
-    : type === "MESSAGE" || type.startsWith("FOLLOW") || type === "NEW_FOLLOWER"
-      ? `/user/${senderName}`
-      : null;
+  const router = useRouter();
+
+  let href: string | null = null;
+  if (isPostNotification(type)) {
+    if (contentId && contentId > 0) {
+      const typeParam = mediaType === "movie" ? "movie" : "tv";
+      href = `/post/${contentId}?type=${typeParam}`;
+    } else if (referenceId > 0) {
+      href = `/activity/item/${referenceId}`;
+    } else {
+      href = null;
+    }
+  } else if (type === "MESSAGE" || type.startsWith("FOLLOW") || type === "NEW_FOLLOWER") {
+    href = `/user/${senderName}`;
+  } else {
+    href = null;
+  }
+
+  // Content taps always open poster detail: resolve the referenced post to its
+  // tmdbId/type when the notification payload doesn't carry one.
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    onDismiss(id);
+    if (!href) return;
+    const fallback = href;
+    if (isPostNotification(type)) {
+      e.preventDefault();
+      resolvePostNotificationHref({ referenceId, contentId, mediaType }).then(
+        (target) => {
+          router.push(target ?? fallback);
+        }
+      );
+    }
+  };
 
   return (
     <div className="pointer-events-auto card p-3 shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
@@ -69,7 +101,7 @@ function NotificationToast({
       {href ? (
         <Link
           href={href}
-          onClick={() => onDismiss(id)}
+          onClick={handleClick}
           className="flex-1 min-w-0 block"
         >
           <NotificationContent title={title} message={message} />

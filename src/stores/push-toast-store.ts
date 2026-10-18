@@ -6,6 +6,7 @@ export interface PushToast {
   title: string;
   message: string;
   referenceId: number;
+  contentId?: number;
   senderName: string;
   mediaType?: string;
 }
