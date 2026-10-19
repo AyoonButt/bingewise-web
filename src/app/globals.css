@@ -224,6 +224,18 @@
     @apply rounded-xl border border-border bg-card text-card-foreground;
   }
 
+  /* Watchlist list-card polaroid preview. Dark slab in dark theme, light
+     surface in light theme; the inline accent gradient stops reference
+     --wlp-surface so both themes share one background-image. */
+  .watchlist-polaroid-card {
+    --wlp-surface: #f7f7fa;
+    background-color: var(--wlp-surface);
+  }
+
+  .dark .watchlist-polaroid-card {
+    --wlp-surface: #0e0e13;
+  }
+
   .card-header {
     @apply flex flex-col space-y-1.5 p-6;
   }

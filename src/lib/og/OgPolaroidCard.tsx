@@ -48,7 +48,7 @@ function polaroidLayout(watchlistId: number, index: number, count: number, regio
   const { r1, r2, r3, r4 } = scatterPolaroid(watchlistId, index)
   const baseW = count <= 2 ? 250 : count <= 4 ? 210 : count <= 6 ? 190 : count <= 9 ? 165 : 150
   const w = baseW * (0.78 + r1 * 0.005)
-  const cardH = w / 0.66 + 24
+  const cardH = (w - 10) / 0.66 + 10
   const halfW = regionW / 2
   const halfH = regionH / 2
   const dxMax = Math.max(0, halfW - (w / 2 + 24))
