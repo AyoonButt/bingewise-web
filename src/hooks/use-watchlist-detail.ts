@@ -118,6 +118,10 @@ export function useWatchlistDetail(
           ...w,
           itemCount: Math.max(0, w.itemCount - 1),
         }));
+        // The list-card collage shows the first items, so it must refetch too.
+        queryClient.invalidateQueries({
+          queryKey: ["watchlistPreviewPosters", watchlistId],
+        });
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to remove item");
         try {
@@ -128,7 +132,7 @@ export function useWatchlistDetail(
         }
       }
     },
-    [watchlistId, shareToken, syncListCache]
+    [watchlistId, shareToken, syncListCache, queryClient]
   );
 
   const [metaSaving, setMetaSaving] = useState(false);
@@ -194,8 +198,12 @@ export function useWatchlistDetail(
       await enqueueReorder(() =>
         reorderWatchlistItems(watchlistId, orderedItemIds)
       );
+      // The list-card collage shows the first items, so it must refetch too.
+      queryClient.invalidateQueries({
+        queryKey: ["watchlistPreviewPosters", watchlistId],
+      });
     },
-    [watchlistId, enqueueReorder]
+    [watchlistId, enqueueReorder, queryClient]
   );
 
   /**
@@ -245,6 +253,9 @@ export function useWatchlistDetail(
         { queryKey: ["watchlists"] },
         (prev) => prev?.filter((w) => w.id !== watchlistId)
       );
+      queryClient.removeQueries({
+        queryKey: ["watchlistPreviewPosters", watchlistId],
+      });
     } finally {
       setIsDeleting(false);
     }

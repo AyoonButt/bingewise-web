@@ -81,6 +81,10 @@ export function useWatchlists(userId?: number) {
       );
       // Item counts appear on the profile Lists tab too.
       if (userId) invalidateUserWatchlists(userId);
+      // The list-card collage shows the first items, so it must refetch too.
+      queryClient.invalidateQueries({
+        queryKey: ["watchlistPreviewPosters", watchlistId],
+      });
     },
   });
 
