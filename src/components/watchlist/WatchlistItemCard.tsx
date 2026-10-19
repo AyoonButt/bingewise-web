@@ -13,7 +13,7 @@ export interface WatchlistCardReorder {
   rank: number;
   dragging: boolean;
   dragOver: boolean;
-  onDragStart: (e: DragEvent<HTMLSpanElement>) => void;
+  onDragStart: (e: DragEvent<HTMLElement>) => void;
   onDragOver: (e: DragEvent<HTMLDivElement>) => void;
   onDrop: (e: DragEvent<HTMLDivElement>) => void;
   onDragEnd: () => void;
@@ -61,10 +61,12 @@ export function WatchlistItemCard({
         onDrop={reorder?.onDrop}
       >
         <Link
-            href={`/post/${item.tmdbId}?type=${item.mediaType}`}
-            className="block"
-            draggable={false}
-          >
+          href={`/post/${item.tmdbId}?type=${item.mediaType}`}
+          className={cn("block", reorder && "cursor-grab active:cursor-grabbing")}
+          draggable={!!reorder}
+          onDragStart={reorder?.onDragStart}
+          onDragEnd={reorder?.onDragEnd}
+        >
           <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-md bg-muted">
             {item.posterPath ? (
               <Image
