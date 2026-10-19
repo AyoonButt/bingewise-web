@@ -30,6 +30,7 @@ import {
 import { isPostNotification } from "@/types/notification";
 import type { NotificationEntity } from "@/types/notification";
 import { cn } from "@/lib/utils";
+import { tmdbImage } from "@/lib/tmdb";
 
 const TYPE_ICONS: Record<string, { icon: typeof Bell; className: string }> = {
   REPLY: { icon: MessageCircle, className: "bg-blue-500/10 text-blue-500" },
@@ -123,7 +124,30 @@ function NotificationItem({
           typeConfig.className
         )}
       >
-        <Icon className="h-5 w-5" />
+        {(() => {
+          const poster = notification.posterUrl;
+          // Show poster image if it's a valid image URL (not a watchlist share link)
+          if (
+            poster &&
+            (poster.startsWith("http") ||
+              (poster.startsWith("/") &&
+                !poster.includes("?") &&
+                /\.(jpg|jpeg|png|webp)$/i.test(poster)))
+          ) {
+            const imageUrl = poster.startsWith("http")
+              ? poster
+              : tmdbImage(poster, "w185");
+            return (
+              <img
+                src={imageUrl}
+                alt=""
+                className="h-10 w-10 rounded-xl object-cover"
+                loading="lazy"
+              />
+            );
+          }
+          return <Icon className="h-5 w-5" />;
+        })()}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
