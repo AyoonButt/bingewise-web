@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { FAQPageJsonLd } from "@/components/seo/JsonLd";
 import { BrandLogo } from "@/components/ui/brand-logo";
+import { AuthenticatedRedirect } from "@/components/AuthenticatedRedirect";
 
 export const metadata: Metadata = {
   title: {
@@ -82,7 +83,7 @@ const guestLinks = [
 
 export default function Home() {
   return (
-    <>
+    <AuthenticatedRedirect>
       <FAQPageJsonLd faqs={faqs} />
 
       <div className="min-h-screen bg-background text-foreground">
@@ -304,6 +305,6 @@ export default function Home() {
           </div>
         </section>
       </div>
-    </>
+    </AuthenticatedRedirect>
   );
 }
