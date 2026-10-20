@@ -26,6 +26,7 @@ import {
 import { useAuthStore } from "@/stores/auth-store";
 import { useUiStore } from "@/stores/ui-store";
 import { useWatchlistDetail } from "@/hooks/use-watchlist-detail";
+import { useTouchReorder } from "@/hooks/use-touch-reorder";
 import { WatchlistItemCard } from "@/components/watchlist/WatchlistItemCard";
 import { EditWatchlistDialog } from "@/components/watchlist/EditWatchlistDialog";
 import { parseCoverColor } from "@/components/watchlist/palette";
@@ -121,10 +122,25 @@ function WatchlistDetailInner({
     !!user && collaborators.some((c) => c.userId === user.userId);
   const isMember = isOwner || isCollaborator;
 
-  // ── Reorder mode ────────────────────────────────────────────────────
-  // Owner/collaborator-only mode: cards become draggable and gain a rank
-  // badge. Persisting is handled by the hook (optimistic + serialized
-  // requests); failures surface via reorderError.
+  // ── Touch reorder ──────────────────────────────────────────────────────
+  // Works on mobile (touch) and desktop (mouse) via pointer events
+  const ITEM_HEIGHT = 280; // approximate card height in px
+  const ITEM_GAP = 16; // gap-4 = 16px
+
+  const { itemsContainerRef, handlePointerDown, draggingIndex, dragOffset, dropTargetIndex } = useTouchReorder({
+    onReorder: async (fromIndex, toIndex) => {
+      if (fromIndex === toIndex) return;
+      const next = [...items];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      await reorderItems(next.map((i) => i.id)).catch(() => {});
+    },
+    getItemCount: () => items.length,
+    itemHeight: ITEM_HEIGHT,
+    gap: ITEM_GAP,
+  });
+
+  // ── Reorder mode (HTML5 drag for desktop) ──────────────────────────────
   const [reorderMode, setReorderMode] = useState(false);
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
@@ -476,7 +492,7 @@ function WatchlistDetailInner({
               Drag cards to reorder &mdash; order saves automatically.
             </p>
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+<div ref={itemsContainerRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {detail.items.map((item, index) => {
               const canRemove =
                 isOwner || (!!user && item.addedBy === user.userId);
@@ -486,20 +502,24 @@ function WatchlistDetailInner({
                   item={item}
                   canRemove={canRemove}
                   onRemove={removeItem}
-                  reorder={
-                    reorderMode
-                      ? {
-                          rank: index + 1,
-                          dragging: draggingId === item.id,
-                          dragOver:
-                            dragOverId === item.id && draggingId !== item.id,
-                          onDragStart: (e) => handleDragStart(item.id, e),
-                          onDragOver: (e) => handleDragOver(item.id, e),
-                          onDrop: (e) => handleDrop(item.id, e),
-                          onDragEnd: handleDragEnd,
-                        }
-                      : undefined
-                  }
+reorder={
+                      reorderMode
+                        ? {
+                            rank: index + 1,
+                            dragging: draggingId === item.id,
+                            dragOver:
+                              dragOverId === item.id && draggingId !== item.id,
+                            onDragStart: (e) => handleDragStart(item.id, e),
+                            onDragOver: (e) => handleDragOver(item.id, e),
+                            onDrop: (e) => handleDrop(item.id, e),
+                            onDragEnd: handleDragEnd,
+                            // Touch/pointer reorder
+                            onPointerDown: (e) => handlePointerDown(e, index),
+                            isTouchDragging: draggingIndex === index,
+                            touchDragOffset: draggingIndex === index ? dragOffset : undefined,
+                          }
+                        : undefined
+                    }
                 />
               );
             })}

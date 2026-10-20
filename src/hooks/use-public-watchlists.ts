@@ -21,7 +21,10 @@ export function usePublicWatchlists(query: string) {
             query.trim() || undefined,
             50
           );
-          if (!cancelled) setResults(data);
+          if (!cancelled) {
+            // Sort by itemCount descending (most items first)
+            setResults([...data].sort((a, b) => b.itemCount - a.itemCount));
+          }
         } catch (e) {
           if (!cancelled) {
             setResults([]);

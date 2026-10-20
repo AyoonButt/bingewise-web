@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, DragEvent } from "react";
+import { useState, DragEvent, PointerEvent, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Move, Loader2, Trash2, X } from "lucide-react";
@@ -17,6 +17,10 @@ export interface WatchlistCardReorder {
   onDragOver: (e: DragEvent<HTMLDivElement>) => void;
   onDrop: (e: DragEvent<HTMLDivElement>) => void;
   onDragEnd: () => void;
+  /** Touch/pointer-based reorder handlers */
+  onPointerDown?: (e: PointerEvent) => void;
+  isTouchDragging?: boolean;
+  touchDragOffset?: { x: number; y: number };
 }
 
 interface WatchlistItemCardProps {
@@ -55,10 +59,17 @@ export function WatchlistItemCard({
         className={cn(
           "relative group",
           reorder?.dragging && "opacity-40",
-          reorder?.dragOver && "ring-2 ring-primary ring-inset rounded-xl"
+          reorder?.dragOver && "ring-2 ring-primary ring-inset rounded-xl",
+          reorder?.isTouchDragging && "opacity-40 z-10"
         )}
         onDragOver={reorder?.onDragOver}
         onDrop={reorder?.onDrop}
+        onPointerDown={reorder?.onPointerDown}
+        style={
+          reorder?.isTouchDragging && reorder?.touchDragOffset
+            ? { transform: `translateY(${reorder.touchDragOffset.y}px)`, zIndex: 50 }
+            : undefined
+        }
       >
         <Link
           href={`/post/${item.tmdbId}?type=${item.mediaType}`}
