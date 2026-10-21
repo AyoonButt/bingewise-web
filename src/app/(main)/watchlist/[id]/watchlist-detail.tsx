@@ -89,19 +89,26 @@ function WatchlistDetailInner({
   } = useWatchlistDetail(watchlistId, shareToken, initialData);
   const [showEdit, setShowEdit] = useState(false);
 
-  // Auto-accept invite for logged-in users
+  // Auto-accept invite for logged-in users, or redirect to login/register for guests
   useEffect(() => {
-    if (inviteToken && user && !isLoading) {
-      const watchlist = detail?.watchlist;
-      const isAlreadyMember = watchlist?.isOwner || detail?.collaborators?.some((c) => c.userId === user.userId);
-      if (!isAlreadyMember) {
-        acceptWatchlistInvite(watchlistId, inviteToken).catch(console.error);
-        // Refresh to show updated collaborator list
-        refresh();
+    if (inviteToken && !isLoading) {
+      if (user) {
+        // Logged in: auto-accept invite
+        const watchlist = detail?.watchlist;
+        const isAlreadyMember = watchlist?.isOwner || detail?.collaborators?.some((c) => c.userId === user.userId);
+        if (!isAlreadyMember) {
+          acceptWatchlistInvite(watchlistId, inviteToken).catch(console.error);
+          // Refresh to show updated collaborator list
+          refresh();
+        }
+        // Clean up URL to avoid re-processing on navigation
+        const newUrl = window.location.pathname;
+        router.replace(newUrl, { scroll: false });
+      } else {
+        // Not logged in: redirect to login with invite params preserved
+        const loginUrl = `/auth/login?invite=${encodeURIComponent(inviteToken)}&watchlistId=${watchlistId}`;
+        router.push(loginUrl);
       }
-      // Clean up URL to avoid re-processing on navigation
-      const newUrl = window.location.pathname;
-      router.replace(newUrl, { scroll: false });
     }
   }, [inviteToken, user, isLoading, detail, watchlistId, refresh, router]);
 
