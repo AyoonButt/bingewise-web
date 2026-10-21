@@ -69,18 +69,30 @@ export default function AccountSettingsPage() {
 
     setDeleting(true);
     try {
+      // Try multiple field name formats for backend compatibility
       await apiClient(`/api/users/${user.userId}`, {
         method: "DELETE",
         body: JSON.stringify({
-          userId: user.userId,
           password: deletePassword,
+          currentPassword: deletePassword,
+          confirmPassword: deletePassword,
           reason: deleteReason || null,
         }),
       });
       logout();
       router.push("/auth/login");
     } catch (e) {
-      setDeleteError(e instanceof Error ? e.message : "Failed to delete account");
+      // Try to parse error response for better error message
+      let message = "Failed to delete account";
+      if (e instanceof Error) {
+        try {
+          const errorData = JSON.parse(e.message);
+          message = errorData.message || errorData.error || e.message;
+        } catch {
+          message = e.message;
+        }
+      }
+      setDeleteError(message);
     } finally {
       setDeleting(false);
     }
@@ -247,7 +259,7 @@ export default function AccountSettingsPage() {
               <button
                 onClick={handleDeleteAccount}
                 disabled={deleting || !deletePassword}
-                className="btn flex--1 h-10 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="btn flex-1 h-10 bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {deleting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

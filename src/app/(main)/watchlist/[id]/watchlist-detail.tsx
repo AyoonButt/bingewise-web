@@ -19,6 +19,7 @@ import {
   GripVertical,
   Loader2,
   Lock,
+  LogIn,
   Pencil,
   Share2,
   Trash2,
@@ -494,6 +495,39 @@ function WatchlistDetailInner({
         </div>
       ) : (
         <>
+          {/* Invite-only join prompt for unauthenticated users */}
+          {!user && inviteToken && (
+            <div className="card p-6 text-center space-y-4 bg-primary/5 border-primary/20">
+              <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+                <Bookmark className="h-6 w-6 text-primary" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold">Join this watchlist</h3>
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium">{watchlist?.name}</span> invited you to collaborate.
+                  {watchlist?.description && <span className="ml-2">“{watchlist.description}”</span>}
+                </p>
+<p className="text-xs text-muted-foreground">
+              {watchlist?.itemCount} {watchlist?.itemCount === 1 ? "title" : "titles"} &bull; {collaborators.length} collaborators
+            </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Link
+                  href={`/auth/login?invite=${encodeURIComponent(inviteToken!)}&watchlistId=${watchlistId}`}
+                  className="btn-primary flex-1 h-10 flex items-center justify-center gap-2"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Sign in to join
+                </Link>
+                <Link
+                  href={`/auth/register?invite=${encodeURIComponent(inviteToken!)}&watchlistId=${watchlistId}`}
+                  className="btn-outline flex-1 h-10"
+                >
+                  Create account & join
+                </Link>
+              </div>
+            </div>
+          )}
           {reorderMode && (
             <p className="text-xs text-muted-foreground text-center">
               Drag cards to reorder &mdash; order saves automatically.
