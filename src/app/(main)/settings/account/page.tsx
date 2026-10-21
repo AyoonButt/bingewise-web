@@ -69,20 +69,16 @@ export default function AccountSettingsPage() {
 
     setDeleting(true);
     try {
-      // Try multiple field name formats for backend compatibility
       await apiClient(`/api/users/${user.userId}`, {
         method: "DELETE",
         body: JSON.stringify({
           password: deletePassword,
-          currentPassword: deletePassword,
-          confirmPassword: deletePassword,
           reason: deleteReason || null,
         }),
       });
       logout();
       router.push("/auth/login");
     } catch (e) {
-      // Try to parse error response for better error message
       let message = "Failed to delete account";
       if (e instanceof Error) {
         try {
