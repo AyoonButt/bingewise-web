@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 
 interface BrandLogoProps {
@@ -32,6 +33,29 @@ export function BingeWiseWordmark({ className }: { className?: string }) {
 
 export function BrandLogo({ size = "md", showText = true, className }: BrandLogoProps) {
   const s = sizes[size];
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    // Return a placeholder that matches the final layout to avoid hydration mismatch
+    return (
+      <div className={`flex items-center gap-2.5 ${className}`}>
+        <div className={`relative ${s.box}`}>
+          <div className="absolute inset-0 flex items-center justify-center bg-primary/10">
+            <span className="text-2xl font-bold text-primary">B</span>
+          </div>
+        </div>
+        {showText && (
+          <span className={`${s.text} font-bold tracking-tight`}>
+            <BingeWiseWordmark />
+          </span>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>

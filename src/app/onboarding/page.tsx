@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Clapperboard, Sparkles, Tv, Shield, Bell, List, CheckCircle2, ChevronRight, RotateCcw } from "lucide-react";
+import { Sparkles, Tv, Shield, Bell, List, CheckCircle2, ChevronRight, RotateCcw } from "lucide-react";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { cn } from "@/lib/utils";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 
@@ -55,7 +56,7 @@ export default function OnboardingWelcomePage() {
       <div className="flex items-center justify-between px-6 h-14 border-b border-border">
         <Link href="/feed" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Clapperboard className="h-4 w-4" />
+            <BrandLogo size="sm" />
           </div>
           <span className="text-lg font-bold tracking-tight">BingeWise</span>
         </Link>
@@ -88,7 +89,7 @@ export default function OnboardingWelcomePage() {
           {/* Hero */}
           <div className="text-center space-y-4">
             <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-              <Clapperboard className="h-7 w-7 text-primary" />
+              <BrandLogo size="md" className="text-primary" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight">
               Stop scrolling. Start watching.
