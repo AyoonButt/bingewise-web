@@ -40,6 +40,7 @@ function applyItemOrder(
 export function useWatchlistDetail(
   watchlistId: number,
   shareToken?: string | null,
+  inviteToken?: string | null,
   initialData?: WatchlistDetailResponse | null
 ) {
   const queryClient = useQueryClient();
@@ -62,7 +63,7 @@ export function useWatchlistDetail(
     let cancelled = false;
     setIsLoading(true);
     setError(null);
-    getWatchlistDetail(watchlistId, shareToken)
+    getWatchlistDetail(watchlistId, shareToken, inviteToken)
       .then((data) => {
         if (!cancelled) setDetail(data);
       })
@@ -77,17 +78,17 @@ export function useWatchlistDetail(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchlistId, shareToken]);
+  }, [watchlistId, shareToken, inviteToken]);
 
   useEffect(() => {
     if (!watchlistId) return;
     return onWatchlistChanged((id) => {
       if (id !== watchlistId) return;
-      getWatchlistDetail(watchlistId, shareToken)
+getWatchlistDetail(watchlistId, shareToken, inviteToken)
         .then(setDetail)
         .catch(() => {});
     });
-  }, [watchlistId, shareToken]);
+  }, [watchlistId, shareToken, inviteToken]);
 
   const syncListCache = useCallback(
     (updater: (w: Watchlist) => Watchlist) => {
@@ -125,14 +126,14 @@ export function useWatchlistDetail(
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to remove item");
         try {
-          const fresh = await getWatchlistDetail(watchlistId, shareToken);
+          const fresh = await getWatchlistDetail(watchlistId, shareToken, inviteToken);
           setDetail(fresh);
         } catch {
           // keep optimistic state
         }
       }
     },
-    [watchlistId, shareToken, syncListCache, queryClient]
+    [watchlistId, shareToken, inviteToken, syncListCache, queryClient]
   );
 
   const [metaSaving, setMetaSaving] = useState(false);
@@ -165,7 +166,7 @@ export function useWatchlistDetail(
           );
           if (pendingReorders.current === 0) {
             try {
-              const fresh = await getWatchlistDetail(watchlistId, shareToken);
+              const fresh = await getWatchlistDetail(watchlistId, shareToken, inviteToken);
               setDetail(fresh);
             } catch {
               // keep optimistic state
@@ -180,7 +181,7 @@ export function useWatchlistDetail(
       );
       return run;
     },
-    [watchlistId, shareToken]
+    [watchlistId, shareToken, inviteToken]
   );
 
   /**
@@ -263,12 +264,12 @@ export function useWatchlistDetail(
 
   const refresh = useCallback(async () => {
     try {
-      const fresh = await getWatchlistDetail(watchlistId, shareToken);
+      const fresh = await getWatchlistDetail(watchlistId, shareToken, inviteToken);
       setDetail(fresh);
     } catch {
       // keep current state on failure
     }
-  }, [watchlistId, shareToken]);
+  }, [watchlistId, shareToken, inviteToken]);
 
   return {
     detail,

@@ -11,6 +11,13 @@ function getShareToken(
   return typeof st === "string" ? st : null;
 }
 
+function getInviteToken(
+  searchParams: { [key: string]: string | string[] | undefined }
+): string | null {
+  const invite = searchParams.invite;
+  return typeof invite === "string" ? invite : null;
+}
+
 export async function generateMetadata({
   params,
   searchParams,
@@ -21,7 +28,8 @@ export async function generateMetadata({
   const watchlistId = Number(params.id);
   const data = await fetchWatchlistDetailForRender(
     watchlistId,
-    getShareToken(searchParams)
+    getShareToken(searchParams),
+    getInviteToken(searchParams)
   );
 
   if (!data) {
@@ -75,10 +83,11 @@ export default async function WatchlistPage({
   // Server-render the list so public watchlists ship real content (name,
   // items, collaborators) in the HTML for crawlers and share-link recipients.
   // If it fails (private list w/o token, backend hiccup) the client component
-  // falls back to its own fetch and shows the normal error/empty states.
+  // falls back to its own client-side fetch and shows the normal error/empty states.
   const initialData = await fetchWatchlistDetailForRender(
     watchlistId,
-    getShareToken(searchParams)
+    getShareToken(searchParams),
+    getInviteToken(searchParams)
   );
 
   return <WatchlistDetailPage initialData={initialData} />;

@@ -87,7 +87,7 @@ function WatchlistDetailInner({
     updateMeta,
     deleteList,
     refresh,
-  } = useWatchlistDetail(watchlistId, shareToken, initialData);
+  } = useWatchlistDetail(watchlistId, shareToken, inviteToken, initialData);
   const [showEdit, setShowEdit] = useState(false);
 
   // Auto-accept invite for logged-in users

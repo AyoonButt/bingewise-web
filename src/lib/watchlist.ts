@@ -132,11 +132,16 @@ export function createWatchlist(
 
 export function getWatchlistDetail(
   watchlistId: number,
-  shareToken?: string | null
+  shareToken?: string | null,
+  inviteToken?: string | null
 ): Promise<WatchlistDetailResponse> {
   // Optional-auth route: guests can view public lists signed-out; secret
-  // share-link tokens (st) grant access to private shared lists.
-  const qs = shareToken ? `?st=${encodeURIComponent(shareToken)}` : "";
+  // share-link tokens (st) grant access to private shared lists. Invite
+  // tokens grant access to private lists for invite recipients.
+  const params = new URLSearchParams();
+  if (shareToken) params.set("st", shareToken);
+  if (inviteToken) params.set("invite", inviteToken);
+  const qs = params.toString() ? `?${params.toString()}` : "";
   return fetch(`/api/guest/watchlists/${watchlistId}${qs}`).then(async (r) => {
     if (!r.ok) throw new Error("Failed to load watchlist");
     return normalizeDetail((await r.json()) as WatchlistDetailDTO);

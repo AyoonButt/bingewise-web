@@ -16,7 +16,8 @@ const BACKEND_URL = process.env.BACKEND_URL || "https://api-bingewise.com";
 export const fetchWatchlistDetailForRender = cache(
   async (
     id: number,
-    shareToken?: string | null
+    shareToken?: string | null,
+    inviteToken?: string | null
   ): Promise<WatchlistDetailResponse | null> => {
     if (!Number.isFinite(id)) return null;
 
@@ -32,7 +33,10 @@ export const fetchWatchlistDetailForRender = cache(
       requestHeaders.get("x-forwarded-for") ?? requestHeaders.get("x-real-ip");
     if (clientIp) fetchHeaders["X-Forwarded-For"] = clientIp;
 
-    const qs = shareToken ? `?st=${encodeURIComponent(shareToken)}` : "";
+    const params = new URLSearchParams();
+    if (shareToken) params.set("st", shareToken);
+    if (inviteToken) params.set("invite", inviteToken);
+    const qs = params.toString() ? `?${params.toString()}` : "";
     try {
       const res = await fetch(`${BACKEND_URL}/api/watchlists/${id}${qs}`, {
         headers: fetchHeaders,
