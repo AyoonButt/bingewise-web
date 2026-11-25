@@ -47,6 +47,8 @@ export function TrailerPager({
   const reelHeight = useReelHeight(scrollRef);
   const [muted, setMuted] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
+  const activeIndexRef = useRef(activeIndex);
+  activeIndexRef.current = activeIndex;
   const [commentPostId, setCommentPostId] = useState<number | null>(null);
   const commentAnchorRef = useRef<HTMLElement | null>(null);
   const [sharePost, setSharePost] = useState<PostDto | null>(null);
@@ -101,11 +103,16 @@ export function TrailerPager({
     loadFailedVideoKeys();
   }, []);
 
-  const items = useMemo(
-    () =>
-      posts.filter((p) => p.videoKey && !isVideoKeyFailed(p.videoKey)),
-    [posts]
-  );
+  const items = useMemo(() => {
+    const seen = new Set<number>();
+    return posts.filter((p) => {
+      if (!p.videoKey || isVideoKeyFailed(p.videoKey)) return false;
+      const id = p.postId ?? p.tmdbId;
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }, [posts]);
 
   const visibleRef = useRef(items);
   visibleRef.current = items;
@@ -116,42 +123,43 @@ export function TrailerPager({
     ready: items.length > 0,
   });
 
-  // Settled page gate: only the exact settled page is active.
-  // settledPage only updates 150ms after scrolling stops, preventing
-  // snap-animation jitter from flipping activeIndex (matching the
-  // Android app's allowVideoPlayer = !isScrolling && page == settledPage).
-  const [settledIndex, setSettledIndex] = useState(0);
-
+  // Only the settled page is active. A cooldown after each switch prevents
+  // snap jitter from cascading acquire/release on the pooled player.
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
 
     let ticking = false;
+    let lockedUntil = 0;
     let settleTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const commit = () => {
+      const { scrollTop, clientHeight } = container;
+      const raw = scrollTop / clientHeight;
+      const snappedIndex = Math.round(raw);
+      if (
+        snappedIndex !== activeIndexRef.current &&
+        snappedIndex >= 0 &&
+        snappedIndex < visibleRef.current.length &&
+        Math.abs(raw - snappedIndex) < 0.25
+      ) {
+        lockedUntil = performance.now() + 300;
+        activeIndexRef.current = snappedIndex;
+        setActiveIndex(snappedIndex);
+      }
+    };
 
     const onScroll = () => {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
         ticking = false;
-        const { scrollTop, clientHeight } = container;
-        const raw = scrollTop / clientHeight;
-        const snappedIndex = Math.round(raw);
-
-        // Debounce: only commit after scrolling has stopped for 150ms.
-        // This prevents snap-animation oscillation from rapidly flipping
-        // activeIndex and causing acquire/release cascades on the pool.
+        const delay = Math.max(lockedUntil - performance.now(), 150);
         if (settleTimer) clearTimeout(settleTimer);
         settleTimer = setTimeout(() => {
-          if (
-            snappedIndex >= 0 &&
-            snappedIndex < items.length &&
-            Math.abs(raw - snappedIndex) < 0.25
-          ) {
-            setSettledIndex(snappedIndex);
-            setActiveIndex(snappedIndex);
-          }
-        }, 150);
+          settleTimer = null;
+          commit();
+        }, delay);
       });
     };
 
@@ -160,7 +168,7 @@ export function TrailerPager({
       container.removeEventListener("scroll", onScroll);
       if (settleTimer) clearTimeout(settleTimer);
     };
-  }, [items.length]);
+  }, []);
 
   const activeId = useMemo(() => {
     const post = items[activeIndex];

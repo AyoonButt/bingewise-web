@@ -46,6 +46,8 @@ export function TrailerFeed() {
 
   const [muted, setMuted] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
+  const activeIndexRef = useRef(activeIndex);
+  activeIndexRef.current = activeIndex;
 
   const [commentPostId, setCommentPostId] = useState<number | null>(null);
   const commentAnchorRef = useRef<HTMLElement | null>(null);
@@ -131,6 +133,8 @@ export function TrailerFeed() {
     }
     return result;
   }, [rawPosts, removedVersion]);
+  const itemsLengthRef = useRef(items.length);
+  itemsLengthRef.current = items.length;
 
   // Preserve reel position when navigating into a poster detail and back.
   useScrollRestoration("/explore", {
@@ -212,39 +216,55 @@ export function TrailerFeed() {
 
     let ticking = false;
     let lockedUntil = 0;
+    let pendingCheck: ReturnType<typeof setTimeout> | null = null;
+
+    const evaluate = () => {
+      const { scrollTop, clientHeight } = container;
+      const raw = scrollTop / clientHeight;
+      const snappedIndex = Math.round(raw);
+      // Deadband: only commit once the scroll has genuinely settled into a
+      // slide (not mid-flight between two).
+      if (
+        snappedIndex !== activeIndexRef.current &&
+        snappedIndex >= 0 &&
+        snappedIndex < itemsLengthRef.current &&
+        Math.abs(raw - snappedIndex) < 0.25
+      ) {
+        // Cooldown after committing an index switch: while the snap animation
+        // settles (and the player swaps videos), boundary jitter must not flip
+        // activeIndex back and forth — each flip releases/acquires the pooled
+        // player and restarts the video, producing a runaway "next video"
+        // cascade.
+        lockedUntil = performance.now() + 400;
+        activeIndexRef.current = snappedIndex;
+        setActiveIndex(snappedIndex);
+      }
+    };
 
     const onScroll = () => {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
         ticking = false;
-        // Cooldown after committing an index switch: while the snap animation
-        // settles (and the player swaps videos), boundary jitter must not flip
-        // activeIndex back and forth — each flip releases/acquires the pooled
-        // player and restarts the video, producing a runaway "next video"
-        // cascade.
-        const now = performance.now();
-        if (now < lockedUntil) return;
-        const { scrollTop, clientHeight } = container;
-        const raw = scrollTop / clientHeight;
-        const snappedIndex = Math.round(raw);
-        // Deadband: only commit once the scroll has genuinely settled into a
-        // slide (not mid-flight between two).
-        if (
-          snappedIndex !== activeIndex &&
-          snappedIndex >= 0 &&
-          snappedIndex < items.length &&
-          Math.abs(raw - snappedIndex) < 0.25
-        ) {
-          lockedUntil = now + 400;
-          setActiveIndex(snappedIndex);
+        const delay = lockedUntil - performance.now();
+        if (delay > 0) {
+          if (pendingCheck) clearTimeout(pendingCheck);
+          pendingCheck = setTimeout(() => {
+            pendingCheck = null;
+            evaluate();
+          }, delay);
+          return;
         }
+        evaluate();
       });
     };
 
     container.addEventListener("scroll", onScroll, { passive: true });
-    return () => container.removeEventListener("scroll", onScroll);
-  }, [activeIndex, items.length]);
+    return () => {
+      container.removeEventListener("scroll", onScroll);
+      if (pendingCheck) clearTimeout(pendingCheck);
+    };
+  }, []);
 
   const activeId = useMemo(() => {
     const post = items[activeIndex];

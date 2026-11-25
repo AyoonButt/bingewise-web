@@ -89,6 +89,7 @@ interface AcquireOptions {
   targetEl: HTMLElement;
   videoKey: string;
   autoPlay: boolean;
+  shouldAutoPlay?: () => boolean;
   startMuted: boolean;
   startSeconds?: number;
   onEnded?: () => void;
@@ -103,6 +104,7 @@ class YoutubePlayerPool {
   private videoBox: HTMLDivElement | null = null;
   private containerEl: HTMLElement | null = null;
   private resizeObserver: ResizeObserver | null = null;
+  private generation = 0;
   private currentOwner: string | null = null;
   private currentVideoKey: string | null = null;
   /** Key of the video the player is actually playing. Null until PLAYING fires for the current key. */
@@ -245,13 +247,21 @@ class YoutubePlayerPool {
   }
 
   private onStateChange(state: number): void {
+    if (state === PLAYER_STATES.PLAYING) {
+      const videoId = this.eventVideoId();
+      if (!this.currentOwner || (videoId && videoId !== this.currentVideoKey)) {
+        try {
+          this.player?.stopVideo?.();
+        } catch {
+          // ignore
+        }
+        return;
+      }
+      if (videoId !== this.currentVideoKey) return;
+    }
     const cb = this.callbacks;
     if (!cb) return;
     if (state === PLAYER_STATES.PLAYING) {
-      // A PLAYING event can belong to a previous video that briefly resumed
-      // before loadVideoById swapped it out. Only trust it for the current key.
-      const videoId = this.eventVideoId();
-      if (videoId && videoId !== this.currentVideoKey) return;
       this.playingVideoKey = this.currentVideoKey;
       cb.onPlayingChange?.(true);
     } else if (state === PLAYER_STATES.PAUSED) {
@@ -444,10 +454,13 @@ class YoutubePlayerPool {
       return;
     }
 
-    // Take over: pause whatever the previous owner was playing.
+    const generation = ++this.generation;
+    const isStale = () =>
+      this.generation !== generation || this.currentOwner !== ownerKey;
+
     if (this.currentOwner && this.currentOwner !== ownerKey) {
       try {
-        this.player?.pauseVideo?.();
+        this.player?.stopVideo?.();
       } catch {
         // ignore
       }
@@ -466,7 +479,7 @@ class YoutubePlayerPool {
       opts.onError?.("API_LOAD_FAILED");
       return;
     }
-    if (this.currentOwner !== ownerKey) return; // lost ownership while loading
+    if (isStale()) return;
 
     this.ensureHost(opts.containerEl);
 
@@ -482,7 +495,7 @@ class YoutubePlayerPool {
         opts.onError?.("API_LOAD_FAILED");
         return;
       }
-      if (this.currentOwner !== ownerKey) return;
+      if (isStale()) return;
     } else {
       try {
         await this.playerReadyPromise;
@@ -491,7 +504,7 @@ class YoutubePlayerPool {
         opts.onError?.("API_LOAD_FAILED");
         return;
       }
-      if (this.currentOwner !== ownerKey) return;
+      if (isStale()) return;
       if (opts.videoKey !== this.currentVideoKey) {
         this.currentVideoKey = opts.videoKey;
       }
@@ -512,10 +525,12 @@ class YoutubePlayerPool {
         return;
       }
     }
+    if (isStale()) return;
 
+    const autoPlay = opts.shouldAutoPlay?.() ?? opts.autoPlay;
     const resumeAt = opts.startSeconds ?? this.getLastKnownPosition(opts.videoKey);
     try {
-      if (opts.autoPlay) {
+      if (autoPlay) {
         this.player.loadVideoById({
           videoId: opts.videoKey,
           startSeconds: resumeAt,
@@ -535,14 +550,15 @@ class YoutubePlayerPool {
 
     this.reposition();
     this.attachLayoutListeners();
-    if (opts.autoPlay) this.startTicking();
+    if (autoPlay) this.startTicking();
   }
 
   release(ownerKey: string): void {
     if (this.currentOwner !== ownerKey) return;
+    this.generation += 1;
     this.capturePosition();
     try {
-      this.player?.pauseVideo?.();
+      this.player?.stopVideo?.();
     } catch {
       // ignore
     }
@@ -559,9 +575,7 @@ class YoutubePlayerPool {
   play(ownerKey: string): void {
     if (this.currentOwner !== ownerKey) return;
     try {
-      // Don't resume the previous owner's video while the new one loads.
-      const videoId = this.player?.getVideoData?.().video_id;
-      if (videoId && videoId !== this.currentVideoKey) return;
+      if (this.eventVideoId() !== this.currentVideoKey) return;
       this.player?.playVideo?.();
       this.startTicking();
     } catch {
@@ -571,6 +585,7 @@ class YoutubePlayerPool {
 
   pause(ownerKey: string): void {
     if (this.currentOwner !== ownerKey) return;
+    if (this.eventVideoId() !== this.currentVideoKey) return;
     this.capturePosition();
     try {
       this.player?.pauseVideo?.();
@@ -581,6 +596,7 @@ class YoutubePlayerPool {
 
   replay(ownerKey: string): void {
     if (this.currentOwner !== ownerKey) return;
+    if (this.eventVideoId() !== this.currentVideoKey) return;
     try {
       this.player?.seekTo?.(0, true);
       this.player?.playVideo?.();
@@ -590,7 +606,8 @@ class YoutubePlayerPool {
     }
   }
 
-  setMuted(muted: boolean): void {
+  setMuted(muted: boolean, ownerKey?: string): void {
+    if (ownerKey && this.currentOwner !== ownerKey) return;
     this.muted = muted;
     try {
       if (muted) this.player?.mute?.();

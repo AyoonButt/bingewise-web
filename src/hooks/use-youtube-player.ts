@@ -38,6 +38,8 @@ export function useYoutubePlayer({
   // Keep latest callbacks in refs so the acquire effect doesn't re-run.
   const cbRef = useRef({ onEnded, onError, onPlayingChange });
   cbRef.current = { onEnded, onError, onPlayingChange };
+  const playingRef = useRef(playing);
+  playingRef.current = playing;
 
   useEffect(() => {
     if (!active || !videoKey || !targetRef.current || !containerRef.current) return;
@@ -47,6 +49,7 @@ export function useYoutubePlayer({
       targetEl: el,
       videoKey,
       autoPlay: playing,
+      shouldAutoPlay: () => playingRef.current && active,
       startMuted: muted,
       onEnded: () => cbRef.current.onEnded?.(),
       onError: (reason) => cbRef.current.onError?.(reason),
@@ -61,8 +64,8 @@ export function useYoutubePlayer({
 
   useEffect(() => {
     if (!active) return;
-    youtubePlayerPool.setMuted(muted);
-  }, [muted, active]);
+    youtubePlayerPool.setMuted(muted, ownerKey);
+  }, [muted, active, ownerKey]);
 
   useEffect(() => {
     if (!active) return;
