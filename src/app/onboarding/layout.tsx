@@ -5,15 +5,23 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const steps = [
-  { href: "/onboarding", label: "Start", step: 0 },
-  { href: "/onboarding/basics", label: "Basics", step: 1 },
-  { href: "/onboarding/genres", label: "Genres", step: 2 },
-  { href: "/onboarding/streaming", label: "Streaming", step: 3 },
-  { href: "/onboarding/ratings", label: "Ratings", step: 4 },
-  { href: "/onboarding/notifications", label: "Alerts", step: 5 },
-  { href: "/onboarding/privacy", label: "Privacy", step: 6 },
-  { href: "/onboarding/review", label: "Review", step: 7 },
+  { href: "/onboarding", label: "Start" },
+  { href: "/onboarding/region-language", label: "Region" },
+  { href: "/onboarding/ratings", label: "Rating" },
+  { href: "/onboarding/streaming", label: "Streaming" },
+  { href: "/onboarding/stay-connected", label: "Alerts" },
+  { href: "/onboarding/vibe-check", label: "Vibe" },
+  { href: "/onboarding/taste-calibration", label: "Taste" },
+  { href: "/onboarding/recommended-for-you", label: "For You" },
 ];
+
+const legacySteps: Record<string, number> = {
+  "/onboarding/basics": 1,
+  "/onboarding/genres": 5,
+  "/onboarding/notifications": 4,
+  "/onboarding/privacy": 7,
+  "/onboarding/review": 7,
+};
 
 export default function OnboardingLayout({
   children,
@@ -21,7 +29,8 @@ export default function OnboardingLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const currentStep = steps.findIndex((s) => pathname === s.href);
+  const currentStep = steps.findIndex((s) => s.href === pathname);
+  const stepIndex = currentStep >= 0 ? currentStep : (legacySteps[pathname] ?? 0);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -29,7 +38,10 @@ export default function OnboardingLayout({
         <meta name="robots" content="noindex, nofollow" />
       </head>
       <div className="flex items-center justify-between px-6 h-14 border-b border-border shrink-0">
-        <Link href="/feed" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link
+          href="/feed?guest=1"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
           Skip
         </Link>
         <div className="flex items-center gap-3 w-40">
@@ -37,15 +49,15 @@ export default function OnboardingLayout({
             <div
               className={cn(
                 "h-full rounded-full bg-primary transition-all",
-                currentStep === 0 && "w-0"
+                stepIndex === 0 && "w-0"
               )}
               style={{
-                width: `${(currentStep / (steps.length - 1)) * 100}%`,
+                width: `${(stepIndex / (steps.length - 1)) * 100}%`,
               }}
             />
           </div>
           <span className="text-xs text-muted-foreground tabular-nums">
-            {Math.max(currentStep, 0)}/{steps.length - 1}
+            {stepIndex}/{steps.length - 1}
           </span>
         </div>
       </div>

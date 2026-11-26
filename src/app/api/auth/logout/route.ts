@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { hasAllowedOrigin } from "@/lib/request-guard";
 
 const BACKEND_URL = process.env.BACKEND_URL || "https://api-bingewise.com";
 
 export async function POST(request: NextRequest) {
+  if (!hasAllowedOrigin(request)) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
   const refreshToken = request.cookies.get("refreshToken")?.value;
 
   if (refreshToken) {

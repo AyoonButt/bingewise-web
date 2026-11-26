@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { hasAllowedOrigin } from "@/lib/request-guard";
+import { REFRESH_TOKEN_MAX_AGE } from "@/lib/session";
 
 const BACKEND_URL = process.env.BACKEND_URL || "https://api-bingewise.com";
 
@@ -35,6 +36,10 @@ export async function DELETE(
 // Public backend endpoints that must work for signed-out visitors (guests)
 // without an access token. Forwarded anonymously (no Authorization header).
 const PUBLIC_GET_PATHS = ["api/recommendations/guest"];
+const GUEST_ONLY_POST_PATHS = [
+  "api/posts/vibe-slate",
+  "api/posts/recommendations/preview",
+];
 
 /**
  * True for GETs that must succeed without an access token. Guests may open a
@@ -54,11 +59,32 @@ async function proxyRequest(
 ) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value;
+  const refreshToken = cookieStore.get("refreshToken")?.value;
+
+  const withRollingSession = (response: NextResponse) => {
+    if (accessToken && refreshToken) {
+      response.cookies.set("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict" as const,
+        maxAge: REFRESH_TOKEN_MAX_AGE,
+        path: "/",
+      });
+    }
+    return response;
+  };
 
   const path = params.path.join("/");
   const isPublicGet = method === "GET" && isPublicGetPath(path);
+  const isGuestOnlyPost =
+    method === "POST" &&
+    GUEST_ONLY_POST_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
 
-  if (!accessToken && !isPublicGet) {
+  if (isGuestOnlyPost && accessToken) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
+  if (!accessToken && !isPublicGet && !isGuestOnlyPost) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
@@ -102,18 +128,20 @@ async function proxyRequest(
   }
 
   if (res.status === 204 || res.headers.get("content-length") === "0") {
-    return new NextResponse(null, { status: res.status });
+    return withRollingSession(new NextResponse(null, { status: res.status }));
   }
 
   const contentTypeHeader = res.headers.get("content-type") || "";
   if (!contentTypeHeader.includes("application/json")) {
     const text = await res.text();
-    return new NextResponse(text || null, {
-      status: res.status,
-      headers: { "Content-Type": contentTypeHeader || "text/plain" },
-    });
+    return withRollingSession(
+      new NextResponse(text || null, {
+        status: res.status,
+        headers: { "Content-Type": contentTypeHeader || "text/plain" },
+      })
+    );
   }
 
   const data = await res.json().catch(() => null);
-  return NextResponse.json(data, { status: res.status });
+  return withRollingSession(NextResponse.json(data, { status: res.status }));
 }

@@ -11,6 +11,8 @@ import { BrandLogo } from "@/components/ui/brand-logo";
 import { register as registerUser } from "@/lib/auth";
 import { acceptWatchlistInvite } from "@/lib/watchlist";
 import { useAuthStore } from "@/stores/auth-store";
+import { promoteGuestProgress } from "@/lib/onboarding-submit";
+import { isNewOnboardingEnabled } from "@/lib/session";
 import { analytics } from "@/lib/analytics";
 
 const schema = z.object({
@@ -31,11 +33,26 @@ function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setSession = useAuthStore((s) => s.setSession);
+  const authStatus = useAuthStore((s) => s.authStatus);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [inviteWatchlistId, setInviteWatchlistId] = useState<number | null>(null);
   const [processingInvite, setProcessingInvite] = useState(false);
+
+  const from = searchParams.get("from");
+  const accountStep = from === "/onboarding/recommended-for-you";
+  const waitingForAuth =
+    isNewOnboardingEnabled() && !accountStep && authStatus === "restoring";
+  const onboardingGate =
+    isNewOnboardingEnabled() && !accountStep && authStatus === "guest";
+
+  useEffect(() => {
+    if (!onboardingGate) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("fresh", "1");
+    router.replace(`/onboarding?${params.toString()}`);
+  }, [onboardingGate, router, searchParams]);
 
   useEffect(() => {
     const token = searchParams.get("invite");
@@ -81,7 +98,21 @@ function RegisterForm() {
         }
       }
 
-      router.push("/onboarding");
+      try {
+        await promoteGuestProgress(user.userId);
+      } catch (e) {
+        console.error("Failed to promote guest setup:", e);
+        setError(
+          "Account created, but your setup preferences could not be saved. Please try again from Settings."
+        );
+        return;
+      }
+
+      const destination =
+        from && from.startsWith("/") && !from.startsWith("//") && !from.startsWith("/onboarding")
+          ? from
+          : "/feed";
+      router.push(destination);
     } catch (err: any) {
       const message = err?.message ?? "Registration failed";
       const code = Number(message.match?.(/\d{3}/)?.[0]) || 0;
@@ -93,6 +124,14 @@ function RegisterForm() {
       }
     }
   };
+
+  if (waitingForAuth || onboardingGate) {
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -204,6 +243,9 @@ function RegisterForm() {
             "Create Account"
           )}
         </button>
+        <p className="text-center text-xs text-muted-foreground">
+          You&rsquo;ll stay signed in until you sign out.
+        </p>
       </form>
 
       <p className="text-center text-sm text-muted-foreground">

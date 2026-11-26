@@ -35,6 +35,13 @@ export const ANALYTICS_EVENTS = {
   REGISTER_FAILURE: "bw_register_failure",
   SESSION_START: "bw_session_start",
   SESSION_END: "bw_session_end",
+  ONBOARDING_STARTED: "bw_onboarding_started",
+  ONBOARDING_STEP_COMPLETED: "bw_onboarding_step_completed",
+  ONBOARDING_RESUME_USED: "bw_onboarding_resume_used",
+  VIBE_CARD_DECISION: "bw_vibe_card_decision",
+  SETUP_COMPLETED: "bw_setup_completed",
+  SESSION_RESTORED: "bw_session_restored",
+  REFRESH_RETRYABLE_FAILURE: "bw_refresh_retryable_failure",
 
   // Trailer / explore feed
   TRAILER_IMPRESSION: "bw_trailer_impression",
@@ -430,5 +437,27 @@ export const analytics = {
     logEvent(ANALYTICS_EVENTS.WATCHLIST_REORDERED, {
       watchlist_id: watchlistId,
     });
+  },
+
+  logOnboardingStarted() {
+    logEvent(ANALYTICS_EVENTS.ONBOARDING_STARTED);
+  },
+  logOnboardingStepCompleted(step: string) {
+    logEvent(ANALYTICS_EVENTS.ONBOARDING_STEP_COMPLETED, { step });
+  },
+  logOnboardingResumeUsed(step: string) {
+    logEvent(ANALYTICS_EVENTS.ONBOARDING_RESUME_USED, { step });
+  },
+  logVibeCardDecision(decision: "liked" | "soft-avoid") {
+    logEvent(ANALYTICS_EVENTS.VIBE_CARD_DECISION, { decision });
+  },
+  logSetupCompleted() {
+    logEvent(ANALYTICS_EVENTS.SETUP_COMPLETED);
+  },
+  logSessionRestored() {
+    logEvent(ANALYTICS_EVENTS.SESSION_RESTORED);
+  },
+  logRefreshRetryableFailure() {
+    logEvent(ANALYTICS_EVENTS.REFRESH_RETRYABLE_FAILURE);
   },
 };

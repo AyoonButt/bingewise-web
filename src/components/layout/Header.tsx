@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 export function Header() {
   const { resolvedTheme, setTheme } = useTheme();
   const user = useAuthStore((s) => s.user);
+  const authStatus = useAuthStore((s) => s.authStatus);
   const { toggleSidebar } = useUiStore();
   const unreadCount = useUnreadCount(user?.userId);
   const [mounted, setMounted] = useState(false);
@@ -86,23 +87,25 @@ export function Header() {
         )}
       </Link>
 
-      {user?.username ? (
-          <Link
-            href="/settings"
-            className={cn(
-              "hidden sm:flex items-center gap-2 p-1 pr-3 rounded-full transition-colors",
-              isExplore ? "hover:bg-white/10" : "hover:bg-accent"
-            )}
-          >
-            <Image
-              src={userAvatarUrl(user.userId, 32)}
-              alt={user.name}
-              width={32}
-              height={32}
-              className="avatar avatar-sm"
-            />
-            <span className="text-sm font-medium">{user.name}</span>
-          </Link>
+      {authStatus === "restoring" ? (
+        <div className="h-10 w-16" aria-hidden="true" />
+      ) : user?.username ? (
+        <Link
+          href="/settings"
+          className={cn(
+            "hidden sm:flex items-center gap-2 p-1 pr-3 rounded-full transition-colors",
+            isExplore ? "hover:bg-white/10" : "hover:bg-accent"
+          )}
+        >
+          <Image
+            src={userAvatarUrl(user.userId, 32)}
+            alt={user.name}
+            width={32}
+            height={32}
+            className="avatar avatar-sm"
+          />
+          <span className="text-sm font-medium">{user.name}</span>
+        </Link>
       ) : (
         <Link
           href="/auth/login"

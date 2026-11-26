@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ACCESS_TOKEN_MAX_AGE, REFRESH_TOKEN_MAX_AGE } from "@/lib/session";
+import {
+  ACCESS_TOKEN_MAX_AGE,
+  REFRESH_TOKEN_MAX_AGE,
+  isDefinitiveRefreshFailure,
+} from "@/lib/session";
 
 const publicPaths = ["/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password"];
 
@@ -8,7 +12,7 @@ const publicPaths = ["/auth/login", "/auth/register", "/auth/forgot-password", "
  * to login. Keep this list to read-only discovery surfaces — any page that renders
  * personal data must stay behind auth.
  */
-const guestPaths = ["/", "/feed", "/explore", "/post", "/legal", "/watchlists", "/watchlist", "/user", "/search", "/following", "/activity/item", "/blog"];
+const guestPaths = ["/", "/feed", "/explore", "/post", "/legal", "/watchlists", "/watchlist", "/user", "/search", "/following", "/activity/item", "/blog", "/onboarding"];
 
 function isGuestAllowed(pathname: string): boolean {
   return guestPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -29,6 +33,41 @@ export function isStaticAsset(pathname: string): boolean {
     pathname === "/site.webmanifest" ||
     pathname === "/manifest.webmanifest"
   );
+}
+
+function cookieOptions(maxAge: number) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict" as const,
+    maxAge,
+    path: "/",
+  };
+}
+
+function setAccessToken(response: NextResponse, token: string) {
+  response.cookies.set("accessToken", token, cookieOptions(ACCESS_TOKEN_MAX_AGE));
+}
+
+function setRefreshToken(response: NextResponse, token: string) {
+  response.cookies.set("refreshToken", token, cookieOptions(REFRESH_TOKEN_MAX_AGE));
+}
+
+function clearAuthCookies(response: NextResponse) {
+  response.cookies.set("accessToken", "", { maxAge: 0, path: "/" });
+  response.cookies.set("refreshToken", "", { maxAge: 0, path: "/" });
+}
+
+function copyCookies(source: NextResponse, target: NextResponse) {
+  for (const cookie of source.cookies.getAll()) {
+    target.cookies.set(cookie.name, cookie.value, {
+      httpOnly: cookie.httpOnly,
+      secure: cookie.secure,
+      sameSite: cookie.sameSite,
+      maxAge: cookie.maxAge,
+      path: cookie.path,
+    });
+  }
 }
 
 export async function middleware(request: NextRequest) {
@@ -63,10 +102,24 @@ async function handleRequest(
 ): Promise<NextResponse> {
   const accessToken = request.cookies.get("accessToken")?.value;
   const refreshToken = request.cookies.get("refreshToken")?.value;
+  const feedUrl = new URL("/feed", request.url);
+  const loginUrl = new URL("/auth/login", request.url);
+  loginUrl.searchParams.set("from", pathname);
 
   if (publicPaths.some((p) => pathname.startsWith(p))) {
     if (accessToken) {
-      return NextResponse.redirect(new URL("/feed", request.url));
+      const response = NextResponse.redirect(feedUrl);
+      if (refreshToken) setRefreshToken(response, refreshToken);
+      return response;
+    }
+    // A stale access cookie must not leave a signed-in user staring at Login.
+    if (refreshToken) {
+      const attempt = await tryRefresh(request, refreshToken);
+      if (attempt.response) {
+        const response = NextResponse.redirect(feedUrl);
+        copyCookies(attempt.response, response);
+        return response;
+      }
     }
     return NextResponse.next();
   }
@@ -76,34 +129,48 @@ async function handleRequest(
   }
 
   if (accessToken) {
-    if (pathname === "/") {
-      return NextResponse.redirect(new URL("/feed", request.url));
-    }
-    return NextResponse.next();
+    const shouldRedirect =
+      pathname === "/" || pathname.startsWith("/onboarding");
+    const response = shouldRedirect
+      ? NextResponse.redirect(feedUrl)
+      : NextResponse.next();
+    // Activity rolls the refresh window forward while the user is active.
+    if (refreshToken) setRefreshToken(response, refreshToken);
+    return response;
   }
 
   // Access token expired — try refreshing with the refresh token
   if (refreshToken) {
-    const refreshed = await tryRefresh(request, refreshToken);
-    if (refreshed) {
-      return refreshed;
+    const attempt = await tryRefresh(request, refreshToken);
+    if (attempt.response) {
+      if (pathname === "/" || pathname.startsWith("/onboarding")) {
+        const response = NextResponse.redirect(feedUrl);
+        copyCookies(attempt.response, response);
+        return response;
+      }
+      return attempt.response;
+    }
+    if (attempt.definitiveFailure) {
+      const response = isGuestAllowed(pathname)
+        ? NextResponse.next()
+        : NextResponse.redirect(loginUrl);
+      clearAuthCookies(response);
+      return response;
     }
   }
 
-  // Guest mode: no tokens at all — still allow read-only discovery surfaces
+  // Guest mode: no usable session — still allow read-only discovery surfaces.
   if (isGuestAllowed(pathname)) {
     return NextResponse.next();
   }
 
-  const loginUrl = new URL("/auth/login", request.url);
-  loginUrl.searchParams.set("from", pathname);
   return NextResponse.redirect(loginUrl);
 }
 
 async function tryRefresh(
   request: NextRequest,
   refreshToken: string
-): Promise<NextResponse | null> {
+): Promise<{ response: NextResponse | null; definitiveFailure: boolean }> {
   try {
     const backendUrl = process.env.BACKEND_URL || "https://api-bingewise.com";
     const res = await fetch(`${backendUrl}/api/auth/refresh`, {
@@ -113,38 +180,31 @@ async function tryRefresh(
         "Content-Type": "application/json",
       },
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      return {
+        response: null,
+        definitiveFailure: isDefinitiveRefreshFailure(res.status),
+      };
+    }
 
     const data = await res.json();
-    if (!data.accessToken) return null;
+    if (!data.accessToken) {
+      return { response: null, definitiveFailure: true };
+    }
+
+    const nextRefreshToken = data.refreshToken ?? refreshToken;
 
     // Make the new tokens visible to downstream handlers for this request
     request.cookies.set("accessToken", data.accessToken);
-    if (data.refreshToken) {
-      request.cookies.set("refreshToken", data.refreshToken);
-    }
+    request.cookies.set("refreshToken", nextRefreshToken);
     const response = NextResponse.next({ request: { headers: request.headers } });
 
     // Persist the new tokens in the browser
-    response.cookies.set("accessToken", data.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: ACCESS_TOKEN_MAX_AGE,
-      path: "/",
-    });
-    if (data.refreshToken) {
-      response.cookies.set("refreshToken", data.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: REFRESH_TOKEN_MAX_AGE,
-        path: "/",
-      });
-    }
-    return response;
+    setAccessToken(response, data.accessToken);
+    setRefreshToken(response, nextRefreshToken);
+    return { response, definitiveFailure: false };
   } catch {
-    return null;
+    return { response: null, definitiveFailure: false };
   }
 }
 

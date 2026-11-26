@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ACCESS_TOKEN_MAX_AGE, REFRESH_TOKEN_MAX_AGE } from "@/lib/session";
+import {
+  ACCESS_TOKEN_MAX_AGE,
+  REFRESH_TOKEN_MAX_AGE,
+  isDefinitiveRefreshFailure,
+} from "@/lib/session";
 import { hasAllowedOrigin } from "@/lib/request-guard";
 
 const BACKEND_URL = process.env.BACKEND_URL || "https://api-bingewise.com";
@@ -27,7 +31,9 @@ export async function POST(request: NextRequest) {
   });
 
   if (!res.ok) {
-    return NextResponse.json({ message: "Refresh failed" }, { status: 401 });
+    // Definitive rejections must clear the session; transient failures keep it.
+    const status = isDefinitiveRefreshFailure(res.status) ? 401 : res.status;
+    return NextResponse.json({ message: "Refresh failed" }, { status });
   }
 
   const data = await res.json();
@@ -42,15 +48,14 @@ export async function POST(request: NextRequest) {
     maxAge: ACCESS_TOKEN_MAX_AGE,
     path: "/",
   });
-  if (data.refreshToken) {
-    response.cookies.set("refreshToken", data.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: REFRESH_TOKEN_MAX_AGE,
-      path: "/",
-    });
-  }
+  // Rolling window: extend even when the backend does not rotate the token.
+  response.cookies.set("refreshToken", data.refreshToken ?? refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: REFRESH_TOKEN_MAX_AGE,
+    path: "/",
+  });
 
   return response;
 }

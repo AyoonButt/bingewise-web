@@ -1,31 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sparkles, Tv, Shield, Bell, List, CheckCircle2, ChevronRight, RotateCcw } from "lucide-react";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { cn } from "@/lib/utils";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { useAuthStore } from "@/stores/auth-store";
+import { onboardingProgressPercent } from "@/lib/onboarding-progress";
+import { analytics } from "@/lib/analytics";
+import { WelcomeBackdrop } from "@/components/onboarding/WelcomeBackdrop";
 
 const STEPS = [
-  { label: "Basics", href: "/onboarding/basics" },
-  { label: "Genres", href: "/onboarding/genres" },
+  { label: "Region & Language", href: "/onboarding/region-language" },
+  { label: "Content Rating", href: "/onboarding/ratings" },
   { label: "Streaming", href: "/onboarding/streaming" },
-  { label: "Ratings", href: "/onboarding/ratings" },
-  { label: "Alerts", href: "/onboarding/notifications" },
-  { label: "Privacy", href: "/onboarding/privacy" },
-  { label: "Review", href: "/onboarding/review" },
+  { label: "Stay Connected", href: "/onboarding/stay-connected" },
+  { label: "Vibe Check", href: "/onboarding/vibe-check" },
+  { label: "Taste Calibration", href: "/onboarding/taste-calibration" },
+  { label: "Recommended For You", href: "/onboarding/recommended-for-you" },
 ];
 
 export default function OnboardingWelcomePage() {
   const router = useRouter();
-  const { completedSteps, clear } = useOnboardingStore();
+  const { completedSteps, clear, loadForUser, isOwnedBy, getResumeRoute, markStepCompleted } =
+    useOnboardingStore();
+  const userId = useAuthStore((s) => s.user?.userId ?? 0);
+  const authStatus = useAuthStore((s) => s.authStatus);
   const [showDetails, setShowDetails] = useState(false);
 
-  const hasProgress = completedSteps.length > 0;
-  const progressPercent = Math.round((completedSteps.length / STEPS.length) * 100);
-  const remaining = STEPS.length - completedSteps.length;
+  useEffect(() => {
+    if (authStatus === "restoring") return;
+    loadForUser(userId);
+  }, [authStatus, loadForUser, userId]);
+
+  const hasProgress =
+    completedSteps.some((step) => step !== "welcome") && isOwnedBy(userId);
+  const progressPercent = onboardingProgressPercent(completedSteps);
+  const completedCount = completedSteps.filter((step) => step !== "welcome").length;
+  const remaining = Math.max(0, STEPS.length - Math.min(completedCount, STEPS.length));
 
   const benefits = [
     {
@@ -51,8 +65,10 @@ export default function OnboardingWelcomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Top bar */}
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
+      <WelcomeBackdrop />
+      <div className="relative z-10 flex flex-1 flex-col">
+        {/* Top bar */}
       <div className="flex items-center justify-between px-6 h-14 border-b border-border">
         <Link href="/feed" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -61,7 +77,7 @@ export default function OnboardingWelcomePage() {
           <span className="text-lg font-bold tracking-tight">BingeWise</span>
         </Link>
         <Link
-          href="/feed"
+          href="/feed?guest=1"
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           Skip setup
@@ -132,14 +148,14 @@ export default function OnboardingWelcomePage() {
                   Takes about 2-3 minutes. Your preferences are saved automatically.
                 </p>
                 <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-                  <span>• Language &amp; region</span>
-                  <span>• Movie &amp; TV preferences</span>
+                  <span>• Region &amp; language</span>
+                  <span>• Content rating</span>
                   <span>• Streaming services</span>
-                  <span>• Preferred genres</span>
-                  <span>• Content rating filter</span>
                   <span>• Notification settings</span>
-                  <span>• Account privacy</span>
-                  <span>• Review &amp; preview</span>
+                  <span>• Vibe check</span>
+                  <span>• Taste calibration</span>
+                  <span>• Personalized preview</span>
+                  <span>• Soft signup option</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   After setup, create watchlists, discover and clone public ones, and follow
@@ -154,7 +170,10 @@ export default function OnboardingWelcomePage() {
             {hasProgress ? (
               <>
                 <button
-                  onClick={() => router.push(STEPS[completedSteps.length]?.href ?? "/onboarding/basics")}
+                  onClick={() => {
+                    analytics.logOnboardingResumeUsed(getResumeRoute());
+                    router.push(getResumeRoute());
+                  }}
                   className="w-full py-3 rounded-xl font-semibold text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
                   Resume Setup ({remaining} step{remaining !== 1 ? "s" : ""} left)
@@ -162,7 +181,9 @@ export default function OnboardingWelcomePage() {
                 <button
                   onClick={() => {
                     clear();
-                    router.push("/onboarding/basics");
+                    loadForUser(userId);
+                    markStepCompleted("welcome");
+                    router.push("/onboarding/region-language");
                   }}
                   className="w-full py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground border border-border transition-colors"
                 >
@@ -174,7 +195,11 @@ export default function OnboardingWelcomePage() {
               </>
             ) : (
               <button
-                onClick={() => router.push("/onboarding/basics")}
+                onClick={() => {
+                  analytics.logOnboardingStarted();
+                  markStepCompleted("welcome");
+                  router.push("/onboarding/region-language");
+                }}
                 className="w-full py-3 rounded-xl font-semibold text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
               >
                 Get Started
@@ -183,6 +208,7 @@ export default function OnboardingWelcomePage() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

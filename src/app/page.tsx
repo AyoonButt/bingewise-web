@@ -10,6 +10,7 @@ import {
 import { FAQPageJsonLd } from "@/components/seo/JsonLd";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { AuthenticatedRedirect } from "@/components/AuthenticatedRedirect";
+import { OnboardingEntryRedirect } from "@/components/OnboardingEntryRedirect";
 
 export const metadata: Metadata = {
   title: {
@@ -84,6 +85,7 @@ const guestLinks = [
 export default function Home() {
   return (
     <AuthenticatedRedirect>
+      <OnboardingEntryRedirect>
       <FAQPageJsonLd faqs={faqs} />
 
       <div className="min-h-screen bg-background text-foreground">
@@ -122,7 +124,7 @@ export default function Home() {
                 Sign In
               </Link>
               <Link
-                href="/feed"
+                href="/feed?guest=1"
                 className="btn-ghost h-12 px-8 text-sm font-semibold text-muted-foreground"
               >
                 Continue as Guest
@@ -296,7 +298,7 @@ export default function Home() {
                 Create Account
               </Link>
               <Link
-                href="/feed"
+                href="/feed?guest=1"
                 className="btn-ghost h-12 px-8 text-sm font-semibold text-muted-foreground"
               >
                 Try as Guest
@@ -305,6 +307,7 @@ export default function Home() {
           </div>
         </section>
       </div>
+      </OnboardingEntryRedirect>
     </AuthenticatedRedirect>
   );
 }

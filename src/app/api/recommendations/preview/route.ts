@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       region: searchParams.get("region") ?? "US",
       subscriptions: (searchParams.get("subscriptions") ?? "").split(",").filter(Boolean).map(Number),
       genreIds: (searchParams.get("genres") ?? "").split(",").filter(Boolean).map(Number),
-      avoidGenreIds: [] as number[],
+      avoidGenreIds: (searchParams.get("avoidGenres") ?? "").split(",").filter(Boolean).map(Number),
       minMovie: parseInt(searchParams.get("minMovie") ?? "0") || null,
       maxMovie: parseInt(searchParams.get("maxMovie") ?? "0") || null,
       minTv: parseInt(searchParams.get("minTv") ?? "0") || null,
@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
       oldestDate: "1900-01-01",
       recentDate: "2099-12-31",
       isPrivate: false,
+      contentLanguagePreference: searchParams.get("contentLanguagePreference") ?? "ANY",
     }),
   });
 

@@ -12,6 +12,7 @@ function authUserToDto(user: AuthUserInfo): UserDto {
     username: user.username,
     email: user.email,
     isPrivate: false,
+    needsSetup: user.needsSetup,
     createdAt: new Date().toISOString(),
   };
 }

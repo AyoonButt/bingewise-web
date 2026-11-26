@@ -9,11 +9,13 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { forceLogout, getRefreshResult } from "@/lib/token-refresh";
 import { apiClient } from "@/lib/api-client";
+import { analytics } from "@/lib/analytics";
 import { NotificationInitializer } from "./NotificationInitializer";
 import { AnalyticsInitializer } from "./AnalyticsInitializer";
 import {
@@ -118,22 +120,24 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 function AuthInitializer() {
-  useEffect(() => {
-    const { restoreSession, refreshSessionData, isSessionExpired } =
-      useAuthStore.getState();
+  const sessionRestoredLogged = useRef(false);
 
-    const restored = restoreSession();
-    if (!restored) return;
+  useEffect(() => {
+    const { restoreSession } = useAuthStore.getState();
+
+    restoreSession();
 
     const revalidate = async () => {
-      if (!useAuthStore.getState().isAuthenticated) return;
-      if (isSessionExpired()) {
-        forceLogout();
-        return;
-      }
+      const state = useAuthStore.getState();
+      state.touchActivity();
+
       const result = await getRefreshResult();
       if (result.status === "ok") {
         if (result.user) {
+          if (!sessionRestoredLogged.current) {
+            analytics.logSessionRestored();
+            sessionRestoredLogged.current = true;
+          }
           let user = result.user;
           // Auth responses don't include language/region; fetch them so
           // content requests use the user's real locale (e.g. en-GB).
@@ -146,17 +150,32 @@ function AuthInitializer() {
               user = { ...user, language: prefs.language, region: prefs.region };
             }
           }
-          refreshSessionData(
-            user,
-            Date.now() + (result.expiresIn ?? DEFAULT_TOKEN_TTL_SECONDS) * 1000
-          );
+          const tokenExpiresAt =
+            Date.now() + (result.expiresIn ?? DEFAULT_TOKEN_TTL_SECONDS) * 1000;
+          const current = useAuthStore.getState();
+          if (current.isAuthenticated) {
+            current.refreshSessionData(user, tokenExpiresAt);
+          } else {
+            current.setSession(user, tokenExpiresAt);
+          }
         }
-      } else if (result.status === "unauthorized") {
-        forceLogout();
+        return;
+      }
+
+      if (result.status === "unauthorized") {
+        const current = useAuthStore.getState();
+        if (current.isAuthenticated) {
+          await forceLogout();
+        } else {
+          current.logout();
+        }
+      }
+      if (result.status === "error") {
+        analytics.logRefreshRetryableFailure();
       }
     };
 
-    revalidate();
+    void revalidate();
 
     const interval = setInterval(revalidate, SESSION_REFRESH_INTERVAL_MS);
     const onFocus = () => {
@@ -167,6 +186,7 @@ function AuthInitializer() {
       const state = useAuthStore.getState();
       if (event.newValue) {
         state.restoreSession();
+        revalidate();
       } else {
         state.logout();
       }

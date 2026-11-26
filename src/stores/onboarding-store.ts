@@ -3,56 +3,25 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { StreamingProviderDto } from "@/types/provider";
+import { analytics } from "@/lib/analytics";
+import { getLanguageName, getRegionName } from "@/lib/locales";
+import {
+  ONBOARDING_SCHEMA_VERSION,
+  nextOnboardingRoute,
+  onboardingProgressPercent,
+  type VibeDeckProgress,
+} from "@/lib/onboarding-progress";
 
-// Available languages
-export const LANGUAGES = [
-  { code: "en-US", name: "English" },
-  { code: "es-ES", name: "Spanish" },
-  { code: "fr-FR", name: "French" },
-  { code: "de-DE", name: "German" },
-  { code: "it-IT", name: "Italian" },
-  { code: "pt-BR", name: "Portuguese" },
-  { code: "ja-JP", name: "Japanese" },
-  { code: "ko-KR", name: "Korean" },
-  { code: "zh-CN", name: "Chinese (Simplified)" },
-  { code: "ru-RU", name: "Russian" },
-  { code: "ar-SA", name: "Arabic" },
-  { code: "hi-IN", name: "Hindi" },
-];
-
-// Available regions (ISO 3166-1 alpha-2)
-export const REGIONS = [
-  { code: "US", name: "United States" },
-  { code: "GB", name: "United Kingdom" },
-  { code: "CA", name: "Canada" },
-  { code: "AU", name: "Australia" },
-  { code: "DE", name: "Germany" },
-  { code: "FR", name: "France" },
-  { code: "IT", name: "Italy" },
-  { code: "ES", name: "Spain" },
-  { code: "MX", name: "Mexico" },
-  { code: "BR", name: "Brazil" },
-  { code: "JP", name: "Japan" },
-  { code: "KR", name: "South Korea" },
-  { code: "IN", name: "India" },
-  { code: "NL", name: "Netherlands" },
-  { code: "SE", name: "Sweden" },
-  { code: "NO", name: "Norway" },
-  { code: "DK", name: "Denmark" },
-  { code: "FI", name: "Finland" },
-  { code: "NZ", name: "New Zealand" },
-];
-
-// Popular streaming providers (fallback)
-export const POPULAR_PROVIDERS = [
-  { id: 8, name: "Netflix" },
-  { id: 9, name: "Amazon Prime Video" },
-  { id: 337, name: "Disney+" },
-  { id: 384, name: "HBO Max" },
-  { id: 15, name: "Hulu" },
-  { id: 350, name: "Apple TV+" },
-  { id: 386, name: "Peacock" },
-  { id: 531, name: "Paramount+" },
+export const POPULAR_PROVIDERS: StreamingProviderDto[] = [
+  { providerId: 8, providerName: "Netflix", logoPath: "https://image.tmdb.org/t/p/w92/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg", displayPriority: 10 },
+  { providerId: 9, providerName: "Amazon Prime Video", logoPath: "https://image.tmdb.org/t/p/w92/emthp39XA2YScoYL1p0sdbAH2WA.jpg", displayPriority: 20 },
+  { providerId: 337, providerName: "Disney+", logoPath: "https://image.tmdb.org/t/p/w92/7rwgEs15tFwyR9NPQ5vpzxTj19Q.jpg", displayPriority: 30 },
+  { providerId: 384, providerName: "HBO Max", logoPath: "https://image.tmdb.org/t/p/w92/Ajqyt5aNxNGjmF9uOfxArGrdf3X.jpg", displayPriority: 40 },
+  { providerId: 15, providerName: "Hulu", logoPath: "https://image.tmdb.org/t/p/w92/zxrVdFjIjLqkfnwyghnfywTn3Lh.jpg", displayPriority: 50 },
+  { providerId: 350, providerName: "Apple TV+", logoPath: "https://image.tmdb.org/t/p/w92/6uhKBfmtzFqOcLousHwZuzcrScK.jpg", displayPriority: 60 },
+  { providerId: 386, providerName: "Peacock", logoPath: "https://image.tmdb.org/t/p/w92/8VCV78prwd9QzZnEm0ReO6bERDa.jpg", displayPriority: 70 },
+  { providerId: 531, providerName: "Paramount+", logoPath: "https://image.tmdb.org/t/p/w92/xbhHHa1YgtpwhC8lb1NQ3ACVcLd.jpg", displayPriority: 80 },
+  { providerId: 283, providerName: "Crunchyroll", logoPath: "https://image.tmdb.org/t/p/w92/8Gt1iClBlzTeQs8WQm8UrCoIxnQ.jpg", displayPriority: 90 },
 ];
 
 // Movie genres (TMDB IDs)
@@ -79,6 +48,7 @@ export const GENRES = [
 ];
 
 export type ContentRating = 0 | 7 | 13 | 17 | 99;
+export type ContentLanguagePreference = "ANY" | "PREFER_SELECTED" | "ONLY_SELECTED";
 
 export const CONTENT_RATINGS: { value: ContentRating; label: string; description: string }[] = [
   { value: 0, label: "Kids", description: "Ages 0+" },
@@ -88,10 +58,26 @@ export const CONTENT_RATINGS: { value: ContentRating; label: string; description
   { value: 99, label: "All", description: "No filter" },
 ];
 
+type NotificationCategoryKey =
+  | "repliesEnabled"
+  | "followRequestsEnabled"
+  | "messagesEnabled"
+  | "releasesEnabled"
+  | "sequelsEnabled"
+  | "generalEnabled"
+  | "subscriptionsEnabled"
+  | "streamingEnabled";
+
 interface OnboardingState {
+  // Resume metadata
+  schemaVersion: number;
+  userId: number;
+  lastStep: string | null;
+
   // Basics
   language: string;
   region: string;
+  contentLanguagePreference: ContentLanguagePreference;
   minMovieDuration: number;
   maxMovieDuration: number;
   minTvDuration: number;
@@ -126,12 +112,28 @@ interface OnboardingState {
   // Privacy
   isPrivateAccount: boolean;
 
+  // Vibe / adaptive taste signal
+  vibeDeckProgress: VibeDeckProgress | null;
+  vibeLikedGenres: number[];
+  vibeSoftAvoidedGenres: number[];
+  vibeExcludedTmdbIds: number[];
+
+  // Priority ordering
+  orderedSelectedProviders: number[];
+  orderedSelectedGenres: number[];
+  orderedAvoidedGenres: number[];
+
   // Progress
   completedSteps: string[];
 
   // Actions
+  loadForUser: (userId: number) => void;
+  setUserId: (userId: number) => void;
+  isOwnedBy: (userId: number) => boolean;
+  getResumeRoute: () => string;
   setLanguage: (language: string) => void;
   setRegion: (region: string) => void;
+  setContentLanguagePreference: (preference: ContentLanguagePreference) => void;
   setMovieDuration: (min: number, max: number) => void;
   setTvDuration: (min: number, max: number) => void;
   setDateRange: (oldest: string, recent: string) => void;
@@ -146,31 +148,51 @@ interface OnboardingState {
   setSelectedProvidersDetails: (details: StreamingProviderDto[]) => void;
   setContentRating: (rating: ContentRating) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
-  setNotificationCategory: (key: keyof Omit<OnboardingState, 'notificationsEnabled' | 'language' | 'region' | 'minMovieDuration' | 'maxMovieDuration' | 'minTvDuration' | 'maxTvDuration' | 'oldestDate' | 'recentDate' | 'preferredGenres' | 'avoidedGenres' | 'selectedProviders' | 'contentRating' | 'isPrivateAccount' | 'completedSteps'>, enabled: boolean) => void;
+  setNotificationCategory: (key: NotificationCategoryKey, enabled: boolean) => void;
   setPrivateAccount: (isPrivate: boolean) => void;
+  setVibeDeckProgress: (progress: VibeDeckProgress | null) => void;
+  recordVibeDecision: (
+    tmdbId: number,
+    decision: "liked" | "soft-avoid",
+    genreIds: number[]
+  ) => void;
   markStepCompleted: (step: string) => void;
+  clearTrackingOnly: () => void;
   getProgress: () => number;
   getSummary: () => Record<string, string>;
   clear: () => void;
 }
 
+function uniqueNumbers(values: number[]): number[] {
+  return Array.from(new Set(values));
+}
+
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set, get) => ({
-      language: "en-US",
+      schemaVersion: ONBOARDING_SCHEMA_VERSION,
+      userId: 0,
+      lastStep: null,
+
+      language: "en",
       region: "US",
+      contentLanguagePreference: "ANY",
       minMovieDuration: 0,
       maxMovieDuration: 300,
       minTvDuration: 0,
       maxTvDuration: 90,
       oldestDate: "",
       recentDate: "",
+
       preferredGenres: [],
       avoidedGenres: [],
       genreNames: {},
+
       selectedProviders: [],
       selectedProvidersDetails: [],
+
       contentRating: 99,
+
       notificationsEnabled: true,
       repliesEnabled: true,
       followRequestsEnabled: true,
@@ -180,11 +202,42 @@ export const useOnboardingStore = create<OnboardingState>()(
       generalEnabled: true,
       subscriptionsEnabled: true,
       streamingEnabled: true,
+
       isPrivateAccount: false,
+
+      vibeDeckProgress: null,
+      vibeLikedGenres: [],
+      vibeSoftAvoidedGenres: [],
+      vibeExcludedTmdbIds: [],
+
+      orderedSelectedProviders: [],
+      orderedSelectedGenres: [],
+      orderedAvoidedGenres: [],
+
       completedSteps: [],
+
+      loadForUser: (userId) => {
+        const state = get();
+        if (state.userId !== 0 && state.userId !== userId) {
+          state.clear();
+        }
+        set({ userId });
+      },
+
+      setUserId: (userId) => set({ userId }),
+
+      isOwnedBy: (userId) => {
+        const owner = get().userId;
+        return owner === 0 || owner === userId;
+      },
+
+      getResumeRoute: () =>
+        nextOnboardingRoute(get().completedSteps, get().lastStep),
 
       setLanguage: (language) => set({ language }),
       setRegion: (region) => set({ region }),
+      setContentLanguagePreference: (preference) =>
+        set({ contentLanguagePreference: preference }),
 
       setMovieDuration: (min, max) =>
         set({ minMovieDuration: min, maxMovieDuration: max }),
@@ -211,10 +264,9 @@ export const useOnboardingStore = create<OnboardingState>()(
           preferredGenres: state.preferredGenres.filter((g) => g !== id),
         })),
 
-      reorderPreferredGenres: (genres: number[]) => set({ preferredGenres: genres }),
-
-      setPreferredGenres: (genres: number[]) => set({ preferredGenres: genres }),
-      setAvoidedGenres: (genres: number[]) => set({ avoidedGenres: genres }),
+      reorderPreferredGenres: (genres) => set({ preferredGenres: genres }),
+      setPreferredGenres: (genres) => set({ preferredGenres: genres }),
+      setAvoidedGenres: (genres) => set({ avoidedGenres: genres }),
 
       cacheGenreName: (id, name) =>
         set((state) => ({ genreNames: { ...state.genreNames, [id]: name } })),
@@ -226,35 +278,72 @@ export const useOnboardingStore = create<OnboardingState>()(
             : [...state.selectedProviders, id],
         })),
 
-      setSelectedProviders: (ids: number[]) => set({ selectedProviders: ids }),
+      setSelectedProviders: (ids) =>
+        set({ selectedProviders: uniqueNumbers(ids), orderedSelectedProviders: uniqueNumbers(ids) }),
 
-      setSelectedProvidersDetails: (details: StreamingProviderDto[]) =>
+      setSelectedProvidersDetails: (details) =>
         set({ selectedProvidersDetails: details }),
 
       setContentRating: (rating) => set({ contentRating: rating }),
 
-      setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
+      setNotificationsEnabled: (enabled) =>
+        set({ notificationsEnabled: enabled }),
 
-      setNotificationCategory: (key, enabled) => set({ [key]: enabled } as Partial<OnboardingState>),
+      setNotificationCategory: (key, enabled) =>
+        set({ [key]: enabled } as Partial<OnboardingState>),
 
       setPrivateAccount: (isPrivate) => set({ isPrivateAccount: isPrivate }),
 
-      markStepCompleted: (step) =>
+      setVibeDeckProgress: (progress) => set({ vibeDeckProgress: progress }),
+
+      recordVibeDecision: (tmdbId, decision, genreIds) =>
+        set((state) => {
+          const progress = state.vibeDeckProgress ?? {
+            deck: [],
+            cursor: 0,
+            decisions: {},
+          };
+          return {
+            vibeDeckProgress: {
+              ...progress,
+              cursor: Math.min(progress.cursor + 1, progress.deck.length),
+              decisions: { ...progress.decisions, [tmdbId]: decision },
+            },
+            vibeLikedGenres:
+              decision === "liked"
+                ? uniqueNumbers([...state.vibeLikedGenres, ...genreIds])
+                : state.vibeLikedGenres,
+            vibeSoftAvoidedGenres:
+              decision === "soft-avoid"
+                ? uniqueNumbers([...state.vibeSoftAvoidedGenres, ...genreIds])
+                : state.vibeSoftAvoidedGenres,
+            vibeExcludedTmdbIds:
+              decision === "soft-avoid"
+                ? uniqueNumbers([...state.vibeExcludedTmdbIds, tmdbId])
+                : state.vibeExcludedTmdbIds,
+            lastStep: "vibe-check",
+          };
+        }),
+
+      markStepCompleted: (step) => {
+        analytics.logOnboardingStepCompleted(step);
         set((state) => ({
           completedSteps: state.completedSteps.includes(step)
             ? state.completedSteps
             : [...state.completedSteps, step],
-        })),
-
-      getProgress: () => {
-        const { completedSteps } = get();
-        return (completedSteps.length / 7) * 100;
+          lastStep: step,
+        }));
       },
+
+      clearTrackingOnly: () =>
+        set({ completedSteps: [], lastStep: null, vibeDeckProgress: null }),
+
+      getProgress: () => onboardingProgressPercent(get().completedSteps),
 
       getSummary: () => {
         const state = get();
-        const langName = LANGUAGES.find((l) => l.code === state.language)?.name ?? state.language;
-        const regionName = REGIONS.find((r) => r.code === state.region)?.name ?? state.region;
+        const langName = getLanguageName(state.language);
+        const regionName = getRegionName(state.region);
 
         const formatDuration = (min: number, max: number, anyMax: number) => {
           if (min === 0 && max >= anyMax) return "Any length";
@@ -298,8 +387,12 @@ export const useOnboardingStore = create<OnboardingState>()(
 
       clear: () =>
         set({
-          language: "en-US",
+          schemaVersion: ONBOARDING_SCHEMA_VERSION,
+          userId: 0,
+          lastStep: null,
+          language: "en",
           region: "US",
+          contentLanguagePreference: "ANY",
           minMovieDuration: 0,
           maxMovieDuration: 300,
           minTvDuration: 0,
@@ -322,11 +415,36 @@ export const useOnboardingStore = create<OnboardingState>()(
           subscriptionsEnabled: true,
           streamingEnabled: true,
           isPrivateAccount: false,
+          vibeDeckProgress: null,
+          vibeLikedGenres: [],
+          vibeSoftAvoidedGenres: [],
+          vibeExcludedTmdbIds: [],
+          orderedSelectedProviders: [],
+          orderedSelectedGenres: [],
+          orderedAvoidedGenres: [],
           completedSteps: [],
         }),
     }),
     {
       name: "bingewise-onboarding",
+      version: ONBOARDING_SCHEMA_VERSION,
+      migrate: (persistedState) => {
+        const state = (persistedState ?? {}) as Partial<OnboardingState>;
+        return {
+          ...state,
+          schemaVersion: ONBOARDING_SCHEMA_VERSION,
+          userId: state.userId ?? 0,
+          lastStep: state.lastStep ?? null,
+          contentLanguagePreference: state.contentLanguagePreference ?? "ANY",
+          vibeDeckProgress: state.vibeDeckProgress ?? null,
+          vibeLikedGenres: state.vibeLikedGenres ?? [],
+          vibeSoftAvoidedGenres: state.vibeSoftAvoidedGenres ?? [],
+          vibeExcludedTmdbIds: state.vibeExcludedTmdbIds ?? [],
+          orderedSelectedProviders: state.orderedSelectedProviders ?? [],
+          orderedSelectedGenres: state.orderedSelectedGenres ?? [],
+          orderedAvoidedGenres: state.orderedAvoidedGenres ?? [],
+        };
+      },
     }
   )
 );

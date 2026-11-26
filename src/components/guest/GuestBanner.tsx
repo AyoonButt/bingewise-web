@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { X, Sparkles } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
+import { FIRST_VISIT_KEY } from "@/lib/session";
 
 const DISMISS_KEY = "bw-guest-banner-dismissed";
 
@@ -14,17 +15,19 @@ const DISMISS_KEY = "bw-guest-banner-dismissed";
  */
 export function GuestBanner() {
   const user = useAuthStore((s) => s.user);
+  const authStatus = useAuthStore((s) => s.authStatus);
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
     setMounted(true);
+    localStorage.setItem(FIRST_VISIT_KEY, "1");
     setDismissed(localStorage.getItem(DISMISS_KEY) === "1");
   }, []);
 
   // The Explore trail is a full-screen reel; no room for a banner above it.
-  if (!mounted || user || dismissed || pathname === "/explore") return null;
+  if (!mounted || authStatus !== "guest" || user || dismissed || pathname === "/explore") return null;
 
   return (
     <div className="relative z-30 flex items-center gap-3 px-4 py-2.5 bg-primary/10 border-b border-primary/20 text-sm">

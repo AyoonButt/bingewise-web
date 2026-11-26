@@ -12,6 +12,7 @@ import { login } from "@/lib/auth";
 import { clearScrollMemory } from "@/hooks/use-scroll-restoration";
 import { acceptWatchlistInvite } from "@/lib/watchlist";
 import { useAuthStore } from "@/stores/auth-store";
+import { promoteGuestProgress } from "@/lib/onboarding-submit";
 import { analytics } from "@/lib/analytics";
 
 const schema = z.object({
@@ -69,12 +70,18 @@ function LoginForm() {
           await acceptWatchlistInvite(inviteWatchlistId, inviteToken);
         } catch (e) {
           console.error("Failed to accept invite:", e);
-        } finally {
-          setProcessingInvite(false);
-        }
+      } finally {
+        setProcessingInvite(false);
       }
+    }
 
-      router.push("/feed");
+    await promoteGuestProgress(user.userId);
+    const from = searchParams.get("from");
+    const destination =
+      from && from.startsWith("/") && !from.startsWith("//") && !from.startsWith("/onboarding")
+        ? from
+        : "/feed";
+    router.push(destination);
     } catch (err: any) {
       const message = err?.message ?? "Login failed";
       const code = Number(message.match?.(/\d{3}/)?.[0]) || 0;
@@ -177,6 +184,9 @@ function LoginForm() {
             "Sign In"
           )}
         </button>
+        <p className="text-center text-xs text-muted-foreground">
+          You&rsquo;ll stay signed in until you sign out.
+        </p>
       </form>
 
       <div className="relative">
@@ -192,7 +202,7 @@ function LoginForm() {
 
       <p className="text-center">
         <Link
-          href="/auth/register"
+          href="/onboarding?fresh=1"
           className="btn-outline w-full h-11 inline-flex"
         >
           Create an account
@@ -201,13 +211,14 @@ function LoginForm() {
 
       <p className="text-center">
         <Link
-          href="/feed"
+          href="/feed?guest=1"
           onClick={clearScrollMemory}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
         >
           Continue as Guest
         </Link>
       </p>
+
     </div>
   );
 }

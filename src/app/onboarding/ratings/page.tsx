@@ -17,8 +17,8 @@ export default function OnboardingRatingsPage() {
 
   const handleContinue = () => {
     store.setContentRating(rating);
-    store.markStepCompleted("ratings");
-    router.push("/onboarding/notifications");
+    store.markStepCompleted("content-rating");
+    router.push("/onboarding/streaming");
   };
 
   const total = CONTENT_RATINGS.length;
@@ -132,7 +132,7 @@ export default function OnboardingRatingsPage() {
 
       <div className="flex gap-3">
         <button
-          onClick={() => router.push("/onboarding/streaming")}
+          onClick={() => router.push("/onboarding/region-language")}
           className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm border border-border text-muted-foreground hover:text-foreground hover:border-border/80 transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />

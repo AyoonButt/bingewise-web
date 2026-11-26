@@ -6,6 +6,7 @@ export interface UserDto {
   language?: string;
   region?: string;
   isPrivate: boolean;
+  needsSetup?: boolean;
   createdAt: string;
 }
 

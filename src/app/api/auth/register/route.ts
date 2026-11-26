@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { hasAllowedOrigin } from "@/lib/request-guard";
+import { ACCESS_TOKEN_MAX_AGE, REFRESH_TOKEN_MAX_AGE } from "@/lib/session";
 
 const BACKEND_URL = process.env.BACKEND_URL || "https://api-bingewise.com";
 
@@ -55,14 +56,14 @@ export async function POST(request: NextRequest) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 900,
+    maxAge: ACCESS_TOKEN_MAX_AGE,
     path: "/",
   });
   response.cookies.set("refreshToken", data.refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 604800,
+    maxAge: REFRESH_TOKEN_MAX_AGE,
     path: "/",
   });
 

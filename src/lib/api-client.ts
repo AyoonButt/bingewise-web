@@ -57,6 +57,11 @@ async function fetchWithAuth<T>(
     throw new Error(errorBody?.message || `API error: ${res.status}`);
   }
 
+  const { useAuthStore } = await import("@/stores/auth-store");
+  if (useAuthStore.getState().isAuthenticated) {
+    useAuthStore.getState().touchActivity();
+  }
+
   if (res.status === 204) {
     return null as T;
   }

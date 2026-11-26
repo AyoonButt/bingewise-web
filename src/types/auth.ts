@@ -55,4 +55,5 @@ export interface SessionData {
   };
   tokenExpiresAt: number;
   loginTimestamp: number;
+  lastActivityAt?: number;
 }

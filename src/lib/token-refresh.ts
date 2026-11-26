@@ -1,5 +1,9 @@
 import type { AuthResponse } from "@/types/auth";
 import type { UserDto } from "@/types/user";
+import {
+  isDefinitiveRefreshFailure,
+  isRetryableRefreshFailure,
+} from "./session";
 
 export type RefreshResult =
   | {
@@ -43,6 +47,7 @@ async function doRefreshInner(): Promise<RefreshResult> {
               username: auth.user.username,
               email: auth.user.email,
               isPrivate: false,
+              needsSetup: auth.user.needsSetup,
               createdAt: new Date().toISOString(),
             }
           : null;
@@ -52,11 +57,14 @@ async function doRefreshInner(): Promise<RefreshResult> {
           expiresIn: auth.expiresIn,
         };
       }
-      if (res.status === 401) {
+      if (isDefinitiveRefreshFailure(res.status)) {
         return { status: "unauthorized" };
       }
+      if (!isRetryableRefreshFailure(res.status)) {
+        return { status: "error" };
+      }
     } catch {
-      // network error, retry
+      // Network failure: retry with backoff and keep the local session.
     }
 
     if (attempt < maxAttempts - 1) {
@@ -79,7 +87,10 @@ export async function forceLogout(): Promise<void> {
   }
   const { useAuthStore } = await import("@/stores/auth-store");
   useAuthStore.getState().logout();
-  if (typeof window !== "undefined") {
+  if (
+    typeof window !== "undefined" &&
+    window.location.pathname !== "/auth/login"
+  ) {
     window.location.href = "/auth/login";
   }
 }
