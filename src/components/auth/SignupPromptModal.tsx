@@ -52,6 +52,7 @@ export function SignupPromptModal() {
   const required = useUiStore((s) => s.isSignupPromptRequired);
   const destination = useUiStore((s) => s.signupPromptDestination);
   const close = useUiStore((s) => s.closeSignupPrompt);
+  const authStatus = useAuthStore((s) => s.authStatus);
   const pathname = usePathname();
   const router = useRouter();
   const [busy, setBusy] = useState<SocialProvider | null>(null);
@@ -60,6 +61,13 @@ export function SignupPromptModal() {
   useEffect(() => {
     if (isOpen) analytics.logSignupPromptShown(required ? "onboarding" : "action");
   }, [isOpen, required]);
+
+  // The prompt belongs to the guest flow. Once a session exists (social popup,
+  // email register/login in another route, or session restore), never leave the
+  // "Create account" overlay visible on top of the signed-in app.
+  useEffect(() => {
+    if (isOpen && authStatus === "authenticated") close();
+  }, [authStatus, close, isOpen]);
 
   if (!isOpen) return null;
 

@@ -48,6 +48,9 @@ export default function RecommendedForYouPage() {
   const gateEnabled = isOnboardingAccountGateEnabled();
 
   const loadPreview = useCallback(async () => {
+    // authStatus starts as "restoring"; a signed-in user must not fall back to
+    // the guest preview endpoint before the session finishes restoring.
+    if (useAuthStore.getState().authStatus === "restoring") return;
     setLoading(true);
     setError(null);
     try {
@@ -78,8 +81,9 @@ export default function RecommendedForYouPage() {
   }, [user?.userId]);
 
   useEffect(() => {
+    if (authStatus === "restoring") return;
     void loadPreview();
-  }, [loadPreview, reloadKey]);
+  }, [authStatus, loadPreview, reloadKey]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

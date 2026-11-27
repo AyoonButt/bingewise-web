@@ -15,6 +15,7 @@ import { Sparkles } from "lucide-react";
 
 export default function FeedPage() {
   const user = useAuthStore((s) => s.user);
+  const authStatus = useAuthStore((s) => s.authStatus);
   const locale = getLanguageRegion(user);
   const region = locale.split("-")[1] ?? "US";
   const {
@@ -25,7 +26,7 @@ export default function FeedPage() {
     isFetchingNextPage,
     isRefreshing,
     hasNextPage,
-  } = useFeed(user?.userId, locale, region);
+  } = useFeed(user?.userId, locale, region, authStatus);
   const { isLiked, isSaved, toggleLike, toggleSave } = useInteractions(
     user?.userId
   );

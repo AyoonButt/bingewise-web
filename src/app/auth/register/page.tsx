@@ -11,6 +11,7 @@ import { BrandLogo } from "@/components/ui/brand-logo";
 import { register as registerUser } from "@/lib/auth";
 import { acceptWatchlistInvite } from "@/lib/watchlist";
 import { useAuthStore } from "@/stores/auth-store";
+import { useUiStore } from "@/stores/ui-store";
 import { promoteGuestProgress } from "@/lib/onboarding-submit";
 import { isNewOnboardingEnabled } from "@/lib/session";
 import { analytics } from "@/lib/analytics";
@@ -34,6 +35,7 @@ function RegisterForm() {
   const searchParams = useSearchParams();
   const setSession = useAuthStore((s) => s.setSession);
   const authStatus = useAuthStore((s) => s.authStatus);
+  const closeSignupPrompt = useUiStore((s) => s.closeSignupPrompt);
   const [error, setError] = useState("");
   const [saveFailure, setSaveFailure] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -89,6 +91,8 @@ function RegisterForm() {
       }
 
       setSession(user, tokenExpiresAt);
+      // Clear the guest prompt that opened this page before entering the app.
+      closeSignupPrompt();
       analytics.registerSuccess(user.userId);
 
       // Handle invite token after successful registration

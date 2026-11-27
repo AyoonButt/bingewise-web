@@ -232,6 +232,102 @@ test("login create-account link opens onboarding welcome", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /Stop scrolling/i })).toBeVisible();
 });
 
+test("signing in from the required create-account prompt closes it and uses the authenticated feed", async ({ page }) => {
+  let signedIn = false;
+  let guestEndpointCallsAfterLogin = 0;
+  let userFeedCalls = 0;
+  const feedResponse = {
+    posts: [post],
+    totalCount: 1,
+    recentCount: 1,
+    qualityCount: 1,
+    hasQualityFallback: false,
+    contentType: "recommendations",
+    nextCursor: null,
+    hasMore: false,
+  };
+
+  await page.route("**/api/auth/refresh", (route) =>
+    route.fulfill({
+      status: signedIn ? 200 : 401,
+      contentType: "application/json",
+      body: JSON.stringify(signedIn ? authResponse : { message: "Unauthorized" }),
+    })
+  );
+  await page.route("**/api/auth/login", (route) => {
+    signedIn = true;
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(authResponse),
+    });
+  });
+  await page.route("**/api/users/**", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true }),
+    })
+  );
+  await page.route("**/api/backend/api/notifications/**", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ count: 0 }),
+    })
+  );
+  const guestResponse = () => {
+    if (signedIn) guestEndpointCallsAfterLogin += 1;
+    return {
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ posts: [post], hasMore: false }),
+    };
+  };
+  await page.route("**/api/backend/api/recommendations/guest*", (route) =>
+    route.fulfill(guestResponse())
+  );
+  await page.route("**/api/backend/api/posts/recommendations/preview*", (route) =>
+    route.fulfill(guestResponse())
+  );
+  await page.route("**/api/backend/api/recommendations/777/**", (route) => {
+    userFeedCalls += 1;
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(feedResponse),
+    });
+  });
+
+  await seedStorage(page, {
+    completedSteps: [
+      "welcome",
+      "region-language",
+      "content-rating",
+      "streaming-services",
+      "stay-connected",
+      "vibe-check",
+      "taste-calibration",
+    ],
+  });
+  await page.goto("/onboarding/recommended-for-you?prompt=1");
+
+  const dialog = page.getByRole("dialog", { name: "Create a free account" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("link", { name: "I already have an account" }).click();
+  await expect(page).toHaveURL(/\/auth\/login/);
+
+  await page.getByLabel("Username").fill("tester");
+  await page.getByLabel("Password").fill("password123");
+  guestEndpointCallsAfterLogin = 0;
+  await page.getByRole("button", { name: "Sign In" }).click();
+
+  await expect(page).toHaveURL(/\/feed$/);
+  await expect(page.getByRole("dialog", { name: "Create a free account" })).toHaveCount(0);
+  await expect.poll(() => userFeedCalls).toBeGreaterThan(0);
+  expect(guestEndpointCallsAfterLogin).toBe(0);
+});
+
 test("signed-in users are redirected away from onboarding", async ({ page }) => {
   await mockApi(page);
   await page.context().addCookies([

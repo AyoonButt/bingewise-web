@@ -3,15 +3,20 @@
 import { useCallback, useRef } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
+import type { AuthStatus } from "@/stores/auth-store";
 import type { ContentResponse, PostDto } from "@/types/post";
 
 export function useFeed(
-  userId?: number,
-  language = "en-US",
-  region = "US"
+  userId: number | undefined,
+  language: string,
+  region: string,
+  authStatus: AuthStatus
 ) {
   const query = useInfiniteQuery({
     queryKey: ["feed", userId, language, region],
+    // Never fire the guest endpoint while the session is still being restored:
+    // a signed-in user would otherwise get a guest feed on first paint.
+    enabled: authStatus !== "restoring",
     queryFn: async ({ pageParam }): Promise<ContentResponse> => {
       const cursor = pageParam as string | null;
       const params = new URLSearchParams({ limit: "20" });
@@ -21,6 +26,10 @@ export function useFeed(
         return await apiClient<ContentResponse>(
           `/api/recommendations/${userId}/${language}?${params.toString()}`
         );
+      }
+
+      if (authStatus !== "guest") {
+        throw new Error("Session is still restoring");
       }
 
       // Guest mode: same endpoint the mobile app uses (unauthenticated).
