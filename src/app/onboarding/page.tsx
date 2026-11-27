@@ -98,13 +98,7 @@ export default function OnboardingWelcomePage() {
       <WelcomeBackdrop />
       <div className="relative z-10 flex flex-1 flex-col">
         {/* Top bar */}
-      <div className="flex items-center justify-between px-6 h-14 border-b border-border">
-        <Link href="/feed" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <BrandLogo size="sm" />
-          </div>
-          <span className="text-lg font-bold tracking-tight">BingeWise</span>
-        </Link>
+      <div className="flex items-center justify-end px-6 h-14 border-b border-border">
         {authStatus === "authenticated" ? (
           <Link
             href="/feed"

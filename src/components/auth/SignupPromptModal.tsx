@@ -195,14 +195,20 @@ export function SignupPromptModal() {
               screen stay open even when the onboarding account gate is active. */}
           <Link
             href={`/auth/register?from=${from}&signup=prompt`}
-            onClick={() => analytics.logSignupProviderClicked("email")}
+            onClick={() => {
+              close();
+              analytics.logSignupProviderClicked("email");
+            }}
             className="btn-primary w-full h-10 flex items-center justify-center"
           >
             Create account with email
           </Link>
           <Link
             href={`/auth/login?from=${from}`}
-            onClick={() => analytics.logSignupProviderClicked("email")}
+            onClick={() => {
+              close();
+              analytics.logSignupProviderClicked("email");
+            }}
             className="btn-outline w-full h-10 flex items-center justify-center"
           >
             I already have an account

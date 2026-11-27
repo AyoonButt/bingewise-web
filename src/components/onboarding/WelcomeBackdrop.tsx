@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
+// Curated TMDB posters shared with the mobile welcome backdrop. Keep both lists in sync.
 const POSTER_URLS = [
   "https://image.tmdb.org/t/p/w342/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",
   "https://image.tmdb.org/t/p/w342/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
@@ -14,6 +15,32 @@ const POSTER_URLS = [
   "https://image.tmdb.org/t/p/w342/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg",
   "https://image.tmdb.org/t/p/w342/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",
   "https://image.tmdb.org/t/p/w342/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
+  "https://image.tmdb.org/t/p/w342/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
+  "https://image.tmdb.org/t/p/w342/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg",
+  "https://image.tmdb.org/t/p/w342/q719jXXEzOoYaps6babgKnONONX.jpg",
+  "https://image.tmdb.org/t/p/w342/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg",
+  "https://image.tmdb.org/t/p/w342/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg",
+  "https://image.tmdb.org/t/p/w342/7fn624j5lj3xTme2SgiLCeuedmO.jpg",
+  "https://image.tmdb.org/t/p/w342/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg",
+  "https://image.tmdb.org/t/p/w342/eWdyYQreja6JGCzqHWXpWHDrrPo.jpg",
+  "https://image.tmdb.org/t/p/w342/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg",
+  "https://image.tmdb.org/t/p/w342/x2FJsf1ElAgr63Y3PNPtJrcmpoe.jpg",
+  "https://image.tmdb.org/t/p/w342/tFXcEccSQMf3lfhfXKSU9iRBpa3.jpg",
+  "https://image.tmdb.org/t/p/w342/n0ybibhJtQ5icDqTp8eRytcIHJx.jpg",
+  "https://image.tmdb.org/t/p/w342/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
+  "https://image.tmdb.org/t/p/w342/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg",
+  "https://image.tmdb.org/t/p/w342/w3LxiVYdWWRvEVdn5RYq6jIqkb1.jpg",
+  "https://image.tmdb.org/t/p/w342/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
+  "https://image.tmdb.org/t/p/w342/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg",
+  "https://image.tmdb.org/t/p/w342/62HCnUTziyWcpDaBO2i1DX17ljH.jpg",
+  "https://image.tmdb.org/t/p/w342/74xTEgt7R36Fpooo50r9T25onhq.jpg",
+  "https://image.tmdb.org/t/p/w342/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg",
+  "https://image.tmdb.org/t/p/w342/vZloFAK7NmvMGKE7VkF5UHaz0I.jpg",
+  "https://image.tmdb.org/t/p/w342/lqoMzCcZYEFK729d6qzt349fB4o.jpg",
+  "https://image.tmdb.org/t/p/w342/kCGlIMHnOm8JPXq3rXM6c5wMxcT.jpg",
+  "https://image.tmdb.org/t/p/w342/pThyQovXQrw2m0s9x82twj48Jq4.jpg",
+  "https://image.tmdb.org/t/p/w342/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg",
+  "https://image.tmdb.org/t/p/w342/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg",
 ];
 
 interface Placement {
@@ -22,13 +49,7 @@ interface Placement {
   y: number;
   width: number;
   height: number;
-  rotationFrom: number;
-  rotationTo: number;
-  driftXFrom: number;
-  driftXTo: number;
-  driftYFrom: number;
-  driftYTo: number;
-  duration: number;
+  rotation: number;
 }
 
 function seededRandom(seed: number): () => number {
@@ -63,7 +84,8 @@ export function WelcomeBackdrop() {
 
     const cardWidth = Math.min(220, Math.max(120, size.width * 0.34));
     const cardHeight = cardWidth * 1.5 + 23;
-    const stepX = cardWidth * 0.62;
+    // Tighter horizontal spacing fits another column of polaroids into the backdrop.
+    const stepX = cardWidth * 0.55;
     const stepY = cardHeight * 0.58;
     const columns = Math.floor(size.width / stepX) + 2;
     const rows = Math.floor(size.height / stepY) + 2;
@@ -76,13 +98,6 @@ export function WelcomeBackdrop() {
       const x = -cardWidth * 0.5 + stepX * column + (random() - 0.5) * cardWidth * 0.2;
       const y = -cardHeight * 0.5 + stepY * row + (random() - 0.5) * cardHeight * 0.16;
       const rotation = (random() - 0.5) * 16;
-      const seed = ((x * 13 + y * 7) | 0);
-      const phase = (seed & 0xff) / 255;
-      const direction = (seed & 0x100) === 0 ? 1 : -1;
-      const driftXAmplitude = 7 + phase * 7;
-      const driftYAmplitude = 4 + phase * 5;
-      const rotationAmplitude = 1.2 + phase * 2.2;
-      const duration = 480 + Math.floor(phase * 220);
 
       return {
         url: posters[index % posters.length],
@@ -90,13 +105,7 @@ export function WelcomeBackdrop() {
         y,
         width: cardWidth,
         height: cardHeight,
-        rotationFrom: rotation - rotationAmplitude * direction,
-        rotationTo: rotation + rotationAmplitude * direction,
-        driftXFrom: -driftXAmplitude * direction,
-        driftXTo: driftXAmplitude * direction,
-        driftYFrom: -driftYAmplitude * direction,
-        driftYTo: driftYAmplitude * direction,
-        duration,
+        rotation,
       };
     });
   }, [size]);
@@ -113,13 +122,7 @@ export function WelcomeBackdrop() {
               top: `${placement.y}px`,
               width: `${placement.width}px`,
               height: `${placement.height}px`,
-              "--welcome-rotation-from": `${placement.rotationFrom}deg`,
-              "--welcome-rotation-to": `${placement.rotationTo}deg`,
-              "--welcome-x-from": `${placement.driftXFrom}px`,
-              "--welcome-x-to": `${placement.driftXTo}px`,
-              "--welcome-y-from": `${placement.driftYFrom}px`,
-              "--welcome-y-to": `${placement.driftYTo}px`,
-              "--welcome-duration": `${placement.duration}ms`,
+              "--welcome-rotation": `${placement.rotation}deg`,
             } as CSSProperties
           }
         >

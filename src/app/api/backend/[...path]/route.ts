@@ -35,7 +35,13 @@ export async function DELETE(
 
 // Public backend endpoints that must work for signed-out visitors (guests)
 // without an access token. Forwarded anonymously (no Authorization header).
-const PUBLIC_GET_PATHS = ["api/recommendations/guest"];
+// The provider endpoints are public on the backend and power onboarding's
+// region-aware provider list and search, which guests can reach.
+const PUBLIC_GET_PATHS = [
+  "api/recommendations/guest",
+  "api/providers/top",
+  "api/providers/filter",
+];
 // These POST endpoints are public on the backend and take all preferences in
 // the request body. Onboarding uses them for signed-in users too, so a stale
 // accessToken cookie must not turn them into a 403.
