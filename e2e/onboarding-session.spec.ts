@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { buildBackendPreferences } from "../src/app/api/recommendations/preview/route";
+import { buildBackendPreferences } from "../src/lib/backend-preferences";
 
 const user = {
   id: 777,
@@ -720,6 +720,15 @@ test("region-language step asks locale and original-language preference only", a
   await expect(page.getByText("Original language content")).toBeVisible();
   await expect(page.getByText("Format preferences")).toHaveCount(0);
 
+  await page.getByRole("button", { name: "English" }).click();
+  const dropdown = page.getByTestId("searchable-select-dropdown").first();
+  await expect(dropdown).toBeVisible();
+  const background = await dropdown.evaluate(
+    (el) => getComputedStyle(el).backgroundColor
+  );
+  expect(background).not.toBe("rgba(0, 0, 0, 0)");
+  await page.keyboard.press("Escape");
+
   await page.getByRole("radio", { name: /Mostly my language/ }).check();
   await page.getByRole("button", { name: /Next/ }).click();
   await expect(page).toHaveURL(/\/onboarding\/ratings$/);
@@ -781,6 +790,36 @@ test("streaming step loads region providers and reorders selected services", asy
   );
   expect(stored.state?.selectedProviders).toEqual([15, 8]);
   expect(stored.state?.orderedSelectedProviders).toEqual([15, 8]);
+});
+
+test("streaming step uses only providers from the region top endpoint", async ({ page }) => {
+  await mockApi(page);
+  let topProvidersUrl = "";
+  await page.route("**/api/providers/top*", (route) => {
+    topProvidersUrl = route.request().url();
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify([
+        {
+          provider_id: 4242,
+          provider_name: "Region Unique TV",
+          logo_path: null,
+          display_priority: 1,
+        },
+      ]),
+    });
+  });
+  await seedStorage(page, {
+    region: "FR",
+    completedSteps: ["welcome", "region-language", "content-rating"],
+    lastStep: "streaming-services",
+  });
+
+  await page.goto("/onboarding/streaming");
+  await expect(page.getByRole("button", { name: "Region Unique TV" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Crunchyroll" })).toHaveCount(0);
+  expect(topProvidersUrl).toContain("country=FR");
 });
 
 test("definitive refresh failure clears the local session", async ({ page }) => {

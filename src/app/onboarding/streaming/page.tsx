@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api-client";
-import { POPULAR_PROVIDERS, useOnboardingStore } from "@/stores/onboarding-store";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 import type { StreamingProviderDto } from "@/types/provider";
 
 interface ProviderApiResponse {
@@ -124,7 +124,8 @@ function ProviderTile({
 export default function OnboardingStreamingPage() {
   const router = useRouter();
   const store = useOnboardingStore();
-  const [providers, setProviders] = useState<StreamingProviderDto[]>(POPULAR_PROVIDERS);
+  // The starting slate must come from the region-aware /providers/top endpoint.
+  const [providers, setProviders] = useState<StreamingProviderDto[]>([]);
   const [selected, setSelected] = useState<StreamingProviderDto[]>(() => {
     const ids =
       store.orderedSelectedProviders.length > 0
@@ -133,7 +134,7 @@ export default function OnboardingStreamingPage() {
     return ids
       .map((id) =>
         store.selectedProvidersDetails.find((p) => p.providerId === id) ??
-        POPULAR_PROVIDERS.find((p) => p.providerId === id) ?? { providerId: id, providerName: `Provider ${id}`, logoPath: null, displayPriority: 999 }
+        { providerId: id, providerName: `Provider ${id}`, logoPath: null, displayPriority: 999 }
       )
       .filter((provider) => provider.providerId !== null);
   });
@@ -141,6 +142,7 @@ export default function OnboardingStreamingPage() {
   const [searchResults, setSearchResults] = useState<StreamingProviderDto[]>([]);
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
 
@@ -155,12 +157,26 @@ export default function OnboardingStreamingPage() {
 
   const loadProviders = useCallback(async (region: string) => {
     setLoading(true);
+    setLoadError(false);
     try {
-      const data = await apiClient<ProviderApiResponse[]>(`/api/providers/top?country=${region}`);
+      // apiClient prefixes /api/backend; backend contract is
+      // GET /api/providers/top?country=<region>.
+      const data = await apiClient<ProviderApiResponse[]>(
+        `/api/providers/top?country=${encodeURIComponent(region)}`
+      );
       const mapped = dedupeProviders((data ?? []).map(mapProvider));
-      setProviders(mapped.length > 0 ? mapped : POPULAR_PROVIDERS);
+      setProviders(mapped);
+      // Persisted selections may only contain IDs; hydrate their names/logos
+      // from the same region endpoint rather than a hardcoded fallback list.
+      setSelected((prev) =>
+        prev.map((item) => {
+          const match = mapped.find((p) => p.providerId === item.providerId);
+          return match ?? item;
+        })
+      );
     } catch {
-      setProviders(POPULAR_PROVIDERS);
+      setProviders([]);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -311,6 +327,25 @@ export default function OnboardingStreamingPage() {
             : `${selected.length} selected · drag to set priority`}
         </p>
       </div>
+
+      {!loading && loadError && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-center text-xs text-muted-foreground">
+          Couldn&apos;t load providers for this region.{" "}
+          <button
+            type="button"
+            onClick={() => void loadProviders(store.region || "US")}
+            className="underline underline-offset-2 hover:text-foreground"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!loading && !loadError && visibleProviders.length === 0 && (
+        <p className="rounded-xl border border-border p-4 text-center text-xs text-muted-foreground">
+          No providers are available for this region yet. Search above to add one.
+        </p>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6">

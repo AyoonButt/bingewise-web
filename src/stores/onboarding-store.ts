@@ -12,18 +12,6 @@ import {
   type VibeDeckProgress,
 } from "@/lib/onboarding-progress";
 
-export const POPULAR_PROVIDERS: StreamingProviderDto[] = [
-  { providerId: 8, providerName: "Netflix", logoPath: "https://image.tmdb.org/t/p/w92/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg", displayPriority: 10 },
-  { providerId: 9, providerName: "Amazon Prime Video", logoPath: "https://image.tmdb.org/t/p/w92/emthp39XA2YScoYL1p0sdbAH2WA.jpg", displayPriority: 20 },
-  { providerId: 337, providerName: "Disney+", logoPath: "https://image.tmdb.org/t/p/w92/7rwgEs15tFwyR9NPQ5vpzxTj19Q.jpg", displayPriority: 30 },
-  { providerId: 384, providerName: "HBO Max", logoPath: "https://image.tmdb.org/t/p/w92/Ajqyt5aNxNGjmF9uOfxArGrdf3X.jpg", displayPriority: 40 },
-  { providerId: 15, providerName: "Hulu", logoPath: "https://image.tmdb.org/t/p/w92/zxrVdFjIjLqkfnwyghnfywTn3Lh.jpg", displayPriority: 50 },
-  { providerId: 350, providerName: "Apple TV+", logoPath: "https://image.tmdb.org/t/p/w92/6uhKBfmtzFqOcLousHwZuzcrScK.jpg", displayPriority: 60 },
-  { providerId: 386, providerName: "Peacock", logoPath: "https://image.tmdb.org/t/p/w92/8VCV78prwd9QzZnEm0ReO6bERDa.jpg", displayPriority: 70 },
-  { providerId: 531, providerName: "Paramount+", logoPath: "https://image.tmdb.org/t/p/w92/xbhHHa1YgtpwhC8lb1NQ3ACVcLd.jpg", displayPriority: 80 },
-  { providerId: 283, providerName: "Crunchyroll", logoPath: "https://image.tmdb.org/t/p/w92/8Gt1iClBlzTeQs8WQm8UrCoIxnQ.jpg", displayPriority: 90 },
-];
-
 // Movie genres (TMDB IDs)
 export const GENRES = [
   { id: 28, name: "Action" },

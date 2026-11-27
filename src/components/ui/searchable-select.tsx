@@ -84,6 +84,8 @@ export function SearchableSelect({
       {/* Trigger */}
       <button
         type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={cn(
           "w-full flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-left transition-colors hover:border-primary/40",
@@ -103,7 +105,11 @@ export function SearchableSelect({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-popover shadow-lg overflow-hidden">
+        <div
+          role="listbox"
+          data-testid="searchable-select-dropdown"
+          className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-popover text-popover-foreground shadow-xl overflow-hidden"
+        >
           <div className="relative p-2 border-b border-border">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
             <input
@@ -146,8 +152,8 @@ export function SearchableSelect({
                     onMouseEnter={() => setHighlighted(idx)}
                     onClick={() => commit(option)}
                     className={cn(
-                      "w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors",
-                      idx === highlighted ? "bg-accent" : "",
+                      "w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-popover-foreground transition-colors",
+                      idx === highlighted ? "bg-accent text-accent-foreground" : "",
                       isSelected && "font-medium text-primary"
                     )}
                   >
