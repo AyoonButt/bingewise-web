@@ -9,7 +9,6 @@ import { z } from "zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { login } from "@/lib/auth";
-import { clearScrollMemory } from "@/hooks/use-scroll-restoration";
 import { acceptWatchlistInvite } from "@/lib/watchlist";
 import { useAuthStore } from "@/stores/auth-store";
 import { promoteGuestProgress } from "@/lib/onboarding-submit";
@@ -206,16 +205,6 @@ function LoginForm() {
           className="btn-outline w-full h-11 inline-flex"
         >
           Create an account
-        </Link>
-      </p>
-
-      <p className="text-center">
-        <Link
-          href="/feed?guest=1"
-          onClick={clearScrollMemory}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
-        >
-          Continue as Guest
         </Link>
       </p>
 

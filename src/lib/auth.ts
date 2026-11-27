@@ -1,4 +1,7 @@
 import { apiClient } from "./api-client";
+import { getSocialIdToken, type SocialProvider } from "./firebase-auth";
+
+export type { SocialProvider } from "./firebase-auth";
 import { clearScrollMemory } from "@/hooks/use-scroll-restoration";
 import { getRefreshResult } from "./token-refresh";
 import { DEFAULT_TOKEN_TTL_SECONDS } from "./session";
@@ -11,8 +14,10 @@ function authUserToDto(user: AuthUserInfo): UserDto {
     name: user.name || user.username,
     username: user.username,
     email: user.email,
+    language: user.language || "en",
+    region: user.region || "US",
     isPrivate: false,
-    needsSetup: user.needsSetup,
+    needsSetup: user.needsSetup ?? false,
     createdAt: new Date().toISOString(),
   };
 }
@@ -71,7 +76,12 @@ export async function register(data: RegisterRequest): Promise<{ user: UserDto; 
   clearScrollMemory();
 
   if (auth.user) {
-    return { user: authUserToDto(auth.user), tokenExpiresAt };
+    // The deployed register response omits needsSetup; a new account always
+    // starts with setup pending, independent of the backend response shape.
+    return {
+      user: { ...authUserToDto(auth.user), needsSetup: true },
+      tokenExpiresAt,
+    };
   }
 
   return {
@@ -84,6 +94,34 @@ export async function register(data: RegisterRequest): Promise<{ user: UserDto; 
       createdAt: new Date().toISOString(),
     },
     tokenExpiresAt,
+  };
+}
+
+export async function socialSignIn(
+  provider: SocialProvider
+): Promise<{ user: UserDto; tokenExpiresAt: number }> {
+  const { idToken, name } = await getSocialIdToken(provider);
+  const res = await fetch("/api/auth/social", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ provider, idToken, name }),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: "Sign-in failed" }));
+    throw new Error(error.message || `Sign-in failed: ${res.status}`);
+  }
+
+  const auth: AuthResponse = await res.json();
+  if (!auth.user) {
+    throw new Error("No user was returned after sign-in.");
+  }
+
+  // Fresh session: never restore scroll from a previous session.
+  clearScrollMemory();
+
+  return {
+    user: authUserToDto(auth.user),
+    tokenExpiresAt: tokenExpiryFrom(auth),
   };
 }
 

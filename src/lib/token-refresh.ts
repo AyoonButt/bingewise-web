@@ -46,8 +46,10 @@ async function doRefreshInner(): Promise<RefreshResult> {
               name: auth.user.name || auth.user.username,
               username: auth.user.username,
               email: auth.user.email,
+              language: auth.user.language || "en",
+              region: auth.user.region || "US",
               isPrivate: false,
-              needsSetup: auth.user.needsSetup,
+              needsSetup: auth.user.needsSetup ?? false,
               createdAt: new Date().toISOString(),
             }
           : null;

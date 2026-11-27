@@ -6,7 +6,8 @@ export interface AuthUserInfo {
   language: string;
   region: string;
   roles: string[];
-  needsSetup: boolean;
+  // Not present in the deployed auth responses; default to false on the client.
+  needsSetup?: boolean;
 }
 
 export interface AuthResponse {
@@ -50,7 +51,10 @@ export interface SessionData {
     name: string;
     username: string;
     email: string;
+    language?: string;
+    region?: string;
     isPrivate: boolean;
+    needsSetup?: boolean;
     createdAt: string;
   };
   tokenExpiresAt: number;

@@ -36,8 +36,12 @@ export const ANALYTICS_EVENTS = {
   SESSION_START: "bw_session_start",
   SESSION_END: "bw_session_end",
   ONBOARDING_STARTED: "bw_onboarding_started",
+  ONBOARDING_STEP_VIEWED: "bw_onboarding_step_viewed",
   ONBOARDING_STEP_COMPLETED: "bw_onboarding_step_completed",
+  ONBOARDING_EXITED: "bw_onboarding_exited",
   ONBOARDING_RESUME_USED: "bw_onboarding_resume_used",
+  SIGNUP_PROMPT_SHOWN: "bw_signup_prompt_shown",
+  SIGNUP_PROVIDER_CLICKED: "bw_signup_provider_clicked",
   VIBE_CARD_DECISION: "bw_vibe_card_decision",
   SETUP_COMPLETED: "bw_setup_completed",
   SESSION_RESTORED: "bw_session_restored",
@@ -439,11 +443,23 @@ export const analytics = {
     });
   },
 
-  logOnboardingStarted() {
-    logEvent(ANALYTICS_EVENTS.ONBOARDING_STARTED);
+  logOnboardingStarted(source?: string) {
+    logEvent(ANALYTICS_EVENTS.ONBOARDING_STARTED, source ? { source } : undefined);
+  },
+  logOnboardingStepViewed(step: string) {
+    logEvent(ANALYTICS_EVENTS.ONBOARDING_STEP_VIEWED, { step });
   },
   logOnboardingStepCompleted(step: string) {
     logEvent(ANALYTICS_EVENTS.ONBOARDING_STEP_COMPLETED, { step });
+  },
+  logOnboardingExited(step: string, destination: string) {
+    logEvent(ANALYTICS_EVENTS.ONBOARDING_EXITED, { step, destination });
+  },
+  logSignupPromptShown(source: "onboarding" | "action") {
+    logEvent(ANALYTICS_EVENTS.SIGNUP_PROMPT_SHOWN, { source });
+  },
+  logSignupProviderClicked(provider: "google" | "apple" | "email") {
+    logEvent(ANALYTICS_EVENTS.SIGNUP_PROVIDER_CLICKED, { provider });
   },
   logOnboardingResumeUsed(step: string) {
     logEvent(ANALYTICS_EVENTS.ONBOARDING_RESUME_USED, { step });

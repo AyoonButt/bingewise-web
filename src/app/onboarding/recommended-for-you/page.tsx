@@ -6,15 +6,18 @@ import Image from "next/image";
 import {
   ArrowRight,
   CheckCircle2,
-  Eye,
   Loader2,
   Shield,
   Sparkles,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
+import { useUiStore } from "@/stores/ui-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { Skeleton } from "@/components/ui/skeleton";
 import { fetchOnboardingPosts } from "@/lib/onboarding-preview";
 import { submitOnboarding } from "@/lib/onboarding-submit";
+import { tmdbImage } from "@/lib/tmdb";
+import { isOnboardingAccountGateEnabled } from "@/lib/session";
 import type { PostDto } from "@/types/post";
 import { analytics } from "@/lib/analytics";
 
@@ -32,6 +35,8 @@ function preservedQuery(): string {
 export default function RecommendedForYouPage() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const authStatus = useAuthStore((s) => s.authStatus);
+  const openSignupPrompt = useUiStore((s) => s.openSignupPrompt);
   const store = useOnboardingStore();
   const [items, setItems] = useState<PostDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,8 +44,8 @@ export default function RecommendedForYouPage() {
   const [reloadKey, setReloadKey] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [dismissedPrompt, setDismissedPrompt] = useState(false);
   const [forcePrompt, setForcePrompt] = useState(false);
+  const gateEnabled = isOnboardingAccountGateEnabled();
 
   const loadPreview = useCallback(async () => {
     setLoading(true);
@@ -56,10 +61,10 @@ export default function RecommendedForYouPage() {
           state.orderedSelectedProviders.length > 0
             ? state.orderedSelectedProviders
             : state.selectedProviders,
-        avoidGenres: uniqueNumbers([
-          ...state.avoidedGenres,
-          ...state.vibeSoftAvoidedGenres,
-        ]),
+        // Only explicit genre-step avoids are hard exclusions. Vibe rejects
+        // stay soft so the backend can demote them instead of hiding them.
+        avoidGenres: uniqueNumbers(state.avoidedGenres),
+        softAvoidGenreIds: state.vibeSoftAvoidedGenres,
         excludedTmdbIds: state.vibeExcludedTmdbIds,
         contentLanguagePreference: state.contentLanguagePreference,
         limit: 6,
@@ -81,23 +86,27 @@ export default function RecommendedForYouPage() {
     setForcePrompt(window.location.search.includes("prompt=1"));
   }, []);
 
-  const authParams = new URLSearchParams(preservedQuery());
-  authParams.set("from", "/onboarding/recommended-for-you");
-  const authQuery = authParams.toString();
+  useEffect(() => {
+    if (forcePrompt && authStatus === "guest") {
+      openSignupPrompt({ required: gateEnabled, destination: "/feed" });
+    }
+  }, [authStatus, forcePrompt, gateEnabled, openSignupPrompt]);
 
   const finish = async () => {
     store.markStepCompleted("recommended-for-you");
     const query = preservedQuery();
-    const feedHref = user?.userId
-      ? query
-        ? `/feed?${query}`
-        : "/feed"
-      : query
-        ? `/feed?guest=1&${query}`
-        : "/feed?guest=1";
+    const feedHref = query ? `/feed?${query}` : "/feed";
 
+    // With the required gate on, guests must create an account (or sign in)
+    // before finishing; account creation promotes the saved progress.
+    // With the soft gate, they can keep their local progress and resume later.
     if (!user?.userId) {
       analytics.logSetupCompleted();
+      if (gateEnabled) {
+        openSignupPrompt({ required: true, destination: "/feed" });
+        return;
+      }
+      analytics.logOnboardingExited("recommended-for-you", feedHref);
       router.push(feedHref);
       return;
     }
@@ -156,8 +165,18 @@ export default function RecommendedForYouPage() {
           </p>
         </div>
         {loading && (
-          <div className="flex min-h-[180px] items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div
+            className="grid grid-cols-3 gap-2"
+            role="status"
+            aria-label="Loading your recommendations"
+          >
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="space-y-1">
+                <Skeleton className="aspect-[2/3] rounded-lg" />
+                <Skeleton className="h-3 w-3/4 rounded" />
+                <Skeleton className="h-3 w-1/2 rounded" />
+              </div>
+            ))}
           </div>
         )}
         {!loading && error && (
@@ -183,7 +202,7 @@ export default function RecommendedForYouPage() {
                 <div className="aspect-[2/3] overflow-hidden rounded-lg bg-muted">
                   {item.posterPath ? (
                     <Image
-                      src={`https://image.tmdb.org/t/p/w300${item.posterPath}`}
+                      src={tmdbImage(item.posterPath, "w342")}
                       alt={item.title}
                       width={200}
                       height={300}
@@ -231,43 +250,21 @@ export default function RecommendedForYouPage() {
           </button>
         </div>
       ) : (
-        (!dismissedPrompt || forcePrompt) && (
-          <div className="card space-y-4 border-primary/30 bg-primary/5 p-5">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                <Eye className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">Save this taste profile</p>
-                <p className="text-xs text-muted-foreground">
-                  Create an account to keep your vibe picks, genres, and watchlists.
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => router.push(`/auth/login?${authQuery}`)}
-                className="rounded-xl border border-border py-2.5 text-sm font-medium hover:bg-muted/50"
-              >
-                Sign in
-              </button>
-              <button
-                onClick={() => router.push(`/auth/register?${authQuery}`)}
-                className="rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-              >
-                Create account
-              </button>
-            </div>
-            {!forcePrompt && (
-              <button
-                onClick={() => setDismissedPrompt(true)}
-                className="w-full text-center text-xs text-muted-foreground hover:text-foreground"
-              >
-                Not now
-              </button>
-            )}
-          </div>
-        )
+        <div className="card space-y-3 border-primary/30 bg-primary/5 p-5 text-center">
+          <p className="text-sm font-semibold">Save this taste profile</p>
+          <p className="text-xs text-muted-foreground">
+            Create a free account or sign in to keep your vibe picks, genres, and watchlists.
+          </p>
+          <button
+            type="button"
+            onClick={() =>
+              openSignupPrompt({ required: gateEnabled, destination: "/feed" })
+            }
+            className="btn-primary w-full h-10 flex items-center justify-center"
+          >
+            Create account or sign in
+          </button>
+        </div>
       )}
 
       <button

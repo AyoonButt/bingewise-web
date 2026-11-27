@@ -14,20 +14,32 @@ const firebaseConfig = {
 let app: FirebaseApp | null = null;
 let messaging: Messaging | null = null;
 
-export function getFirebaseApp(): FirebaseApp | null {
-  if (typeof window === "undefined") return null;
-  if (
-    !firebaseConfig.apiKey ||
-    !firebaseConfig.projectId ||
-    !firebaseConfig.messagingSenderId ||
-    !firebaseConfig.appId
-  ) {
-    return null;
-  }
+function coreConfigured(): boolean {
+  return Boolean(
+    firebaseConfig.apiKey &&
+      firebaseConfig.authDomain &&
+      firebaseConfig.projectId &&
+      firebaseConfig.appId
+  );
+}
+
+function ensureApp(): FirebaseApp | null {
+  if (typeof window === "undefined" || !coreConfigured()) return null;
   if (!app) {
     app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
   }
   return app;
+}
+
+/** Firebase app for messaging, which additionally needs a sender ID. */
+export function getFirebaseApp(): FirebaseApp | null {
+  if (!firebaseConfig.messagingSenderId) return null;
+  return ensureApp();
+}
+
+/** Firebase app for Auth — Google/Apple don't need the messaging sender ID. */
+export function getFirebaseAuthApp(): FirebaseApp | null {
+  return ensureApp();
 }
 
 export function getMessagingInstance(): Messaging | null {

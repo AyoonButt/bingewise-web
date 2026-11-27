@@ -35,13 +35,17 @@ function RegisterForm() {
   const setSession = useAuthStore((s) => s.setSession);
   const authStatus = useAuthStore((s) => s.authStatus);
   const [error, setError] = useState("");
+  const [saveFailure, setSaveFailure] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [inviteWatchlistId, setInviteWatchlistId] = useState<number | null>(null);
   const [processingInvite, setProcessingInvite] = useState(false);
 
   const from = searchParams.get("from");
-  const accountStep = from === "/onboarding/recommended-for-you";
+  // The signup popup offers this page as the full email sign-up UI. Don't bounce
+  // those guests back into onboarding; the gate still applies to normal entries.
+  const fromSignupPrompt = searchParams.get("signup") === "prompt";
+  const accountStep = from === "/onboarding/recommended-for-you" || fromSignupPrompt;
   const waitingForAuth =
     isNewOnboardingEnabled() && !accountStep && authStatus === "restoring";
   const onboardingGate =
@@ -76,6 +80,7 @@ function RegisterForm() {
     analytics.registerAttempt();
     try {
       setError("");
+      setSaveFailure("");
       const { user, tokenExpiresAt } = await registerUser(data);
 
       if (!user.userId) {
@@ -101,18 +106,18 @@ function RegisterForm() {
       try {
         await promoteGuestProgress(user.userId);
       } catch (e) {
+        const reason = e instanceof Error ? e.message : String(e);
         console.error("Failed to promote guest setup:", e);
-        setError(
-          "Account created, but your setup preferences could not be saved. Please try again from Settings."
-        );
+        // The account already exists and the session is live. Never strand the
+        // user on this form — let them continue and retry setup from the resume
+        // banner, with the underlying backend reason visible for support.
+        setSaveFailure(reason);
         return;
       }
 
-      const destination =
-        from && from.startsWith("/") && !from.startsWith("//") && !from.startsWith("/onboarding")
-          ? from
-          : "/feed";
-      router.push(destination);
+      // A successful sign-up always starts at the app home, no matter which
+      // page or prompt opened the form (email or social go through this rule).
+      router.push("/feed");
     } catch (err: any) {
       const message = err?.message ?? "Registration failed";
       const code = Number(message.match?.(/\d{3}/)?.[0]) || 0;
@@ -149,6 +154,22 @@ function RegisterForm() {
         {error && (
           <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
             {error}
+          </div>
+        )}
+
+        {saveFailure && (
+          <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-sm space-y-2">
+            <p>
+              Your account is ready, but your setup preferences could not be
+              saved ({saveFailure}). Your progress is still on this device.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push("/feed")}
+              className="font-medium text-primary hover:underline"
+            >
+              Continue without saving &rarr;
+            </button>
           </div>
         )}
 

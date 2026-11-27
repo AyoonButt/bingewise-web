@@ -36,7 +36,10 @@ export async function DELETE(
 // Public backend endpoints that must work for signed-out visitors (guests)
 // without an access token. Forwarded anonymously (no Authorization header).
 const PUBLIC_GET_PATHS = ["api/recommendations/guest"];
-const GUEST_ONLY_POST_PATHS = [
+// These POST endpoints are public on the backend and take all preferences in
+// the request body. Onboarding uses them for signed-in users too, so a stale
+// accessToken cookie must not turn them into a 403.
+const PUBLIC_POST_PATHS = [
   "api/posts/vibe-slate",
   "api/posts/recommendations/preview",
 ];
@@ -76,15 +79,11 @@ async function proxyRequest(
 
   const path = params.path.join("/");
   const isPublicGet = method === "GET" && isPublicGetPath(path);
-  const isGuestOnlyPost =
+  const isPublicPost =
     method === "POST" &&
-    GUEST_ONLY_POST_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
+    PUBLIC_POST_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
 
-  if (isGuestOnlyPost && accessToken) {
-    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-  }
-
-  if (!accessToken && !isPublicGet && !isGuestOnlyPost) {
+  if (!accessToken && !isPublicGet && !isPublicPost) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 

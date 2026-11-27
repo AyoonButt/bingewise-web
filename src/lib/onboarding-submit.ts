@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api-client";
+import { writeLocalNotificationPreferences } from "@/lib/notification-preferences";
 import { SESSION_KEY } from "@/lib/session";
 import type { SessionData } from "@/types/auth";
 import { useAuthStore } from "@/stores/auth-store";
@@ -8,30 +9,40 @@ function uniqueNumbers(values: number[]): number[] {
   return Array.from(new Set(values));
 }
 
+/**
+ * Keys here must match the backend's UserUpdate DTO exactly. That DTO is bound
+ * with a strict ObjectMapper, so unknown keys (including the store's client-only
+ * `vibe*` names) produce a 400 instead of being ignored.
+ */
 export function buildOnboardingPayload() {
   const state = useOnboardingStore.getState();
   const providers =
     state.orderedSelectedProviders.length > 0
       ? state.orderedSelectedProviders
       : state.selectedProviders;
-  const genres = uniqueNumbers([
-    ...state.orderedSelectedGenres,
-    ...state.preferredGenres,
-    ...state.vibeLikedGenres,
-  ]);
-  const avoidGenres = uniqueNumbers([
-    ...state.orderedAvoidedGenres,
-    ...state.avoidedGenres,
-    ...state.vibeSoftAvoidedGenres,
-  ]).filter((id) => !genres.includes(id));
+  // preferredGenres/avoidedGenres already carry drag order. The legacy
+  // ordered* genre fields are never written by any step, so using them here
+  // would let stale persisted values override the user's current choices.
+  const genres = uniqueNumbers([...state.preferredGenres, ...state.vibeLikedGenres]);
+  // Vibe rejects are soft ranking signals, not hard exclusions. They must stay
+  // in softAvoidGenreIds so the backend can demote rather than hide them.
+  const avoidGenres = uniqueNumbers(state.avoidedGenres).filter(
+    (id) => !genres.includes(id)
+  );
+  const softAvoidGenreIds = uniqueNumbers(state.vibeSoftAvoidedGenres).filter(
+    (id) => !genres.includes(id) && !avoidGenres.includes(id)
+  );
 
   return {
     language: state.language.split("-")[0] || "en",
     region: state.region,
-    minMovie: state.minMovieDuration || null,
-    maxMovie: state.maxMovieDuration < 300 ? state.maxMovieDuration : null,
-    minTV: state.minTvDuration || null,
-    maxTV: state.maxTvDuration < 90 ? state.maxTvDuration : null,
+    // The backend treats null as "leave this field unchanged", not "no limit".
+    // Onboarding's unbounded sentinels (0/300 for movies, 0/90 for TV) must be
+    // sent explicitly or a new account keeps the server defaults (60/180/20/90).
+    minMovie: state.minMovieDuration,
+    maxMovie: state.maxMovieDuration,
+    minTV: state.minTvDuration,
+    maxTV: state.maxTvDuration,
     oldestDate: state.oldestDate || "1900-01-01",
     recentDate:
       state.recentDate === "CURRENT"
@@ -43,9 +54,8 @@ export function buildOnboardingPayload() {
     subscriptions: providers,
     genres,
     avoidGenres,
-    vibeLikedGenres: state.vibeLikedGenres,
-    vibeSoftAvoidedGenres: state.vibeSoftAvoidedGenres,
-    vibeExcludedTmdbIds: state.vibeExcludedTmdbIds,
+    softAvoidGenreIds,
+    excludedTmdbIds: uniqueNumbers(state.vibeExcludedTmdbIds),
   };
 }
 
@@ -69,41 +79,25 @@ export async function submitOnboarding(): Promise<void> {
   const userId = useAuthStore.getState().user?.userId;
   if (!userId) throw new Error("Sign in to save your preferences");
 
+  const state = useOnboardingStore.getState();
   const payload = buildOnboardingPayload();
 
+  // This is the only onboarding write the backend can actually persist.
   await apiClient(`/api/users/${userId}`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
 
-  try {
-    await apiClient(`/api/notifications/${userId}/settings`, {
-      method: "PUT",
-      body: JSON.stringify({
-        enabled: useOnboardingStore.getState().notificationsEnabled,
-        repliesEnabled: useOnboardingStore.getState().repliesEnabled,
-        followRequestsEnabled: useOnboardingStore.getState().followRequestsEnabled,
-        messagesEnabled: useOnboardingStore.getState().messagesEnabled,
-        releasesEnabled: useOnboardingStore.getState().releasesEnabled,
-        sequelsEnabled: useOnboardingStore.getState().sequelsEnabled,
-        subscriptionsEnabled: useOnboardingStore.getState().subscriptionsEnabled,
-        streamingEnabled: useOnboardingStore.getState().streamingEnabled,
-        generalEnabled: useOnboardingStore.getState().generalEnabled,
-      }),
-    });
-  } catch (error) {
-    void error;
-  }
+  // There is no backend notification-settings endpoint, and only the master
+  // choice can actually be enforced on web by registering/unregistering this
+  // device. Keep that one choice locally instead of POSTing to a 404 route.
+  writeLocalNotificationPreferences(userId, {
+    masterEnabled: state.notificationsEnabled,
+  });
 
-  try {
-    await apiClient(`/api/users/${userId}/complete-setup`, {
-      method: "POST",
-      body: "{}",
-    });
-  } catch (error) {
-    void error;
-  }
-
+  // The backend has no complete-setup endpoint; needsSetup is response-only.
+  // Mark it complete in the local session so the client does not loop back into
+  // onboarding. Login/refresh already report needsSetup: false.
   markSetupCompleteLocally();
 }
 

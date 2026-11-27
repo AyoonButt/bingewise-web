@@ -11,22 +11,49 @@ import type {
   UserDto,
 } from "@/types/user";
 
-export interface UserProfilePreferences {
+interface UserProfilePreferencesResponse {
   userId: number;
   language: string;
   region: string;
   minMovie: number | null;
   maxMovie: number | null;
-  minTv: number | null;
-  maxTv: number | null;
+  // The backend emits minTV/maxTV. Older cached responses used minTv/maxTv.
+  minTV?: number | null;
+  maxTV?: number | null;
+  minTv?: number | null;
+  maxTv?: number | null;
   oldestDate: string;
   recentDate: string;
   isPrivate?: boolean;
+  // The deployed backend's GET /preferences emits `private` rather than
+  // `isPrivate`; accept both shapes.
   private?: boolean;
   contentRatingAge?: number;
+  contentLanguagePreference?: "ANY" | "PREFER_SELECTED" | "ONLY_SELECTED";
   subscriptions?: number[];
   genreIds?: number[];
   avoidGenreIds?: number[];
+  softAvoidGenreIds?: number[];
+  excludedTmdbIds?: number[];
+}
+
+export interface UserProfilePreferences
+  extends Omit<UserProfilePreferencesResponse, "minTV" | "maxTV" | "private"> {
+  minTv: number | null;
+  maxTv: number | null;
+  isPrivate?: boolean;
+}
+
+function normalizePreferences(
+  raw: UserProfilePreferencesResponse
+): UserProfilePreferences {
+  const { minTV, maxTV, minTv, maxTv, private: deployedPrivate, ...rest } = raw;
+  return {
+    ...rest,
+    isPrivate: rest.isPrivate ?? deployedPrivate,
+    minTv: minTv ?? minTV ?? null,
+    maxTv: maxTv ?? maxTV ?? null,
+  };
 }
 
 const PENDING_REQUESTS_KEY = "bw_pending_follow_requests";
@@ -241,7 +268,9 @@ export function useUserProfileData(userId: number | undefined) {
   const prefsQuery = useQuery({
     queryKey: ["userProfilePreferences", userId],
     queryFn: () =>
-      apiClient<UserProfilePreferences>(`/api/users/${userId}/preferences`),
+      apiClient<UserProfilePreferencesResponse>(`/api/users/${userId}/preferences`).then(
+        normalizePreferences
+      ),
     enabled: !!userId,
     retry: shouldRetry,
   });

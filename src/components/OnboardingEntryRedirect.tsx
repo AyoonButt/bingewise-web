@@ -1,16 +1,25 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/auth-store";
 import { FIRST_VISIT_KEY, isNewOnboardingEnabled } from "@/lib/session";
 
-export function OnboardingEntryRedirect({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+/** Shared links that open one specific post, as opposed to a feed/list page. */
+function isPostDeepLink(pathname: string): boolean {
+  return (
+    pathname.startsWith("/post/") || pathname.startsWith("/activity/item/")
+  );
+}
+
+/**
+ * Mounted globally: first-time guests land in onboarding from the home page,
+ * while shared watchlist/post links open their target without interruption and
+ * count as a completed first visit.
+ */
+export function OnboardingEntryRedirect() {
   const router = useRouter();
+  const pathname = usePathname();
   const authStatus = useAuthStore((s) => s.authStatus);
 
   useEffect(() => {
@@ -18,15 +27,22 @@ export function OnboardingEntryRedirect({
     if (authStatus !== "guest") return;
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    const bypassParams = ["guest", "invite", "watchlistId", "from"];
-    if (bypassParams.some((key) => params.has(key))) {
+    const isSharedLink =
+      params.has("invite") ||
+      params.has("watchlistId") ||
+      isPostDeepLink(pathname);
+
+    if (isSharedLink) {
       localStorage.setItem(FIRST_VISIT_KEY, "1");
       return;
     }
+
+    // Only the home page starts setup; other direct entries keep their target.
+    if (pathname !== "/") return;
     if (localStorage.getItem(FIRST_VISIT_KEY) === "1") return;
     localStorage.setItem(FIRST_VISIT_KEY, "1");
     router.replace("/onboarding");
-  }, [authStatus, router]);
+  }, [authStatus, pathname, router]);
 
-  return <>{children}</>;
+  return null;
 }

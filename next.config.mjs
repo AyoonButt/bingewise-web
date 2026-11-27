@@ -27,9 +27,9 @@ const securityHeaders = [
           "media-src 'self' blob: https://image.tmdb.org https://*.tmdb.org",
           "font-src 'self' data: https://cdn.jsdelivr.net",
           // Backend API + Firebase + Firebase Analytics (GA4) + TMDB + Google Ads tracking + any websocket notifications channel.
-          "connect-src 'self' https://api-bingewise.com https://api.tmdb.org https://www.themoviedb.org https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://www.google.com https://*.googleapis.com https://*.firebaseio.com https://*.doubleclick.net https://*.google-analytics.com https://*.analytics.google.com wss:",
-          // YouTube trailer embeds, AdSense safeframes, reCAPTCHA iframes.
-          "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://googleads.g.doubleclick.net https://*.safeframe.googlesyndication.com https://pagead2.googlesyndication.com https://*.adtrafficquality.google https://www.google.com",
+          "connect-src 'self' https://api-bingewise.com https://api.tmdb.org https://www.themoviedb.org https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://www.google.com https://*.googleapis.com https://*.firebaseapp.com https://*.firebaseio.com https://accounts.google.com https://appleid.apple.com https://*.doubleclick.net https://*.google-analytics.com https://*.analytics.google.com wss:",
+          // YouTube trailer embeds, AdSense safeframes, reCAPTCHA iframes, Firebase Auth popups.
+          "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://googleads.g.doubleclick.net https://*.safeframe.googlesyndication.com https://pagead2.googlesyndication.com https://*.adtrafficquality.google https://www.google.com https://*.firebaseapp.com https://accounts.google.com https://appleid.apple.com",
           "object-src 'none'",
           "base-uri 'self'",
           "form-action 'self'",
