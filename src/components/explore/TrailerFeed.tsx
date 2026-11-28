@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
 import { useUiStore } from "@/stores/ui-store";
+import { openTrackSheetForPost } from "@/stores/tracking-sheet-store";
 import { TrailerCard } from "./TrailerCard";
 import { AdUnit } from "@/components/ads/AdUnit";
 import { AD_INTERVALS, isPlacementEnabled } from "@/lib/ads";
@@ -339,6 +340,7 @@ export function TrailerFeed() {
 
   const handleSaveClick = useCallback(
     (post: PostDto) => {
+      if (openTrackSheetForPost(post)) return;
       const postId = post.postId;
       if (!postId || !user) return;
       setSavedTrailerIds((ids) => {

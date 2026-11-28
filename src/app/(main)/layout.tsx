@@ -8,6 +8,7 @@ import { AdSense } from "@/components/ads/AdSense";
 import { ConsentBanner } from "@/components/consent/ConsentBanner";
 import { SignupPromptModal } from "@/components/auth/SignupPromptModal";
 import { GuestBanner } from "@/components/guest/GuestBanner";
+import { TrackSheetHost } from "@/components/tracking/TrackSheetHost";
 
 export default function MainLayout({
   children,
@@ -31,6 +32,7 @@ export default function MainLayout({
       <AdSense />
       <ConsentBanner />
       <SignupPromptModal />
+      <TrackSheetHost />
       {modal}
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Play, ListPlus, Loader2 } from "lucide-react";
+import { Bookmark, Eye, Play, Loader2 } from "lucide-react";
 
 interface PosterActionsProps {
   creatingAction: "post" | "trailer" | null;
@@ -56,8 +56,8 @@ export function PosterActions({
         disabled={isAnyLoading}
         className="btn-outline w-full flex items-center justify-center gap-2 h-11"
       >
-        <ListPlus className="h-4 w-4" />
-        Add to Watchlist
+        <Bookmark className="h-4 w-4" />
+        Track title
       </button>
     </div>
   );

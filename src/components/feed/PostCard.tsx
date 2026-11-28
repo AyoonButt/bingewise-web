@@ -11,6 +11,8 @@ import { useEffect, useRef, useState } from "react";
 import { CommentBottomSheet } from "@/components/comments/CommentBottomSheet";
 import { ShareDialog } from "@/components/share/ShareDialog";
 import { analytics } from "@/lib/analytics";
+import { openTrackSheetForPost } from "@/stores/tracking-sheet-store";
+import { TrackingPostBadges } from "@/components/tracking/TrackingBadges";
 
 interface PostCardProps {
   post: PostDto;
@@ -127,6 +129,10 @@ export function PostCard({
     likeFromPoster();
   };
 
+  const handleTrackClick = () => {
+    if (!openTrackSheetForPost(post)) onSave();
+  };
+
   const openComments = (e: React.MouseEvent) => {
     commentAnchorRef.current =
       (e.currentTarget as HTMLElement).closest("[data-post-card]") ?? null;
@@ -163,6 +169,7 @@ export function PostCard({
             <h3 className="font-semibold text-lg hover:underline">{post.title}</h3>
           </Link>
           {post.overview && <p className="text-sm text-muted-foreground line-clamp-3 mt-1">{post.overview}</p>}
+          <TrackingPostBadges post={post} className="mt-2" />
         </div>
         <div className="flex items-center gap-4 pt-2 border-t border-border">
           <button
@@ -180,7 +187,8 @@ export function PostCard({
             <MessageCircle className="h-5 w-5" />
           </button>
           <button
-            onClick={onSave}
+            onClick={handleTrackClick}
+            aria-label="Track title"
             className="flex items-center gap-1.5 text-sm ml-auto active:scale-90 transition-all"
             style={{ color: isSaved ? "var(--saved-bookmark)" : undefined }}
           >

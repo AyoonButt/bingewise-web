@@ -27,6 +27,8 @@ import {
 import { useAuthStore } from "@/stores/auth-store";
 import { useUiStore } from "@/stores/ui-store";
 import { useWatchlistDetail } from "@/hooks/use-watchlist-detail";
+import { useBatchTitleTracking } from "@/hooks/use-title-tracking";
+import { toTrackingKey } from "@/lib/title-tracking";
 import { useTouchReorder } from "@/hooks/use-touch-reorder";
 import { WatchlistItemCard } from "@/components/watchlist/WatchlistItemCard";
 import { EditWatchlistDialog } from "@/components/watchlist/EditWatchlistDialog";
@@ -105,6 +107,14 @@ function WatchlistDetailInner({
   }, [inviteToken, user, isLoading, detail, watchlistId, refresh, router]);
 
   const items = useMemo(() => detail?.items ?? [], [detail]);
+  const trackingKeys = useMemo(
+    () => items.map((item) => toTrackingKey(item)),
+    [items]
+  );
+  const { entries: trackingEntries } = useBatchTitleTracking(
+    user?.userId,
+    trackingKeys
+  );
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSend, setShowSend] = useState(false);
@@ -528,12 +538,18 @@ function WatchlistDetailInner({
             {detail.items.map((item, index) => {
               const canRemove =
                 isOwner || (!!user && item.addedBy === user.userId);
+              const key = toTrackingKey(item);
+              const trackingEntry =
+                !!user && (isOwner || item.addedBy === user.userId)
+                  ? (trackingEntries[`${key.tmdbId}:${key.mediaType}`] ?? null)
+                  : null;
               return (
 <WatchlistItemCard
                   key={item.id}
                   item={item}
                   canRemove={canRemove}
                   onRemove={removeItem}
+                  trackingEntry={trackingEntry}
 reorder={
                       reorderMode
                         ? {

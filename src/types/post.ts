@@ -1,3 +1,5 @@
+import type { ViewingStatus } from "@/types/title-tracking";
+
 export interface PostDto {
   postId: number | null;
   tmdbId: number;
@@ -18,6 +20,10 @@ export interface PostDto {
   providerIds: number[] | null;
   runtime: number | null;
   contentRating: string | null;
+  trackingStatus?: ViewingStatus | null;
+  userRating?: number | null;
+  hasNote?: boolean;
+  trackingProgress?: string | null;
 }
 
 export interface ContentResponse {

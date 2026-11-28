@@ -29,3 +29,7 @@ export function isNewOnboardingEnabled(): boolean {
 export function isOnboardingAccountGateEnabled(): boolean {
   return process.env.NEXT_PUBLIC_ONBOARDING_ACCOUNT_GATE !== "false";
 }
+
+export function isTitleTrackingEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_TITLE_TRACKING !== "false";
+}

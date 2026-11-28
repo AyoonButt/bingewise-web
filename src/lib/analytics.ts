@@ -95,6 +95,14 @@ export const ANALYTICS_EVENTS = {
   WATCHLIST_CLONED: "bw_watchlist_cloned",
   WATCHLIST_LINK_SHARED: "bw_watchlist_link_shared",
   WATCHLIST_REORDERED: "bw_watchlist_reordered",
+
+  // Title tracking
+  TRACK_SHEET_OPENED: "bw_track_sheet_opened",
+  TITLE_STATUS_SET: "bw_title_status_set",
+  TITLE_RATING_SET: "bw_title_rating_set",
+  TITLE_NOTE_SAVED: "bw_title_note_saved",
+  TV_PROGRESS_SAVED: "bw_tv_progress_saved",
+  TRACKING_TAB_VIEWED: "bw_tracking_tab_viewed",
 } as const;
 
 export type AnalyticsEventName =
@@ -209,6 +217,26 @@ function mediaParams(ref: MediaRef): EventParams {
     media_type: ref.mediaType?.toLowerCase(),
     tmdb_id: ref.tmdbId ?? undefined,
   };
+}
+
+function ratingBucket(rating: number): string {
+  if (rating <= 2) return "1-2";
+  if (rating <= 4) return "3-4";
+  return "5";
+}
+
+function noteLengthBucket(length: number): string {
+  if (length === 0) return "empty";
+  if (length <= 50) return "1-50";
+  if (length <= 200) return "51-200";
+  return "201-500";
+}
+
+function episodeBucket(value: number): string {
+  if (value <= 1) return "1";
+  if (value <= 5) return "2-5";
+  if (value <= 20) return "6-20";
+  return "21+";
 }
 
 /**
@@ -475,5 +503,37 @@ export const analytics = {
   },
   logRefreshRetryableFailure() {
     logEvent(ANALYTICS_EVENTS.REFRESH_RETRYABLE_FAILURE);
+  },
+
+  logTrackSheetOpened(ref: MediaRef) {
+    logEvent(ANALYTICS_EVENTS.TRACK_SHEET_OPENED, mediaParams(ref));
+  },
+  logTitleStatusSet(ref: MediaRef, status: string) {
+    logEvent(ANALYTICS_EVENTS.TITLE_STATUS_SET, {
+      ...mediaParams(ref),
+      status,
+    });
+  },
+  logTitleRatingSet(ref: MediaRef, rating: number) {
+    logEvent(ANALYTICS_EVENTS.TITLE_RATING_SET, {
+      ...mediaParams(ref),
+      rating_bucket: ratingBucket(rating),
+    });
+  },
+  logTitleNoteSaved(ref: MediaRef, noteLength: number) {
+    logEvent(ANALYTICS_EVENTS.TITLE_NOTE_SAVED, {
+      ...mediaParams(ref),
+      length_bucket: noteLengthBucket(noteLength),
+    });
+  },
+  logTvProgressSaved(ref: MediaRef, season: number, episode: number) {
+    logEvent(ANALYTICS_EVENTS.TV_PROGRESS_SAVED, {
+      ...mediaParams(ref),
+      season_bucket: episodeBucket(season),
+      episode_bucket: episodeBucket(episode),
+    });
+  },
+  logTrackingTabViewed(status: string) {
+    logEvent(ANALYTICS_EVENTS.TRACKING_TAB_VIEWED, { status });
   },
 };

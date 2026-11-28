@@ -28,7 +28,8 @@ import { OverviewCard } from "@/components/post/OverviewCard";
 import { CastList } from "@/components/post/CastList";
 import { RecommendationsSection } from "@/components/post/RecommendationsSection";
 import { CommentBottomSheet } from "@/components/comments/CommentBottomSheet";
-import { AddToListSheet } from "@/components/watchlist/AddToListSheet";
+import { openTrackSheet } from "@/stores/tracking-sheet-store";
+import { TrackingStatusRow } from "@/components/tracking/TrackingStatusRow";
 import type { AddWatchlistItemRequest } from "@/types/watchlist";
 import type { TmdbMovieDetail, TmdbTvDetail } from "@/types/tmdb";
 
@@ -127,7 +128,6 @@ export function PosterDetailContent() {
   const [error, setError] = useState<string | null>(null);
   const [showComments, setShowComments] = useState(false);
   const [creatingAction, setCreatingAction] = useState<"post" | "trailer" | null>(null);
-  const [showAddToList, setShowAddToList] = useState(false);
 
   const {
     comments,
@@ -284,15 +284,6 @@ export function PosterDetailContent() {
     }
   }, [ensurePost, router]);
 
-  const handleAddToWatchlist = useCallback(() => {
-    // Guest mode: prompt sign-up instead of opening the list picker
-    if (!useAuthStore.getState().user) {
-      useUiStore.getState().openSignupPrompt();
-      return;
-    }
-    setShowAddToList(true);
-  }, []);
-
   // Guest-only gate: prompts sign-up; signed-in users pass through untouched
   const handleGuestAction = useCallback(() => {
     if (!useAuthStore.getState().user) {
@@ -319,6 +310,11 @@ export function PosterDetailContent() {
       releaseYear: Number.isNaN(parsedYear) ? null : parsedYear,
     };
   }, [media, id, isMovie]);
+
+  const handleAddToWatchlist = useCallback(() => {
+    if (!watchlistCandidate) return;
+    openTrackSheet(watchlistCandidate);
+  }, [watchlistCandidate]);
 
   const videoKey = selectBestVideoKey(media?.videos);
   const hasVideo = !!videoKey;
@@ -426,6 +422,10 @@ export function PosterDetailContent() {
             onAddToWatchlist={handleAddToWatchlist}
           />
 
+          {watchlistCandidate && !creatingAction && (
+            <TrackingStatusRow candidate={watchlistCandidate} />
+          )}
+
           <InfoCard
             rows={[
               ...(releaseDate
@@ -508,7 +508,7 @@ export function PosterDetailContent() {
               <Heart className="h-4 w-4" />
               Like
             </button>
-            <button onClick={handleGuestAction} className="btn-outline flex-1 h-10 gap-2">
+            <button onClick={handleAddToWatchlist} className="btn-outline flex-1 h-10 gap-2">
               <Bookmark className="h-4 w-4" />
               Save
             </button>
@@ -593,17 +593,6 @@ export function PosterDetailContent() {
         />
       )}
 
-      {/* Add to watchlist bottom sheet */}
-      {showAddToList && watchlistCandidate && (
-        <AddToListSheet
-          candidate={watchlistCandidate}
-          onClose={() => setShowAddToList(false)}
-          onManageLists={() => {
-            setShowAddToList(false);
-            router.push("/watchlists");
-          }}
-        />
-      )}
     </div>
   );
 }

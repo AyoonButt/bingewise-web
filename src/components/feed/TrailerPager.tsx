@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
+import { openTrackSheetForPost } from "@/stores/tracking-sheet-store";
 import { TrailerCard } from "@/components/explore/TrailerCard";
 import { CommentBottomSheet } from "@/components/comments/CommentBottomSheet";
 import { ShareDialog } from "@/components/share/ShareDialog";
@@ -227,6 +228,7 @@ export function TrailerPager({
 
   const handleSaveClick = useCallback(
     (post: PostDto) => {
+      if (openTrackSheetForPost(post)) return;
       const postId = post.postId;
       if (!postId || !user) return;
       setSavedTrailerIds((ids) => {

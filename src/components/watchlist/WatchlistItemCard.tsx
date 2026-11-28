@@ -7,6 +7,8 @@ import { Move, Loader2, Trash2, X } from "lucide-react";
 import { tmdbImage } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
 import type { WatchlistItem } from "@/types/watchlist";
+import type { TitleTrackingDto } from "@/types/title-tracking";
+import { TrackingEntryBadges } from "@/components/tracking/TrackingBadges";
 
 /** Drag-and-drop wiring for a card in reorder mode. */
 export interface WatchlistCardReorder {
@@ -28,6 +30,7 @@ interface WatchlistItemCardProps {
   isOwner?: boolean;
   canRemove?: boolean;
   onRemove: (itemId: number) => Promise<void> | void;
+  trackingEntry?: TitleTrackingDto | null;
   /** When present the card renders in reorder mode: draggable + move controls. */
   reorder?: WatchlistCardReorder;
 }
@@ -37,6 +40,7 @@ export function WatchlistItemCard({
   isOwner,
   canRemove,
   onRemove,
+  trackingEntry,
   reorder,
 }: WatchlistItemCardProps) {
   const [confirming, setConfirming] = useState(false);
@@ -112,6 +116,7 @@ export function WatchlistItemCard({
           <p className="text-xs text-muted-foreground">
             {item.releaseYear ?? ""}
           </p>
+          <TrackingEntryBadges entry={trackingEntry} className="mt-1" />
         </Link>
         {allowRemove && (
           <button

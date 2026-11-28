@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Bookmark, Compass, Plus, Search } from "lucide-react";
+import { Bookmark, Compass, ListChecks, Plus, Search } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useUiStore } from "@/stores/ui-store";
 import { useWatchlists } from "@/hooks/use-watchlists";
 import { usePublicWatchlists } from "@/hooks/use-public-watchlists";
 import { WatchlistCard } from "@/components/watchlist/WatchlistCard";
 import { CreateWatchlistDialog } from "@/components/watchlist/CreateWatchlistDialog";
+import { TrackingTab } from "@/components/tracking/TrackingTab";
+import { isTitleTrackingEnabled } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
-type Tab = "discover" | "mine";
+type Tab = "discover" | "mine" | "tracking";
 
 export default function WatchlistsPage() {
   const user = useAuthStore((s) => s.user);
@@ -22,7 +24,7 @@ export default function WatchlistsPage() {
   const [tab, setTab] = useState<Tab>(user ? "mine" : "discover");
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreate, setShowCreate] = useState(false);
-  const publicFeed = usePublicWatchlists(tab === "discover" ? searchQuery : "");
+  const trackingEnabled = isTitleTrackingEnabled();
 
   const handleCreateClick = () => {
     // Guest mode: prompt sign-up instead of opening the dialog
@@ -95,14 +97,30 @@ export default function WatchlistsPage() {
           <Bookmark className="h-4 w-4" />
           My Lists
         </button>
+        {trackingEnabled && (
+          <button
+            onClick={() => setTab("tracking")}
+            className={cn(
+              "flex-1 h-9 rounded-lg text-sm font-medium transition-colors inline-flex items-center justify-center gap-2",
+              tab === "tracking"
+                ? "bg-background shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <ListChecks className="h-4 w-4" />
+            Tracking
+          </button>
+        )}
       </div>
 
-      {tab === "discover" ? (
-        <DiscoverTab
-          query={searchQuery}
-          onQueryChange={setSearchQuery}
-          feed={publicFeed}
-        />
+      {tab === "tracking" && trackingEnabled ? (
+        user ? (
+          <TrackingTab userId={user.userId} />
+        ) : (
+          <TrackingGuest onCreateClick={handleCreateClick} />
+        )
+      ) : tab === "discover" ? (
+        <DiscoverTab query={searchQuery} onQueryChange={setSearchQuery} />
       ) : (
         <MyListsTab
           watchlists={watchlists}
@@ -126,12 +144,11 @@ export default function WatchlistsPage() {
 function DiscoverTab({
   query,
   onQueryChange,
-  feed,
 }: {
   query: string;
   onQueryChange: (q: string) => void;
-  feed: ReturnType<typeof usePublicWatchlists>;
 }) {
+  const feed = usePublicWatchlists(query);
   return (
     <div className="space-y-5">
       <div className="relative">
@@ -251,6 +268,26 @@ function MyListsTab({
       {watchlists.map((w) => (
         <WatchlistCard key={w.id} watchlist={w} />
       ))}
+    </div>
+  );
+}
+
+function TrackingGuest({ onCreateClick }: { onCreateClick: () => void }) {
+  return (
+    <div className="text-center py-16 space-y-3">
+      <div className="h-12 w-12 rounded-2xl bg-muted mx-auto flex items-center justify-center">
+        <ListChecks className="h-6 w-6 text-muted-foreground" />
+      </div>
+      <p className="text-muted-foreground max-w-xs mx-auto">
+        Create a free account to track what you want to watch, are watching, and
+        have finished.
+      </p>
+      <button
+        onClick={onCreateClick}
+        className="btn-primary h-10 px-4 inline-flex items-center gap-2 text-sm"
+      >
+        Sign up free
+      </button>
     </div>
   );
 }
