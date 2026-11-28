@@ -1,6 +1,16 @@
 import { forceLogout, getRefreshResult } from "./token-refresh";
 import { DEFAULT_TOKEN_TTL_SECONDS } from "./session";
 
+/** Backend errors use either `message` or `error`; surface whichever is present. */
+function apiErrorMessage(body: unknown, status: number): string {
+  if (body && typeof body === "object") {
+    const record = body as Record<string, unknown>;
+    const value = record.message ?? record.error;
+    if (typeof value === "string" && value.trim()) return value;
+  }
+  return `API error: ${status}`;
+}
+
 async function fetchWithAuth<T>(
   path: string,
   options: RequestInit = {}
@@ -36,7 +46,7 @@ async function fetchWithAuth<T>(
       });
       if (!retryRes.ok) {
         const errorBody = await retryRes.json().catch(() => null);
-        throw new Error(errorBody?.message || `API error: ${retryRes.status}`);
+        throw new Error(apiErrorMessage(errorBody, retryRes.status));
       }
       return retryRes.json();
     }
@@ -54,7 +64,7 @@ async function fetchWithAuth<T>(
 
   if (!res.ok) {
     const errorBody = await res.json().catch(() => null);
-    throw new Error(errorBody?.message || `API error: ${res.status}`);
+    throw new Error(apiErrorMessage(errorBody, res.status));
   }
 
   const { useAuthStore } = await import("@/stores/auth-store");

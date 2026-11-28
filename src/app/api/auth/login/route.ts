@@ -36,8 +36,15 @@ export async function POST(request: NextRequest) {
   });
 
   if (!res.ok) {
-    const error = await res.text();
-    return NextResponse.json({ message: error }, { status: res.status });
+    const text = await res.text();
+    let message = text || `Login failed: ${res.status}`;
+    try {
+      const body = JSON.parse(text);
+      message = body.message || body.error || message;
+    } catch {
+      // Non-JSON upstream error — keep the raw text.
+    }
+    return NextResponse.json({ message }, { status: res.status });
   }
 
   const data = await res.json();

@@ -22,7 +22,7 @@ function GuestSignupButtons() {
         Sign up free
       </Link>
       <button
-        onClick={openSignupPrompt}
+        onClick={() => openSignupPrompt()}
         className="btn-outline h-10 px-5 inline-flex items-center text-sm"
       >
         Learn more

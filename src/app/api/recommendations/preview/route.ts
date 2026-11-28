@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { buildBackendPreferences } from "@/lib/backend-preferences";
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value;
 
@@ -9,39 +10,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const { searchParams } = request.nextUrl;
-  const userId = searchParams.get("userId") ?? "0";
-  const limit = searchParams.get("limit") ?? "10";
+  const raw = await request.json().catch(() => null);
+  if (!raw || typeof raw !== "object") {
+    return NextResponse.json({ message: "Invalid preferences" }, { status: 400 });
+  }
 
-  const backendUrl = process.env.BACKEND_URL || "https://api-bingewise.com";
+  const preferences = buildBackendPreferences(raw as Record<string, unknown>);
+  const { searchParams } = request.nextUrl;
+  const limit = searchParams.get("limit") ?? "10";
   const params = new URLSearchParams({
-    userId,
+    userId: String(preferences.userId),
     mediaType: "movie",
     limit,
   });
 
+  const backendUrl = process.env.BACKEND_URL || "https://api-bingewise.com";
   const res = await fetch(`${backendUrl}/api/posts/recommendations/preview?${params}`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      userId: parseInt(userId),
-      language: searchParams.get("language") ?? "en",
-      region: searchParams.get("region") ?? "US",
-      subscriptions: (searchParams.get("subscriptions") ?? "").split(",").filter(Boolean).map(Number),
-      genreIds: (searchParams.get("genres") ?? "").split(",").filter(Boolean).map(Number),
-      avoidGenreIds: (searchParams.get("avoidGenres") ?? "").split(",").filter(Boolean).map(Number),
-      minMovie: parseInt(searchParams.get("minMovie") ?? "0") || null,
-      maxMovie: parseInt(searchParams.get("maxMovie") ?? "0") || null,
-      minTv: parseInt(searchParams.get("minTv") ?? "0") || null,
-      maxTv: parseInt(searchParams.get("maxTv") ?? "0") || null,
-      oldestDate: "1900-01-01",
-      recentDate: "2099-12-31",
-      isPrivate: false,
-      contentLanguagePreference: searchParams.get("contentLanguagePreference") ?? "ANY",
-    }),
+    body: JSON.stringify(preferences),
   });
 
   if (!res.ok) {

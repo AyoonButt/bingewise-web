@@ -2,19 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ChevronRight,
-  ChevronLeft,
-  Bell,
-  Reply,
-  UserPlus,
-  Mail,
-  Film,
-  Clapperboard,
-  Globe,
-  Layers,
-  Loader2,
-} from "lucide-react";
+import { ChevronRight, ChevronLeft, Bell, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { useAuthStore } from "@/stores/auth-store";
@@ -25,41 +13,17 @@ import {
   unregisterDevice,
 } from "@/lib/push-notifications";
 
-const categories = [
-  { key: "repliesEnabled" as const, icon: Reply, label: "Replies", desc: "When someone replies to your posts" },
-  { key: "followRequestsEnabled" as const, icon: UserPlus, label: "Follow Requests", desc: "When someone follows you" },
-  { key: "messagesEnabled" as const, icon: Mail, label: "Messages", desc: "When you receive DMs" },
-  { key: "releasesEnabled" as const, icon: Film, label: "Upcoming Releases", desc: "Reminders for movies and TV premieres" },
-  { key: "sequelsEnabled" as const, icon: Clapperboard, label: "Sequels", desc: "When sequels to your favorites are announced" },
-  { key: "subscriptionsEnabled" as const, icon: Layers, label: "New Seasons", desc: "When shows you follow return" },
-  { key: "streamingEnabled" as const, icon: Globe, label: "Streaming Availability", desc: "When saved content becomes available to stream" },
-  { key: "generalEnabled" as const, icon: Bell, label: "General", desc: "App updates and announcements" },
-];
-
 export default function StayConnectedPage() {
   const router = useRouter();
   const store = useOnboardingStore();
   const userId = useAuthStore((s) => s.user?.userId);
   const [masterEnabled, setMasterEnabled] = useState(store.notificationsEnabled);
-  const [enabled, setEnabled] = useState(() => ({
-    repliesEnabled: store.repliesEnabled,
-    followRequestsEnabled: store.followRequestsEnabled,
-    messagesEnabled: store.messagesEnabled,
-    releasesEnabled: store.releasesEnabled,
-    sequelsEnabled: store.sequelsEnabled,
-    generalEnabled: store.generalEnabled,
-    subscriptionsEnabled: store.subscriptionsEnabled,
-    streamingEnabled: store.streamingEnabled,
-  }));
-  const [permission, setPermission] = useState<string>("default");
+  const [permission, setPermission] = useState(() => getNotificationPermission());
   const [requesting, setRequesting] = useState(false);
 
   useEffect(() => {
     setPermission(getNotificationPermission());
   }, []);
-
-  const toggle = (key: keyof typeof enabled) =>
-    setEnabled((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const handlePermission = async () => {
     setRequesting(true);
@@ -72,16 +36,22 @@ export default function StayConnectedPage() {
 
   const handleContinue = async () => {
     store.setNotificationsEnabled(masterEnabled);
-    Object.entries(enabled).forEach(([k, v]) =>
-      store.setNotificationCategory(k as keyof typeof enabled, v)
-    );
     store.markStepCompleted("stay-connected");
-    if (userId && masterEnabled && permission === "granted") {
-      await registerDevice(userId);
+
+    if (!userId) {
+      router.push("/onboarding/vibe-check");
+      return;
     }
-    if (!masterEnabled && userId) {
+
+    if (!masterEnabled) {
+      await unregisterDevice();
+    } else if (permission === "granted") {
+      await registerDevice(userId);
+    } else {
+      // Never leave a token registered if alerts will not be shown.
       await unregisterDevice();
     }
+
     router.push("/onboarding/vibe-check");
   };
 
@@ -90,7 +60,7 @@ export default function StayConnectedPage() {
       <div className="text-center space-y-1">
         <h2 className="text-xl font-bold tracking-tight">Stay Connected</h2>
         <p className="text-sm text-muted-foreground">
-          Pick the updates that matter to you. You can change these later.
+          Choose whether this browser can show BingeWise alerts.
         </p>
       </div>
 
@@ -99,12 +69,14 @@ export default function StayConnectedPage() {
           <Bell className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-medium">Enable Notifications</p>
+          <p className="text-sm font-medium">Enable web alerts</p>
           <p className="text-xs text-muted-foreground">
-            Receive updates about content and activity
+            This setting applies to this browser only.
           </p>
         </div>
         <button
+          type="button"
+          aria-pressed={masterEnabled}
           onClick={() => setMasterEnabled((v) => !v)}
           className={cn(
             "relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0",
@@ -120,57 +92,45 @@ export default function StayConnectedPage() {
         </button>
       </div>
 
-      {masterEnabled && (
-        <>
-          {permission !== "granted" && permission !== "unsupported" && (
-            <button
-              onClick={handlePermission}
-              disabled={requesting}
-              className="w-full py-2.5 rounded-xl text-sm border border-primary/40 text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
-            >
-              {requesting ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Enabling…</>
-              ) : (
-                <><Bell className="h-4 w-4" /> Enable browser alerts</>
-              )}
-            </button>
+      {masterEnabled && permission !== "granted" && permission !== "unsupported" && (
+        <button
+          onClick={handlePermission}
+          disabled={requesting}
+          className="w-full py-2.5 rounded-xl text-sm border border-primary/40 text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+        >
+          {requesting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> Enabling…
+            </>
+          ) : (
+            <>
+              <Bell className="h-4 w-4" /> Allow browser alerts
+            </>
           )}
-          {permission === "denied" && (
-            <p className="text-center text-xs text-muted-foreground">
-              Browser alerts are blocked. You can still use BingeWise normally.
-            </p>
-          )}
-          <div className="card divide-y divide-border">
-            {categories.map(({ key, icon: Icon, label, desc }) => (
-              <div key={key} className="flex items-center gap-3 p-4">
-                <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{label}</p>
-                  <p className="text-xs text-muted-foreground">{desc}</p>
-                </div>
-                <button
-                  onClick={() => toggle(key)}
-                  className={cn(
-                    "relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0",
-                    enabled[key] ? "bg-primary" : "bg-secondary"
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform",
-                      enabled[key] ? "translate-x-5" : "translate-x-1"
-                    )}
-                  />
-                </button>
-              </div>
-            ))}
-          </div>
-        </>
+        </button>
+      )}
+
+      {masterEnabled && permission === "granted" && (
+        <p className="text-center text-xs text-muted-foreground">
+          Browser alerts are allowed for this device.
+        </p>
+      )}
+
+      {masterEnabled && permission === "denied" && (
+        <p className="text-center text-xs text-muted-foreground">
+          Browser alerts are blocked. You can still use BingeWise normally.
+        </p>
+      )}
+
+      {masterEnabled && permission === "unsupported" && (
+        <p className="text-center text-xs text-muted-foreground">
+          This browser does not support web alerts.
+        </p>
       )}
 
       {!masterEnabled && (
         <p className="text-center text-xs text-muted-foreground">
-          Notifications are disabled. You can enable them later in Settings.
+          Alerts are off. You can enable them later in Settings.
         </p>
       )}
 

@@ -12,6 +12,21 @@ interface GenreFilterResult {
   name: string;
 }
 
+// The backend returns GenreEntity fields (genreId/genreName); older mocks and
+// proxies may still return id/name. Accept both shapes before caching/saving.
+function normalizeGenreResult(value: unknown): GenreFilterResult | null {
+  const genre = value as {
+    id?: number;
+    name?: string;
+    genreId?: number;
+    genreName?: string;
+  } | null;
+  const id = Number(genre?.id ?? genre?.genreId);
+  const name = String(genre?.name ?? genre?.genreName ?? "");
+  if (!Number.isFinite(id) || id <= 0 || !name) return null;
+  return { id, name };
+}
+
 export default function OnboardingGenresPage() {
   const router = useRouter();
   const store = useOnboardingStore();
@@ -34,10 +49,14 @@ export default function OnboardingGenresPage() {
     setSearching(true);
     const timer = setTimeout(async () => {
       try {
-        const data = await apiClient<GenreFilterResult[]>(
+        const data = await apiClient<unknown[]>(
           `/api/genres/filter?query=${encodeURIComponent(q)}`
         );
-        setSearchResults(data ?? []);
+        setSearchResults(
+          (data ?? [])
+            .map(normalizeGenreResult)
+            .filter((genre): genre is GenreFilterResult => genre !== null)
+        );
       } catch {
         setSearchResults([]);
       } finally {

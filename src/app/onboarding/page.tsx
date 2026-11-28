@@ -8,9 +8,23 @@ import { BrandLogo } from "@/components/ui/brand-logo";
 import { cn } from "@/lib/utils";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { useAuthStore } from "@/stores/auth-store";
+import { useUiStore } from "@/stores/ui-store";
 import { onboardingProgressPercent } from "@/lib/onboarding-progress";
 import { analytics } from "@/lib/analytics";
+import { isOnboardingAccountGateEnabled } from "@/lib/session";
 import { WelcomeBackdrop } from "@/components/onboarding/WelcomeBackdrop";
+
+function acquisitionSource(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  const params = new URLSearchParams(window.location.search);
+  return (
+    params.get("utm_source") ||
+    params.get("utm_campaign") ||
+    params.get("ref") ||
+    document.referrer ||
+    undefined
+  );
+}
 
 const STEPS = [
   { label: "Region & Language", href: "/onboarding/region-language" },
@@ -28,7 +42,22 @@ export default function OnboardingWelcomePage() {
     useOnboardingStore();
   const userId = useAuthStore((s) => s.user?.userId ?? 0);
   const authStatus = useAuthStore((s) => s.authStatus);
+  const openSignupPrompt = useUiStore((s) => s.openSignupPrompt);
+  const gateEnabled = isOnboardingAccountGateEnabled();
   const [showDetails, setShowDetails] = useState(false);
+
+  const handleSkip = () => {
+    analytics.logOnboardingExited(
+      "welcome",
+      authStatus === "authenticated" ? "/feed" : gateEnabled ? "signup_prompt" : "/feed?guest=1"
+    );
+    if (authStatus === "authenticated") return;
+    if (gateEnabled) {
+      openSignupPrompt({ required: true, destination: "/feed" });
+    } else {
+      router.push("/feed?guest=1");
+    }
+  };
 
   useEffect(() => {
     if (authStatus === "restoring") return;
@@ -69,19 +98,20 @@ export default function OnboardingWelcomePage() {
       <WelcomeBackdrop />
       <div className="relative z-10 flex flex-1 flex-col">
         {/* Top bar */}
-      <div className="flex items-center justify-between px-6 h-14 border-b border-border">
-        <Link href="/feed" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <BrandLogo size="sm" />
-          </div>
-          <span className="text-lg font-bold tracking-tight">BingeWise</span>
-        </Link>
-        <Link
-          href="/feed?guest=1"
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Skip setup
-        </Link>
+      <div className="flex items-center justify-end px-6 h-14 border-b border-border">
+        {authStatus === "authenticated" ? (
+          <Link
+            href="/feed"
+            onClick={() => handleSkip()}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Skip setup
+          </Link>
+        ) : (
+          <button type="button" onClick={handleSkip} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Skip setup
+          </button>
+        )}
       </div>
 
       {/* Progress bar (show if resuming) */}
@@ -155,7 +185,7 @@ export default function OnboardingWelcomePage() {
                   <span>• Vibe check</span>
                   <span>• Taste calibration</span>
                   <span>• Personalized preview</span>
-                  <span>• Soft signup option</span>
+                  <span>• Save your progress</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   After setup, create watchlists, discover and clone public ones, and follow
@@ -180,6 +210,7 @@ export default function OnboardingWelcomePage() {
                 </button>
                 <button
                   onClick={() => {
+                    analytics.logOnboardingStarted(acquisitionSource());
                     clear();
                     loadForUser(userId);
                     markStepCompleted("welcome");
@@ -196,7 +227,7 @@ export default function OnboardingWelcomePage() {
             ) : (
               <button
                 onClick={() => {
-                  analytics.logOnboardingStarted();
+                  analytics.logOnboardingStarted(acquisitionSource());
                   markStepCompleted("welcome");
                   router.push("/onboarding/region-language");
                 }}

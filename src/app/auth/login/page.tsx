@@ -9,9 +9,9 @@ import { z } from "zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { login } from "@/lib/auth";
-import { clearScrollMemory } from "@/hooks/use-scroll-restoration";
 import { acceptWatchlistInvite } from "@/lib/watchlist";
 import { useAuthStore } from "@/stores/auth-store";
+import { useUiStore } from "@/stores/ui-store";
 import { promoteGuestProgress } from "@/lib/onboarding-submit";
 import { analytics } from "@/lib/analytics";
 
@@ -26,6 +26,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setSession = useAuthStore((s) => s.setSession);
+  const closeSignupPrompt = useUiStore((s) => s.closeSignupPrompt);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [inviteToken, setInviteToken] = useState<string | null>(null);
@@ -61,6 +62,9 @@ function LoginForm() {
       }
 
       setSession(user, tokenExpiresAt);
+      // The login screen may have been opened from the required signup overlay;
+      // clear that guest prompt before returning to the app.
+      closeSignupPrompt();
       analytics.loginSuccess(user.userId);
 
       // Handle invite token after successful login
@@ -206,16 +210,6 @@ function LoginForm() {
           className="btn-outline w-full h-11 inline-flex"
         >
           Create an account
-        </Link>
-      </p>
-
-      <p className="text-center">
-        <Link
-          href="/feed?guest=1"
-          onClick={clearScrollMemory}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
-        >
-          Continue as Guest
         </Link>
       </p>
 

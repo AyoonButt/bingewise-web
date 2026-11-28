@@ -1,7 +1,7 @@
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import type { PostDto } from "@/types/post";
 
-interface FetchOnboardingPostsInput {
+export interface FetchOnboardingPostsInput {
   userId?: number;
   language: string;
   region: string;
@@ -9,11 +9,13 @@ interface FetchOnboardingPostsInput {
   providers: number[];
   limit: number;
   avoidGenres?: number[];
+  softAvoidGenreIds?: number[];
   excludedTmdbIds?: number[];
   contentLanguagePreference?: "ANY" | "PREFER_SELECTED" | "ONLY_SELECTED";
 }
 
-interface OnboardingPreferences {
+/** Shape accepted by the backend's UserPreferencesDto. */
+export interface OnboardingPreferences {
   userId: number;
   language: string;
   region: string;
@@ -61,15 +63,14 @@ function normalizedDate(value: string, fallback: string): string {
 
 export function buildVibePreferences(userId: number): OnboardingPreferences {
   const state = useOnboardingStore.getState();
-  const genreIds = uniqueNumbers([
-    ...state.orderedSelectedGenres,
-    ...state.preferredGenres,
-    ...state.vibeLikedGenres,
-  ]);
-  const avoidGenreIds = uniqueNumbers([
-    ...state.orderedAvoidedGenres,
-    ...state.avoidedGenres,
-  ]).filter((id) => !genreIds.includes(id));
+  // preferredGenres/avoidedGenres already carry drag order; the legacy
+  // ordered* genre fields are never written by a step and must not override
+  // the current selection.
+  const genreIds = uniqueNumbers([...state.preferredGenres, ...state.vibeLikedGenres]);
+  // Vibe rejects are soft signals only; hard avoids come from the genre step.
+  const avoidGenreIds = uniqueNumbers(state.avoidedGenres).filter(
+    (id) => !genreIds.includes(id)
+  );
   const softAvoidGenreIds = uniqueNumbers(state.vibeSoftAvoidedGenres).filter(
     (id) => !genreIds.includes(id) && !avoidGenreIds.includes(id)
   );
@@ -98,7 +99,12 @@ export function buildVibePreferences(userId: number): OnboardingPreferences {
   };
 }
 
-export async function fetchGuestVibeSlate(): Promise<PostDto[]> {
+/**
+ * The vibe-slate endpoint is public and takes the full preference object in its
+ * body. Signed-in users use it too so their hard avoids, soft vibe signals and
+ * exact exclusions are identical to a guest's.
+ */
+export async function fetchVibeSlate(): Promise<PostDto[]> {
   const preferences = buildVibePreferences(0);
   const res = await fetch("/api/backend/api/posts/vibe-slate", {
     method: "POST",
@@ -113,6 +119,9 @@ export async function fetchGuestVibeSlate(): Promise<PostDto[]> {
   return normalizePosts(await res.json());
 }
 
+// Kept as an alias for callers/tests that use the old name.
+export const fetchGuestVibeSlate = fetchVibeSlate;
+
 export async function fetchOnboardingPosts({
   userId,
   language,
@@ -121,40 +130,43 @@ export async function fetchOnboardingPosts({
   providers,
   limit,
   avoidGenres = [],
+  softAvoidGenreIds,
   excludedTmdbIds = [],
   contentLanguagePreference = "ANY",
 }: FetchOnboardingPostsInput): Promise<PostDto[]> {
-  if (userId) {
-    const params = new URLSearchParams({
-      userId: String(userId),
-      language: language.split("-")[0] || "en",
-      region,
-      genres: genres.join(","),
-      avoidGenres: avoidGenres.join(","),
-      subscriptions: providers.join(","),
-      contentLanguagePreference,
-      limit: String(limit),
-    });
-    const res = await fetch(`/api/recommendations/preview?${params}`);
-    if (!res.ok) throw new Error("Failed to load recommendations");
-    return excludePosts(normalizePosts(await res.json()), excludedTmdbIds);
-  }
+  // Start from the complete stored preference DTO, then apply step-level
+  // overrides. Never reduce it to a handful of query parameters: the backend
+  // ranking needs every field (dates, runtimes, rating, soft/exact exclusions).
+  const preferences = buildVibePreferences(userId ?? 0);
 
-  const preferences = buildVibePreferences(0);
-  const params = new URLSearchParams({
-    mediaType: "movie",
-    limit: String(limit),
-  });
-  const res = await fetch(`/api/backend/api/posts/recommendations/preview?${params}`, {
+  if (userId) preferences.userId = userId;
+  if (genres.length > 0) preferences.genreIds = uniqueNumbers(genres);
+  if (providers.length > 0) preferences.subscriptions = uniqueNumbers(providers);
+  preferences.avoidGenreIds = uniqueNumbers(avoidGenres).filter(
+    (id) => !preferences.genreIds.includes(id)
+  );
+  preferences.softAvoidGenreIds = uniqueNumbers(
+    softAvoidGenreIds ?? preferences.softAvoidGenreIds
+  ).filter(
+    (id) => !preferences.genreIds.includes(id) && !preferences.avoidGenreIds.includes(id)
+  );
+  if (excludedTmdbIds.length > 0) {
+    preferences.excludedTmdbIds = uniqueNumbers(excludedTmdbIds);
+  }
+  preferences.language = language.split("-")[0] || "en";
+  preferences.region = region || preferences.region;
+  preferences.contentLanguagePreference = contentLanguagePreference;
+
+  const url = userId
+    ? `/api/recommendations/preview?limit=${limit}`
+    : `/api/backend/api/posts/recommendations/preview?mediaType=movie&limit=${limit}`;
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(preferences),
   });
   if (!res.ok) throw new Error("Failed to load recommendations");
-  return excludePosts(
-    normalizePosts(await res.json()),
-    excludedTmdbIds.length > 0 ? excludedTmdbIds : preferences.excludedTmdbIds
-  );
+  return excludePosts(normalizePosts(await res.json()), preferences.excludedTmdbIds);
 }
 
 export function parseGenreIds(value: string): number[] {

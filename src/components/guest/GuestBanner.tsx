@@ -5,47 +5,85 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { X, Sparkles } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
-import { FIRST_VISIT_KEY } from "@/lib/session";
+import { useOnboardingStore } from "@/stores/onboarding-store";
+import { analytics } from "@/lib/analytics";
+import { ONBOARDING_STEP_IDS } from "@/lib/onboarding-progress";
 
 const DISMISS_KEY = "bw-guest-banner-dismissed";
+const RESUME_DISMISS_KEY = "bw-guest-resume-banner-dismissed";
 
 /**
  * Slim conversion banner shown to signed-out visitors on guest-browsable pages.
- * Dismissal persists for the browser (localStorage).
+ * If the visitor started onboarding, it becomes a resume prompt instead so the
+ * finished taste profile is one tap away. Dismissal persists per variant.
  */
 export function GuestBanner() {
   const user = useAuthStore((s) => s.user);
   const authStatus = useAuthStore((s) => s.authStatus);
   const pathname = usePathname();
+  const completedSteps = useOnboardingStore((s) => s.completedSteps);
+  const getResumeRoute = useOnboardingStore((s) => s.getResumeRoute);
   const [mounted, setMounted] = useState(false);
   const [dismissed, setDismissed] = useState(true);
+  const [resumeDismissed, setResumeDismissed] = useState(true);
 
   useEffect(() => {
     setMounted(true);
-    localStorage.setItem(FIRST_VISIT_KEY, "1");
     setDismissed(localStorage.getItem(DISMISS_KEY) === "1");
+    setResumeDismissed(localStorage.getItem(RESUME_DISMISS_KEY) === "1");
   }, []);
 
+  const meaningfulSteps = completedSteps.filter((step) => step !== "welcome").length;
+  const hasOnboardingProgress = meaningfulSteps > 0;
+  const showResume = hasOnboardingProgress && !resumeDismissed;
+  const resumeRoute = getResumeRoute();
+  const remaining = Math.max(1, ONBOARDING_STEP_IDS.length - 1 - meaningfulSteps);
+
   // The Explore trail is a full-screen reel; no room for a banner above it.
-  if (!mounted || authStatus !== "guest" || user || dismissed || pathname === "/explore") return null;
+  if (
+    !mounted ||
+    authStatus !== "guest" ||
+    user ||
+    pathname === "/explore" ||
+    (!showResume && dismissed)
+  ) {
+    return null;
+  }
 
   return (
     <div className="relative z-30 flex items-center gap-3 px-4 py-2.5 bg-primary/10 border-b border-primary/20 text-sm">
       <Sparkles className="h-4 w-4 text-primary shrink-0" />
       <p className="flex-1 min-w-0">
-        You&rsquo;re browsing as a guest.{" "}
-        <Link
-          href="/auth/register?from=/feed"
-          className="font-semibold underline underline-offset-2 hover:opacity-80"
-        >
-          Create a free account
-        </Link>{" "}
-        to like, save, and build watchlists.
+        {showResume ? (
+          <>
+            You&rsquo;re {remaining} step{remaining !== 1 ? "s" : ""} from a personalized feed.{" "}
+            <Link
+              href={resumeRoute}
+              onClick={() => analytics.logOnboardingResumeUsed(resumeRoute)}
+              className="font-semibold underline underline-offset-2 hover:opacity-80"
+            >
+              Finish setup
+            </Link>{" "}
+            to save your picks.
+          </>
+        ) : (
+          <>
+            You&rsquo;re browsing as a guest.{" "}
+            <Link
+              href="/auth/register?from=/feed"
+              className="font-semibold underline underline-offset-2 hover:opacity-80"
+            >
+              Create a free account
+            </Link>{" "}
+            to like, save, and build watchlists.
+          </>
+        )}
       </p>
       <button
         onClick={() => {
-          localStorage.setItem(DISMISS_KEY, "1");
-          setDismissed(true);
+          localStorage.setItem(showResume ? RESUME_DISMISS_KEY : DISMISS_KEY, "1");
+          if (showResume) setResumeDismissed(true);
+          else setDismissed(true);
         }}
         className="p-2.5 rounded-lg hover:bg-accent transition-colors shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
         aria-label="Dismiss"

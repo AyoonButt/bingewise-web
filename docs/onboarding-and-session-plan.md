@@ -16,12 +16,12 @@ Status: plan approved for phased implementation. No files were changed while pro
 3. **Social sign-in**: implement the soft signup prompt with the providers the web backend already supports; if OAuth endpoints are unavailable, use an email-signup-only variant with the same progress-promotion behavior.
 4. **Rollout**: gate the new wizard behind `NEXT_PUBLIC_NEW_ONBOARDING=true`.
 
-### Backend contract to confirm
+### Backend contract — verified 2026-11-27
 
-- `AuthUserInfo.needsSetup` is returned in auth responses and can be cleared after setup.
-- `GET/PUT /api/users/{userId}/notification-preferences` is available for the Stay Connected step.
-- Vibe feedback can be persisted via existing recommendation feedback endpoints (likes, soft avoids, excluded TMDB IDs).
-- Optional: `/api/auth/google` and `/api/auth/apple` for parity with mobile's soft signup overlay.
+- `needsSetup` exists only in auth **responses**. There is no DB column and no `complete-setup` endpoint; login/refresh always return `false` even for an account that never finished setup. The web clears it in the local session only.
+- There is no notification-settings endpoint, DTO, entity, or table. Web therefore offers only the master alert choice, stored in `bingewise-notification-preferences` on this device; the mobile category matrix is intentionally not reproduced because web cannot honor per-category suppression.
+- `PUT /api/users/{userId}` persists all 16 onboarding preference keys. Vibe feedback is split into `softAvoidGenreIds` (soft demotion) and `excludedTmdbIds` (hard exclusion); both are real persisted fields and affect ranking.
+- `/api/auth/google` and `/api/auth/apple` exist and are used through the web's `/api/auth/social` proxy. There is no backend `/api/auth/social`.
 
 ---
 
@@ -114,7 +114,7 @@ Files: `web/src/lib/auth.ts`, `web/src/lib/token-refresh.ts`, `web/src/app/auth/
   - Stored account or guest → `/feed`; never auto-replay setup.
   - Register → `/onboarding?fresh=1`.
   - Login → `/feed`, but if owned partial progress exists show Resume Setup dialog → `/onboarding?resume=1`.
-  - Shared watchlist/post deep links → target page as guest, no setup interruption.
+  - Shared watchlist (`invite` / `watchlistId`) and post (`/post/[id]`, `/activity/item/[postId]`) deep links → target page as guest, no setup interruption; handled globally by `OnboardingEntryRedirect`.
 - Preserve `invite`, `watchlistId`, and `from` params through auth/setup (`src/app/auth/login/page.tsx:34-41`, `src/app/auth/register/page.tsx:40-47`).
 - Allow `/onboarding` in `guestPaths` only if all steps are guest-safe and no user-scoped calls happen before signup (`src/middleware.ts:11`).
 
@@ -128,7 +128,7 @@ Files: `web/src/app/onboarding/**`, `web/src/components/onboarding/**`, `web/src
 2. **Region/Language** — language, region, content language; fold current duration/date filters here or into an expandable “advanced taste” block.
 3. **Content Rating** — reuse current ratings UI (`web/src/app/onboarding/ratings/page.tsx`).
 4. **Streaming** — reuse provider picker and add ordering (`web/src/app/onboarding/streaming/page.tsx`).
-5. **Stay Connected** — browser `Notification.requestPermission()`, device registration via existing `NotificationInitializer`, category toggles, and backend notification-preferences save.
+5. **Stay Connected** — browser `Notification.requestPermission()` and device (un)registration for the one per-device master choice. No category toggles: the backend has no per-user notification settings and the web service worker cannot suppress categories reliably.
 6. **Vibe Check** — new screen: fetch one prefiltered slate, 6 cards, widen to 8 when no positive signal, persist each decision, never fall back to unrelated trending posters on failure (`mobile VibeCheckScreen.kt:91-160`).
 7. **Taste Calibration** — new screen: fixed 250 ms × 4 stages, `prefers-reduced-motion` fallback, non-skippable (`mobile TasteCalibrationScreen.kt:53-58`).
 8. **Recommended For You** — prefetch preview, timed trending fallback, soft signup prompt for guests, promote guest progress to the new account on signup, then mark setup complete (`mobile RecommendedForYouScreen.kt:95-199`).
@@ -146,8 +146,11 @@ Acceptance: all 8 steps work on mobile viewport; resume is exact; vibe rejection
 
 Files: `web/src/app/onboarding/review/page.tsx`, new `web/src/lib/onboarding-submit.ts`, `web/src/app/api/users/**` as needed.
 
-- Build one submit payload containing profile preferences + notification preferences + vibe signals.
-- For accounts: `PUT /api/users/{userId}`, save notification prefs, call complete-setup, refresh auth store with updated `needsSetup`, clear local progress, redirect to intended destination.
+- Build one profile payload using the backend `UserUpdate` keys exactly: `language`, `region`, `minMovie`, `maxMovie`, `minTV`, `maxTV`, `oldestDate`, `recentDate`, `isPrivate`, `contentRatingAge`, `contentLanguagePreference`, `subscriptions`, `genres`, `avoidGenres`, `softAvoidGenreIds`, `excludedTmdbIds`. The backend binds with a strict Jackson mapper, so unknown/client-only `vibe*` keys cause a 400.
+- Send unbounded durations explicitly as the backend sentinels `0/300` (movies) and `0/90` (TV). `null` means "leave unchanged" and would keep the new account's server defaults. Live `GET /preferences` emits `private`, so the client accepts both `private` and `isPrivate` when reading back.
+- Hard `avoidGenres` come only from the genre step. Vibe rejects stay in `softAvoidGenreIds` (ranking demotion), and rejected poster IDs go in `excludedTmdbIds` (hard exclusion).
+- For accounts, `PUT /api/users/{userId}` is the only onboarding write the backend can persist. There is no `complete-setup` endpoint and no notification-settings endpoint/DTO in the backend: completion is recorded in the local session (`needsSetup: false`; login/refresh already return false), and the web alert choice is kept on-device in `bingewise-notification-preferences` as `masterEnabled` only.
+- Authenticated and guest previews both send the full `UserPreferencesDto` in the POST body. `/api/recommendations/preview` forwards all 17 fields with `minTV`/`maxTV` casing; the vibe-slate route is public for signed-in users too.
 - For guests: mark local completion only; on later signup/social login promote progress by calling the same submit path before redirecting to `/feed`.
 - Retry policy: keep local progress until every required save succeeds; partial success must not clear the store.
 
@@ -161,7 +164,7 @@ Add Playwright e2e coverage in `web/e2e/`:
 - register → onboarding → reload mid-step → resume → finish → `/feed`
 - login with matching progress → Resume dialog; with stale user progress → cleared
 - returning account → `/feed`, no setup flash
-- shared watchlist deep link as guest → no setup
+- shared watchlist and post deep links as guest → no setup
 - refresh-token-only cookie → navigation refreshes and stays signed in
 - upstream 500 during refresh → still signed in; 401 → cookies/localStorage cleared
 - register refresh cookie `Max-Age` equals login refresh cookie
@@ -202,4 +205,13 @@ Verification completed:
 - `npm run typecheck` passed.
 - `npm run lint` passed with the pre-existing `src/app/(main)/notifications/page.tsx:141` `<img>` warning.
 - `npm run build` passed.
-- `npx playwright test e2e/onboarding-session.spec.ts` passed 6/6.
+- `npx playwright test e2e/onboarding-session.spec.ts` passed with the current contract assertions.
+
+Backend re-verification on 2026-11-27 (source `22fbdd8 OAuth Fix`, clean tree, plus live probes against `api-bingewise.com`):
+
+- Auth source and live deployment agree on: no httpOnly cookies from the backend, JSON tokens, refresh via Bearer header, no `/api/auth/social`, and no server-side `needsSetup`.
+- Live `POST /api/auth/register`, `/api/auth/google`, `/api/auth/apple`, `/api/posts/vibe-slate`, and `/api/posts/recommendations/preview` exist. `complete-setup`, `notification-preferences`, and `/notifications/{id}/settings` return 404.
+- A full `PUT /api/users/{id}` with the web's 16 keys followed by `GET /api/users/{id}/preferences` round-tripped every onboarding field, including `softAvoidGenreIds`, `excludedTmdbIds`, and `contentRatingAge`.
+- Strict binding was confirmed: an unknown `vibeSoftAvoidedGenres` key or mis-cased `minTv`/`maxTv` returns 400; social `idToken` is required (a `token` alias returns 400).
+- Live deployment is older than source for auth user fields: `language`, `region`, and `needsSetup` were absent from the probed auth responses. The client now defaults these safely and forces `needsSetup: true` only for a fresh registration.
+- `user_soft_avoid_genres`, `user_excluded_tmdb_ids`, `user_providers`, and `onboarding_swipes` are used by code but have no in-repo migration/DDL; live persistence was confirmed for the first two through the round-trip.

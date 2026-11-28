@@ -27,6 +27,7 @@ import type { ContentResponse, PostDto } from "@/types/post";
 
 export function TrailerFeed() {
   const user = useAuthStore((s) => s.user);
+  const authStatus = useAuthStore((s) => s.authStatus);
   const userId = user?.userId;
   const language = getLanguageRegion(user);
   const region = language.split("-")[1] ?? "US";
@@ -67,6 +68,9 @@ export function TrailerFeed() {
 
   const query = useInfiniteQuery({
     queryKey: ["trailers", userId, language],
+    // A signed-in visitor must not be served guest trailers while the session
+    // is still being restored on first paint.
+    enabled: authStatus !== "restoring",
     queryFn: async ({ pageParam }): Promise<ContentResponse> => {
       const cursor = pageParam as string | null;
       const params = new URLSearchParams({ limit: "20" });
@@ -76,6 +80,10 @@ export function TrailerFeed() {
         return await apiClient<ContentResponse>(
           `/api/recommendations/${userId}/${language}?${params.toString()}`
         );
+      }
+
+      if (authStatus !== "guest") {
+        throw new Error("Session is still restoring");
       }
 
       // Guest mode: same endpoint the mobile app uses (unauthenticated).

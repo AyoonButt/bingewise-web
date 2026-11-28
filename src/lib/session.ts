@@ -24,3 +24,8 @@ export function isRetryableRefreshFailure(status: number): boolean {
 export function isNewOnboardingEnabled(): boolean {
   return process.env.NEXT_PUBLIC_NEW_ONBOARDING !== "false";
 }
+
+/** Gates the required account step at onboarding exit. Set to "false" to A/B test a soft gate. */
+export function isOnboardingAccountGateEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_ONBOARDING_ACCOUNT_GATE !== "false";
+}

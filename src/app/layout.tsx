@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { OnboardingEntryRedirect } from "@/components/OnboardingEntryRedirect";
 import { Footer } from "@/components/layout/Footer";
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/seo/JsonLd";
 
@@ -79,6 +80,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} min-h-screen`}>
         <Providers>
+          <OnboardingEntryRedirect />
           {children}
           <Footer />
         </Providers>

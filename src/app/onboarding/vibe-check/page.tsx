@@ -4,13 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ChevronLeft, Heart, X, Loader2, Sparkles } from "lucide-react";
-import { useAuthStore } from "@/stores/auth-store";
 import { GENRES, useOnboardingStore } from "@/stores/onboarding-store";
-import {
-  fetchGuestVibeSlate,
-  fetchOnboardingPosts,
-  parseGenreIds,
-} from "@/lib/onboarding-preview";
+import { fetchVibeSlate, parseGenreIds } from "@/lib/onboarding-preview";
 import type { PostDto } from "@/types/post";
 import { analytics } from "@/lib/analytics";
 
@@ -20,14 +15,8 @@ function genreLabel(id: number): string {
 
 export default function VibeCheckPage() {
   const router = useRouter();
-  const userId = useAuthStore((s) => s.user?.userId);
   const progress = useOnboardingStore((s) => s.vibeDeckProgress);
-  const language = useOnboardingStore((s) => s.language);
-  const region = useOnboardingStore((s) => s.region);
-  const preferredGenres = useOnboardingStore((s) => s.preferredGenres);
-  const selectedProviders = useOnboardingStore((s) => s.selectedProviders);
   const contentRating = useOnboardingStore((s) => s.contentRating);
-  const contentLanguagePreference = useOnboardingStore((s) => s.contentLanguagePreference);
   const [pool, setPool] = useState<PostDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,17 +27,9 @@ export default function VibeCheckPage() {
     setError(null);
     try {
       const state = useOnboardingStore.getState();
-      const posts = userId
-        ? await fetchOnboardingPosts({
-            userId,
-            language,
-            region,
-            genres: preferredGenres,
-            providers: selectedProviders,
-            contentLanguagePreference,
-            limit: 25,
-          })
-        : await fetchGuestVibeSlate();
+      // The public vibe-slate endpoint accepts the full preference DTO, so
+      // signed-in users get the same hard/soft/exact filters as guests.
+      const posts = await fetchVibeSlate();
       const filtered = contentRating < 99
         ? posts.filter((post) => {
             const rating = Number(post.contentRating);
@@ -68,7 +49,7 @@ export default function VibeCheckPage() {
     } finally {
       setLoading(false);
     }
-  }, [contentLanguagePreference, contentRating, language, preferredGenres, region, selectedProviders, userId]);
+  }, [contentRating]);
 
   useEffect(() => {
     void load();

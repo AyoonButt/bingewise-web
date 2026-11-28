@@ -103,5 +103,6 @@ export function tmdbImage(
   if (/^https?:\/\//i.test(path)) return path;
   // TMDB paths should start with /
   if (!path.startsWith("/")) return "/images/placeholder.png";
-  return `${process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE}/${size}${path}`;
+  const base = process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE || "https://image.tmdb.org/t/p";
+  return `${base}/${size}${path}`;
 }
