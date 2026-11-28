@@ -1,6 +1,7 @@
 import type { AuthResponse } from "@/types/auth";
 import type { UserDto } from "@/types/user";
 import {
+  SESSION_KEY,
   isDefinitiveRefreshFailure,
   isRetryableRefreshFailure,
 } from "./session";
@@ -33,7 +34,20 @@ async function doRefresh(): Promise<RefreshResult> {
   }
 }
 
+function hasLocalSession(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    return Boolean(window.localStorage.getItem(SESSION_KEY));
+  } catch {
+    return true;
+  }
+}
+
 async function doRefreshInner(): Promise<RefreshResult> {
+  if (!hasLocalSession()) {
+    return { status: "unauthorized" };
+  }
+
   const maxAttempts = 3;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
