@@ -288,7 +288,10 @@ async function openFeedSheet(page: Page) {
 
 async function openTrackingTab(page: Page) {
   await page.goto("/watchlists");
+  await expect(page.getByRole("heading", { name: "Lists", level: 1 })).toBeVisible();
   await page.getByRole("button", { name: /^Tracking$/ }).click();
+  await expect(page.getByText(/Track what you want to watch/)).toBeVisible();
+  await expect(page.getByText(/watchlist/i)).toHaveCount(0);
   await expect(page.getByRole("button", { name: /^watching \(/i })).toBeVisible();
 }
 

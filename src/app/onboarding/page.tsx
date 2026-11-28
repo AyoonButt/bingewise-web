@@ -78,7 +78,7 @@ export default function OnboardingWelcomePage() {
     },
     {
       icon: List,
-      title: "Watchlists that plan ahead",
+      title: "Lists that plan ahead",
       description: "Save to your own lists, clone curated public ones, and never wonder what's next.",
     },
     {

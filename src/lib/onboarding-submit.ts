@@ -59,7 +59,36 @@ export function buildOnboardingPayload() {
   };
 }
 
-function markSetupCompleteLocally() {
+async function claimOnboardingVector(userId: number) {
+  const state = useOnboardingStore.getState();
+  const decisions = state.vibeDeckProgress?.decisions ?? {};
+  const swipes = Object.entries(decisions).map(([tmdbId, decision]) => ({
+    tmdbId: Number(tmdbId),
+    direction: decision === "liked" ? "right" : "left",
+  }));
+  if (!swipes.length) return;
+
+  const providers = state.orderedSelectedProviders.length > 0
+    ? state.orderedSelectedProviders
+    : state.selectedProviders;
+
+  try {
+    await apiClient(`/api/users/${userId}/claim-onboarding`, {
+      method: "POST",
+      body: JSON.stringify({
+        preferences: {
+          providerIds: providers,
+          contentRatingAge: state.contentRating,
+        },
+        swipes,
+      }),
+    });
+  } catch (error) {
+    console.error("Failed to build onboarding vector", error);
+  }
+}
+
+function markSetupCompleteLocally(language?: string, region?: string) {
   const auth = useAuthStore.getState();
   if (!auth.user) return;
   let tokenExpiresAt = auth.tokenExpiresAt ?? Date.now() + 30 * 24 * 60 * 60 * 1000;
@@ -72,7 +101,15 @@ function markSetupCompleteLocally() {
       tokenExpiresAt = auth.tokenExpiresAt ?? Date.now() + 30 * 24 * 60 * 60 * 1000;
     }
   }
-  auth.refreshSessionData({ ...auth.user, needsSetup: false }, tokenExpiresAt);
+  auth.refreshSessionData(
+    {
+      ...auth.user,
+      needsSetup: false,
+      language: language || auth.user.language,
+      region: region || auth.user.region,
+    },
+    tokenExpiresAt
+  );
 }
 
 export async function submitOnboarding(): Promise<void> {
@@ -87,6 +124,7 @@ export async function submitOnboarding(): Promise<void> {
     method: "PUT",
     body: JSON.stringify(payload),
   });
+  await claimOnboardingVector(userId);
 
   // There is no backend notification-settings endpoint, and only the master
   // choice can actually be enforced on web by registering/unregistering this
@@ -98,7 +136,7 @@ export async function submitOnboarding(): Promise<void> {
   // The backend has no complete-setup endpoint; needsSetup is response-only.
   // Mark it complete in the local session so the client does not loop back into
   // onboarding. Login/refresh already report needsSetup: false.
-  markSetupCompleteLocally();
+  markSetupCompleteLocally(state.language, state.region);
 }
 
 export async function promoteGuestProgress(userId: number): Promise<"saved" | "resume" | "none"> {

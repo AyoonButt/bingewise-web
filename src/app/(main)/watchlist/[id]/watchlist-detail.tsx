@@ -281,7 +281,7 @@ function WatchlistDetailInner({
         <p className="text-muted-foreground">{error || "Watchlist not found"}</p>
         <Link
           href="/watchlists"
-          aria-label="Back to Watchlists"
+          aria-label="Back to Lists"
           className="p-2 rounded-lg hover:bg-accent transition-colors inline-flex"
         >
           <ChevronLeft className="h-5 w-5" />
@@ -441,7 +441,7 @@ function WatchlistDetailInner({
           ) : (
             <Copy className="h-4 w-4" />
           )}
-          Add to My Watchlists
+          Add to My Lists
         </button>
       )}
 

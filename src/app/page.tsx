@@ -77,7 +77,7 @@ const guestLinks = [
   { href: "/feed", label: "Feed", icon: HomeIcon, description: "See what's trending" },
   { href: "/explore", label: "Explore", icon: Compass, description: "Discover new titles" },
   { href: "/search", label: "Search", icon: Search, description: "Find any show or movie" },
-  { href: "/watchlists", label: "Watchlists", icon: Bookmark, description: "Browse public lists" },
+  { href: "/watchlists", label: "Lists", icon: Bookmark, description: "Browse public lists" },
   { href: "/following", label: "Following", icon: Users, description: "See what others watch" },
 ];
 

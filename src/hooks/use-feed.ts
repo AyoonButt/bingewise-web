@@ -3,7 +3,7 @@
 import { useCallback, useRef } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import type { AuthStatus } from "@/stores/auth-store";
+import { useAuthStore, type AuthStatus } from "@/stores/auth-store";
 import type { ContentResponse, PostDto } from "@/types/post";
 
 export function useFeed(
@@ -13,11 +13,19 @@ export function useFeed(
   authStatus: AuthStatus
 ) {
   const query = useInfiniteQuery({
-    queryKey: ["feed", userId, language, region],
+    queryKey: ["feed", userId, language, region, authStatus],
     // Never fire the guest endpoint while the session is still being restored:
     // a signed-in user would otherwise get a guest feed on first paint.
-    enabled: authStatus !== "restoring",
+    enabled:
+      authStatus === "authenticated" ? Boolean(userId) : authStatus === "guest",
     queryFn: async ({ pageParam }): Promise<ContentResponse> => {
+      const current = useAuthStore.getState();
+      if (
+        current.authStatus !== authStatus ||
+        (current.user?.userId || undefined) !== userId
+      ) {
+        throw new Error("Session changed while loading the feed");
+      }
       const cursor = pageParam as string | null;
       const params = new URLSearchParams({ limit: "20" });
       if (cursor) params.set("cursor", cursor);

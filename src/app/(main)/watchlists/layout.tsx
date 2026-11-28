@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "My Watchlists",
+  title: "Lists",
   description:
-    "Manage your watchlists. Track shows and movies across all your streaming services in one place.",
+    "Manage your lists. Track shows and movies across all your streaming services in one place.",
   openGraph: {
-    title: "My Watchlists",
+    title: "Lists",
     description:
-      "Manage your watchlists. Track shows and movies across all your streaming services in one place.",
+      "Manage your lists. Track shows and movies across all your streaming services in one place.",
     url: "https://www.bingewise.net/watchlists",
     siteName: "BingeWise",
     type: "website",

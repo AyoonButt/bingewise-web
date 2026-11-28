@@ -68,11 +68,19 @@ export function TrailerFeed() {
   } = useTrailerInteractionTracker(userId);
 
   const query = useInfiniteQuery({
-    queryKey: ["trailers", userId, language],
+    queryKey: ["trailers", userId, language, authStatus],
     // A signed-in visitor must not be served guest trailers while the session
     // is still being restored on first paint.
-    enabled: authStatus !== "restoring",
+    enabled:
+      authStatus === "authenticated" ? Boolean(userId) : authStatus === "guest",
     queryFn: async ({ pageParam }): Promise<ContentResponse> => {
+      const current = useAuthStore.getState();
+      if (
+        current.authStatus !== authStatus ||
+        (current.user?.userId || undefined) !== userId
+      ) {
+        throw new Error("Session changed while loading trailers");
+      }
       const cursor = pageParam as string | null;
       const params = new URLSearchParams({ limit: "20" });
       if (cursor) params.set("cursor", cursor);

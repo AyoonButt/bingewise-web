@@ -15,14 +15,22 @@ import { formatTrackingProgress, toTrackingKey } from "@/lib/title-tracking";
 import { cn } from "@/lib/utils";
 import type { TrackCandidate } from "@/types/title-tracking";
 
-export function TrackingStatusRow({ candidate }: { candidate: TrackCandidate }) {
+export function TrackingStatusRow({
+  candidate,
+  showEmptyState = true,
+}: {
+  candidate: TrackCandidate;
+  showEmptyState?: boolean;
+}) {
   const user = useAuthStore((s) => s.user);
   const key = toTrackingKey(candidate);
   const openSubdialog = useTrackingSheetStore((s) => s.openSubdialog);
   const entryQuery = useTrackingForTitle(user?.userId, key);
-  const { upsert, isSaving } = useTitleTrackingMutations(user?.userId);
+  const { upsert, isSaving, error } = useTitleTrackingMutations(user?.userId);
   const entry = entryQuery.data ?? null;
   const progress = formatTrackingProgress(entry);
+
+  if (!showEmptyState && (!user || entryQuery.isLoading || !entry)) return null;
 
   if (!user) {
     return (
@@ -61,14 +69,18 @@ export function TrackingStatusRow({ candidate }: { candidate: TrackCandidate }) 
   const increment = async () => {
     if (!entry.lastSeason || !entry.lastEpisode || isSaving) return;
     const nextEpisode = entry.lastEpisode + 1;
-    await upsert({
-      ...key,
-      status: "watching",
-      rating: null,
-      note: entry.note ?? null,
-      lastSeason: entry.lastSeason,
-      lastEpisode: nextEpisode,
-    });
+    try {
+      await upsert({
+        ...key,
+        status: "watching",
+        rating: null,
+        note: entry.note ?? null,
+        lastSeason: entry.lastSeason,
+        lastEpisode: nextEpisode,
+      });
+    } catch {
+      return;
+    }
     analytics.logTvProgressSaved(
       { tmdbId: key.tmdbId, mediaType: key.mediaType, postId: candidate.postId },
       entry.lastSeason,
@@ -139,6 +151,7 @@ export function TrackingStatusRow({ candidate }: { candidate: TrackCandidate }) 
           </button>
         )}
       </div>
+      {error && <p className="text-xs text-destructive">{error.message}</p>}
     </div>
   );
 }

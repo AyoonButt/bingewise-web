@@ -26,6 +26,13 @@ export default function WatchlistsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const trackingEnabled = isTitleTrackingEnabled();
 
+  const subtitle =
+    tab === "tracking"
+      ? "Track what you want to watch, what you're watching, and what you've finished."
+      : tab === "discover"
+        ? "Discover public lists from other users and clone the ones you like."
+        : "Organize movies and TV shows into collections. Keep lists private or publish them so others can discover and clone them.";
+
   const handleCreateClick = () => {
     // Guest mode: prompt sign-up instead of opening the dialog
     if (!user) {
@@ -53,12 +60,9 @@ export default function WatchlistsPage() {
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Watchlists
+            Lists
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Organize movies and TV shows into collections. Keep watchlists
-            private or publish them so others can discover and clone them.
-          </p>
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
         </div>
         {tab === "mine" && (
           <button
@@ -156,7 +160,7 @@ function DiscoverTab({
         <input
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Search public watchlists…"
+          placeholder="Search public lists…"
           className="input-base pl-10"
         />
       </div>
@@ -182,8 +186,8 @@ function DiscoverTab({
           </div>
           <p className="text-muted-foreground">
             {query.trim()
-              ? `No public watchlists match “${query.trim()}”.`
-              : "No public watchlists yet. Make one of yours public to appear here."}
+              ? `No public lists match “${query.trim()}”.`
+              : "No public lists yet. Make one of yours public to appear here."}
           </p>
         </div>
       ) : (
@@ -231,7 +235,7 @@ function MyListsTab({
           <Bookmark className="h-6 w-6 text-muted-foreground" />
         </div>
         <p className="text-muted-foreground max-w-xs mx-auto">
-          Create a free account to build watchlists and save movies and shows.
+          Create a free account to build lists and save movies and shows.
         </p>
         <button
           onClick={onCreateClick}
@@ -250,14 +254,14 @@ function MyListsTab({
           <Bookmark className="h-6 w-6 text-muted-foreground" />
         </div>
         <p className="text-muted-foreground">
-          No watchlists yet. Create one to save movies and shows.
+          No lists yet. Create one to save movies and shows.
         </p>
         <button
           onClick={onCreateClick}
           className="btn-primary h-10 px-4 inline-flex items-center gap-2 text-sm"
         >
           <Plus className="h-4 w-4" />
-          Create your first watchlist
+          Create your first list
         </button>
       </div>
     );

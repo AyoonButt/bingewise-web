@@ -3,14 +3,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import {
-  ArrowLeft,
-  X,
-  Loader2,
-  Share2,
-  Heart,
-  Bookmark,
-} from "lucide-react";
+import { ArrowLeft, X, Loader2 } from "lucide-react";
 import { getMovieDetail, getTvDetail, tmdbImage } from "@/lib/tmdb";
 import { getLanguageRegion } from "@/lib/locale";
 import { decodeHtmlEntities } from "@/lib/utils";
@@ -19,6 +12,7 @@ import { userAvatarUrl } from "@/lib/avatar";
 import { useAuthStore } from "@/stores/auth-store";
 import { useUiStore } from "@/stores/ui-store";
 import { useComments } from "@/hooks/use-comments";
+import { useInteractions } from "@/hooks/use-interactions";
 import { useViewDurationTracker } from "@/hooks/use-view-duration-tracker";
 import { RatingDisplay } from "@/components/post/RatingDisplay";
 import { PosterActions } from "@/components/post/PosterActions";
@@ -28,9 +22,11 @@ import { OverviewCard } from "@/components/post/OverviewCard";
 import { CastList } from "@/components/post/CastList";
 import { RecommendationsSection } from "@/components/post/RecommendationsSection";
 import { CommentBottomSheet } from "@/components/comments/CommentBottomSheet";
+import { ShareDialog } from "@/components/share/ShareDialog";
 import { openTrackSheet } from "@/stores/tracking-sheet-store";
 import { TrackingStatusRow } from "@/components/tracking/TrackingStatusRow";
 import type { AddWatchlistItemRequest } from "@/types/watchlist";
+import type { PostDto } from "@/types/post";
 import type { TmdbMovieDetail, TmdbTvDetail } from "@/types/tmdb";
 
 type MediaDetail = TmdbMovieDetail & {
@@ -127,14 +123,24 @@ export function PosterDetailContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showComments, setShowComments] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [creatingAction, setCreatingAction] = useState<"post" | "trailer" | null>(null);
+  const [resolvedPostId, setResolvedPostId] = useState<number | null>(null);
+  const [isInteractionLoading, setIsInteractionLoading] = useState(false);
+  const createdPostIdRef = useRef<number | null>(null);
+
+  const { isLiked, isSaved, toggleLike, toggleSave } = useInteractions(
+    user?.userId
+  );
+
+  const commentPostId = resolvedPostId ?? id;
 
   const {
     comments,
     isLoading: commentsLoading,
     postComment,
     deleteComment,
-  } = useComments(id);
+  } = useComments(commentPostId);
 
   // Track viewing duration for this poster detail screen (matches Android InfoDto / POST /api/info/save)
   useViewDurationTracker(id, isMovie ? "movie" : "tv");
@@ -147,6 +153,8 @@ export function PosterDetailContent() {
     async function load() {
       setLoading(true);
       setError(null);
+      setResolvedPostId(null);
+      createdPostIdRef.current = null;
       try {
         const wantMovie = explicitIsMovie ?? true;
         let data: MediaDetail;
@@ -177,12 +185,40 @@ export function PosterDetailContent() {
     if (id) load();
   }, [id, explicitIsMovie, languageRegion]);
 
-  const createdPostIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!id || loading || !media) return;
+    let cancelled = false;
+    const type = isMovie ? "movie" : "tv";
+    apiClient<PostDto[]>(`/api/posts/by-tmdb/${languageRegion}`, {
+      method: "POST",
+      body: JSON.stringify([{ tmdbId: id, type }]),
+    })
+      .then((posts) => {
+        if (cancelled) return;
+        const match = (posts ?? []).find(
+          (post) =>
+            post?.tmdbId === id &&
+            post.type?.toLowerCase() === type &&
+            typeof post.postId === "number"
+        );
+        if (match?.postId != null) setResolvedPostId(match.postId);
+      })
+      .catch(() => {
+        if (!cancelled) setResolvedPostId(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, isMovie, languageRegion, loading, media]);
 
   // Creates a post/trailer for this media once (reused for both "View as Post"
   // and "Watch Trailer"), returning its id so the caller can open it.
   const ensurePost = useCallback(async (): Promise<number | null> => {
     if (createdPostIdRef.current != null) return createdPostIdRef.current;
+    if (resolvedPostId != null) {
+      createdPostIdRef.current = resolvedPostId;
+      return resolvedPostId;
+    }
     const videoKey = selectBestVideoKey(media?.videos);
     if (!videoKey || !media) return null;
     const title = isMovie
@@ -246,13 +282,14 @@ export function PosterDetailContent() {
       const postId = res?.postId ?? (res as { id?: number })?.id;
       if (typeof postId === "number") {
         createdPostIdRef.current = postId;
+        setResolvedPostId(postId);
         return postId;
       }
       return null;
     } catch {
       return null;
     }
-  }, [media, id, isMovie, languageRegion, language, region]);
+  }, [media, id, isMovie, languageRegion, language, region, resolvedPostId]);
 
   const handleViewAsPost = useCallback(async () => {
     // Guest mode: prompt sign-up instead of creating a post
@@ -284,12 +321,40 @@ export function PosterDetailContent() {
     }
   }, [ensurePost, router]);
 
-  // Guest-only gate: prompts sign-up; signed-in users pass through untouched
-  const handleGuestAction = useCallback(() => {
+  const resolveInteractionPostId = useCallback(async () => {
+    if (resolvedPostId != null) return resolvedPostId;
     if (!useAuthStore.getState().user) {
       useUiStore.getState().openSignupPrompt();
+      return null;
     }
-  }, []);
+    const postId = await ensurePost();
+    if (postId != null) setResolvedPostId(postId);
+    return postId;
+  }, [ensurePost, resolvedPostId]);
+
+  const handleLike = useCallback(async () => {
+    setIsInteractionLoading(true);
+    try {
+      const postId = await resolveInteractionPostId();
+      if (postId != null) toggleLike(postId);
+    } catch {
+      return;
+    } finally {
+      setIsInteractionLoading(false);
+    }
+  }, [resolveInteractionPostId, toggleLike]);
+
+  const handleShare = useCallback(async () => {
+    setIsInteractionLoading(true);
+    try {
+      const postId = await resolveInteractionPostId();
+      if (postId != null) setShowShare(true);
+    } catch {
+      return;
+    } finally {
+      setIsInteractionLoading(false);
+    }
+  }, [resolveInteractionPostId]);
 
   const watchlistCandidate = useMemo<AddWatchlistItemRequest | null>(() => {
     if (!media) return null;
@@ -315,6 +380,32 @@ export function PosterDetailContent() {
     if (!watchlistCandidate) return;
     openTrackSheet(watchlistCandidate);
   }, [watchlistCandidate]);
+
+  const handleTrackClick = useCallback(() => {
+    if (resolvedPostId != null && isSaved(resolvedPostId)) {
+      toggleSave(resolvedPostId);
+      return;
+    }
+    handleAddToWatchlist();
+    if (resolvedPostId != null) {
+      toggleSave(resolvedPostId);
+      return;
+    }
+    if (user) {
+      void resolveInteractionPostId()
+        .then((postId) => {
+          if (postId != null && !isSaved(postId)) toggleSave(postId);
+        })
+        .catch(() => {});
+    }
+  }, [
+    handleAddToWatchlist,
+    isSaved,
+    resolveInteractionPostId,
+    resolvedPostId,
+    toggleSave,
+    user,
+  ]);
 
   const videoKey = selectBestVideoKey(media?.videos);
   const hasVideo = !!videoKey;
@@ -417,13 +508,21 @@ export function PosterDetailContent() {
           <PosterActions
             creatingAction={creatingAction}
             hasVideo={hasVideo}
+            isLiked={resolvedPostId != null && isLiked(resolvedPostId)}
+            isSaved={resolvedPostId != null && isSaved(resolvedPostId)}
+            isLikeLoading={isInteractionLoading}
             onViewAsPost={handleViewAsPost}
             onWatchTrailer={handleWatchTrailer}
-            onAddToWatchlist={handleAddToWatchlist}
+            onLike={handleLike}
+            onAddToWatchlist={handleTrackClick}
+            onShare={handleShare}
           />
 
           {watchlistCandidate && !creatingAction && (
-            <TrackingStatusRow candidate={watchlistCandidate} />
+            <TrackingStatusRow
+              candidate={watchlistCandidate}
+              showEmptyState={false}
+            />
           )}
 
           <InfoCard
@@ -501,21 +600,6 @@ export function PosterDetailContent() {
           <WatchProviders regionProviders={regionProviders} />
 
           <OverviewCard overview={media.overview} />
-
-          {/* Share / Like / Save row */}
-          <div className="flex items-center gap-2 pt-4 border-t border-border">
-            <button onClick={handleGuestAction} className="btn-outline flex-1 h-10 gap-2">
-              <Heart className="h-4 w-4" />
-              Like
-            </button>
-            <button onClick={handleAddToWatchlist} className="btn-outline flex-1 h-10 gap-2">
-              <Bookmark className="h-4 w-4" />
-              Save
-            </button>
-            <button onClick={handleGuestAction} className="btn-outline h-10 w-10 p-0">
-              <Share2 className="h-4 w-4" />
-            </button>
-          </div>
         </div>
       </div>
 
@@ -587,9 +671,18 @@ export function PosterDetailContent() {
       {/* Comment bottom sheet */}
       {showComments && (
         <CommentBottomSheet
-          postId={id}
+          postId={commentPostId}
           onClose={() => setShowComments(false)}
           highlightCommentIds={highlightCommentIds}
+        />
+      )}
+
+      {showShare && resolvedPostId != null && (
+        <ShareDialog
+          postId={resolvedPostId}
+          postTitle={title}
+          postMediaType={isMovie ? "movie" : "tv"}
+          onClose={() => setShowShare(false)}
         />
       )}
 

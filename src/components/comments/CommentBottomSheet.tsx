@@ -32,6 +32,7 @@ export function CommentBottomSheet({
     isLoading,
     error,
     isPosting,
+    postError,
     replyCounts,
     repliesCache,
     visibleReplySections,
@@ -89,7 +90,11 @@ export function CommentBottomSheet({
 
   const handlePost = useCallback(async () => {
     if (!commentText.trim() || isPosting) return;
-    await postComment(commentText, replyingTo?.commentId ?? undefined);
+    const result = await postComment(
+      commentText,
+      replyingTo?.commentId ?? undefined
+    );
+    if (!result) return;
     setCommentText("");
     setReplyingTo(null);
   }, [commentText, isPosting, postComment, replyingTo]);
@@ -322,6 +327,12 @@ export function CommentBottomSheet({
               Cancel
             </button>
           </div>
+        )}
+
+        {postError && (
+          <p role="alert" className="px-4 pb-2 text-xs text-destructive">
+            {postError}
+          </p>
         )}
 
         {/* Input area */}

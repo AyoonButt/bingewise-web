@@ -75,7 +75,7 @@ export function GuestBanner() {
             >
               Create a free account
             </Link>{" "}
-            to like, save, and build watchlists.
+            to like, save, and build lists.
           </>
         )}
       </p>

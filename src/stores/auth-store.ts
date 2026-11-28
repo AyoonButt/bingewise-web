@@ -13,6 +13,7 @@ interface AuthState {
   user: UserDto | null;
   isAuthenticated: boolean;
   authStatus: AuthStatus;
+  sessionEpoch: number;
   tokenExpiresAt: number | null;
   loginTimestamp: number | null;
   lastActivityAt: number | null;
@@ -61,28 +62,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   authStatus: "restoring",
+  sessionEpoch: 0,
   tokenExpiresAt: null,
   loginTimestamp: null,
   lastActivityAt: null,
 
   setUser: (user) =>
-    set({
+    set((state) => ({
       user,
       isAuthenticated: !!user,
       authStatus: user ? "authenticated" : "guest",
-    }),
+      sessionEpoch: state.sessionEpoch + 1,
+    })),
 
   setSession: (user, tokenExpiresAt) => {
     saveSession(user, tokenExpiresAt);
     const now = Date.now();
-    set({
+    set((state) => ({
       user,
       isAuthenticated: true,
       authStatus: "authenticated",
+      sessionEpoch: state.sessionEpoch + 1,
       tokenExpiresAt,
       loginTimestamp: now,
       lastActivityAt: now,
-    });
+    }));
   },
 
   refreshSessionData: (user, tokenExpiresAt) => {
@@ -90,14 +94,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const loginTimestamp = session?.loginTimestamp ?? Date.now();
     const lastActivityAt = session?.lastActivityAt ?? Date.now();
     persistSession({ user, tokenExpiresAt, loginTimestamp, lastActivityAt });
-    set({
+    set((state) => ({
       user,
       isAuthenticated: true,
       authStatus: "authenticated",
+      sessionEpoch: state.sessionEpoch + 1,
       tokenExpiresAt,
       loginTimestamp,
       lastActivityAt,
-    });
+    }));
   },
 
   touchActivity: () => {
@@ -122,20 +127,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: () => {
     clearSession();
-    set({
+    set((state) => ({
       user: null,
       isAuthenticated: false,
       authStatus: "guest",
+      sessionEpoch: state.sessionEpoch + 1,
       tokenExpiresAt: null,
       loginTimestamp: null,
       lastActivityAt: null,
-    });
+    }));
   },
 
   restoreSession: () => {
     const session = loadSession();
     if (!session) {
-      set({ authStatus: "guest" });
+      // Keep the session in "restoring" until revalidation has decided whether
+      // httpOnly cookies still identify a user. Serving a guest feed on the
+      // first paint is what makes a resumed sign-up look like a guest session.
       return false;
     }
 
@@ -147,21 +155,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // httpOnly cookies decide whether the session is still valid.
     if (lastActivityAt > now + CLOCK_SKEW_TOLERANCE_MS) {
       clearSession();
-      set({
+      set((state) => ({
         user: null,
         isAuthenticated: false,
         authStatus: "guest",
+        sessionEpoch: state.sessionEpoch + 1,
         tokenExpiresAt: null,
         loginTimestamp: null,
         lastActivityAt: null,
-      });
+      }));
       return false;
     }
 
     const user = session.user;
     if (!user || !user.userId || !user.username || user.username === "undefined") {
       clearSession();
-      set({ authStatus: "guest" });
+      set((state) => ({
+        user: null,
+        isAuthenticated: false,
+        authStatus: "guest",
+        sessionEpoch: state.sessionEpoch + 1,
+        tokenExpiresAt: null,
+        loginTimestamp: null,
+        lastActivityAt: null,
+      }));
       return false;
     }
 
@@ -169,14 +186,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       user.name = user.username;
     }
 
-    set({
+    set((state) => ({
       user,
       isAuthenticated: true,
       authStatus: "authenticated",
+      sessionEpoch: state.sessionEpoch + 1,
       tokenExpiresAt: session.tokenExpiresAt,
       loginTimestamp: session.loginTimestamp,
       lastActivityAt,
-    });
+    }));
     return true;
   },
 }));

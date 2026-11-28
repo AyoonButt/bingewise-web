@@ -19,7 +19,7 @@ const navItems = [
   { href: "/explore", label: "Explore", icon: Compass },
   { href: "/search", label: "Search", icon: Search },
   { href: "/following", label: "Following", icon: Users },
-  { href: "/watchlists", label: "Watchlists", icon: Bookmark },
+  { href: "/watchlists", label: "Lists", icon: Bookmark },
 ];
 
 export function Sidebar() {

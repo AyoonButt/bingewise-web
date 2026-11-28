@@ -87,8 +87,8 @@ export function ShareDialog({
 
     if (watchlistTarget) {
       type = "WATCHLIST_SHARE";
-      title = "Shared watchlist";
-      message = `${user?.name ?? user?.username ?? "Someone"} shared the watchlist "${watchlistTarget.name}" with you`;
+      title = "Shared list";
+      message = `${user?.name ?? user?.username ?? "Someone"} shared the list "${watchlistTarget.name}" with you`;
       contentId = watchlistTarget.id;
       referenceId = watchlistTarget.id;
       mediaType = null;
@@ -104,23 +104,27 @@ export function ShareDialog({
       }
     }
 
-    await apiClient("/api/notifications/send", {
-      method: "POST",
-      body: JSON.stringify({
-        userId,
-        type,
-        title,
-        message,
-        referenceId,
-        contentId,
-        senderName: user?.name ?? user?.username ?? "",
-        senderUserId: user?.userId ?? 0,
-        posterUrl,
-        mediaType,
-        scheduledFor: null,
-      }),
-    });
-    setShared(true);
+    try {
+      await apiClient("/api/notifications/send", {
+        method: "POST",
+        body: JSON.stringify({
+          userId,
+          type,
+          title,
+          message,
+          referenceId,
+          contentId,
+          senderName: user?.name ?? user?.username ?? "",
+          senderUserId: user?.userId ?? 0,
+          posterUrl,
+          mediaType,
+          scheduledFor: null,
+        }),
+      });
+      setShared(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't share");
+    }
   };
 
   const handleCopyLink = async () => {

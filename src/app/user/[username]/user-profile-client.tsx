@@ -295,7 +295,7 @@ export default function UserProfileClient({ initialUser }: UserProfileClientProp
           <p className="text-center text-sm text-muted-foreground py-16">
             {isOwnProfile
               ? "You haven't created any watchlists yet"
-              : `${user.name} hasn't created any public watchlists`}
+              : `${user.name} hasn't created any public lists`}
           </p>
         ) : (
           <div className="space-y-3">

@@ -23,6 +23,7 @@ export function useComments(postId: number) {
   const [loadingReplies, setLoadingReplies] = useState<Set<number>>(new Set());
   const [deletingComments, setDeletingComments] = useState<Set<number>>(new Set());
   const [isPosting, setIsPosting] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
   const connectedRef = useRef(false);
 
   const fetchReplyCounts = useCallback(async (ids: number[]) => {
@@ -72,15 +73,15 @@ export function useComments(postId: number) {
       switch (event.type) {
         case "NEW_ROOT_COMMENT":
           if (event.commentId) {
-            apiClient<CommentDto>(`/api/comments/data/${event.commentId}`).then(
-              (newComment) => setComments((prev) => [newComment, ...prev])
-            );
+            apiClient<CommentDto>(`/api/comments/data/${event.commentId}`)
+              .then((newComment) => setComments((prev) => [newComment, ...prev]))
+              .catch(() => {});
           }
           break;
         case "NEW_REPLY":
           if (event.commentId && event.postId) {
-            apiClient<CommentDto>(`/api/comments/data/${event.commentId}`).then(
-              (newReply) => {
+            apiClient<CommentDto>(`/api/comments/data/${event.commentId}`)
+              .then((newReply) => {
                 const parentId = newReply.parentCommentId;
                 if (parentId) {
                   setRepliesCache((prev) => ({
@@ -93,8 +94,8 @@ export function useComments(postId: number) {
                     [parentId]: (prev[parentId] || 0) + 1,
                   }));
                 }
-              }
-            );
+              })
+              .catch(() => {});
           }
           break;
         case "REPLY_COUNT_UPDATE":
@@ -239,8 +240,9 @@ export function useComments(postId: number) {
       if (!user) {
         const { useUiStore } = await import("@/stores/ui-store");
         useUiStore.getState().openSignupPrompt();
-        return;
+        return null;
       }
+      setPostError(null);
       setIsPosting(true);
       try {
         const body: Record<string, unknown> = {
@@ -298,6 +300,11 @@ export function useComments(postId: number) {
           }
         }
         return res;
+      } catch (err) {
+        setPostError(
+          err instanceof Error ? err.message : "Couldn't post comment"
+        );
+        return null;
       } finally {
         setIsPosting(false);
       }
@@ -310,6 +317,7 @@ export function useComments(postId: number) {
     isLoading,
     error,
     isPosting,
+    postError,
     replyCounts,
     repliesCache,
     visibleReplySections,

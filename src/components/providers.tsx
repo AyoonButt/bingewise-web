@@ -119,50 +119,81 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+function authIdentity(state: ReturnType<typeof useAuthStore.getState>) {
+  if (state.user?.userId) return `user:${state.user.userId}`;
+  return state.authStatus === "guest" ? "guest" : null;
+}
+
 function AuthInitializer() {
   const sessionRestoredLogged = useRef(false);
 
   useEffect(() => {
     const { restoreSession } = useAuthStore.getState();
+    const queryClient = getQueryClient();
+    let identity = authIdentity(useAuthStore.getState());
+    const unsubscribe = useAuthStore.subscribe((state) => {
+      const nextIdentity = authIdentity(state);
+      if (nextIdentity === identity) return;
+      identity = nextIdentity;
+      // Cached feed/recommendation data is identity-specific. Clearing it on
+      // auth transitions prevents a new account from seeing the prior session's
+      // guest or user recommendations after login/register/logout.
+      queryClient.clear();
+    });
 
     restoreSession();
 
     const revalidate = async () => {
       const state = useAuthStore.getState();
+      const epoch = state.sessionEpoch;
       state.touchActivity();
 
       const result = await getRefreshResult();
+      const isStale = () => useAuthStore.getState().sessionEpoch !== epoch;
       if (result.status === "ok") {
-        if (result.user) {
+        if (result.user && !isStale()) {
           if (!sessionRestoredLogged.current) {
             analytics.logSessionRestored();
             sessionRestoredLogged.current = true;
           }
           let user = result.user;
-          // Auth responses don't include language/region; fetch them so
-          // content requests use the user's real locale (e.g. en-GB).
-          if (!user.language) {
-            const prefs = await apiClient<{
-              language: string;
-              region: string;
-            }>(`/api/users/${user.userId}/preferences`).catch(() => null);
-            if (prefs) {
-              user = { ...user, language: prefs.language, region: prefs.region };
+          // Auth responses often omit or lag behind language/region changes.
+          // Prefer the persisted preferences, then the locally refreshed user,
+          // so onboarding's locale survives a reload.
+          const prefs = await apiClient<{
+            language?: string;
+            region?: string;
+          }>(`/api/users/${user.userId}/preferences`).catch(() => null);
+          if (isStale()) return;
+          if (prefs?.language && prefs?.region) {
+            user = { ...user, language: prefs.language, region: prefs.region };
+          } else {
+            const current = useAuthStore.getState();
+            if (current.user?.userId === user.userId) {
+              user = {
+                ...user,
+                language: current.user.language ?? user.language,
+                region: current.user.region ?? user.region,
+              };
             }
           }
+          if (isStale()) return;
+          const current = useAuthStore.getState();
           const tokenExpiresAt =
             Date.now() + (result.expiresIn ?? DEFAULT_TOKEN_TTL_SECONDS) * 1000;
-          const current = useAuthStore.getState();
-          if (current.isAuthenticated) {
+          if (current.isAuthenticated && current.user?.userId === user.userId) {
             current.refreshSessionData(user, tokenExpiresAt);
-          } else {
+          } else if (!current.user) {
             current.setSession(user, tokenExpiresAt);
           }
+        } else if (!isStale() && !useAuthStore.getState().user) {
+          useAuthStore.getState().logout();
         }
         return;
       }
 
       if (result.status === "unauthorized") {
+        if (isStale()) return;
         const current = useAuthStore.getState();
         if (current.isAuthenticated) {
           await forceLogout();
@@ -170,7 +201,7 @@ function AuthInitializer() {
           current.logout();
         }
       }
-      if (result.status === "error") {
+      if (result.status === "error" && !isStale()) {
         analytics.logRefreshRetryableFailure();
       }
     };
@@ -195,6 +226,7 @@ function AuthInitializer() {
     window.addEventListener("storage", onStorage);
     return () => {
       clearInterval(interval);
+      unsubscribe();
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("storage", onStorage);
     };

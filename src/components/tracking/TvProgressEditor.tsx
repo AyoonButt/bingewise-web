@@ -45,13 +45,17 @@ export function TvProgressEditor({
 
   const save = async (nextSeason: number | null, nextEpisode: number | null) => {
     if ((nextSeason === null) !== (nextEpisode === null) || isSaving) return;
-    await upsert({
-      ...key,
-      status: "watching",
-      note: entry?.note ?? null,
-      lastSeason: nextSeason,
-      lastEpisode: nextEpisode,
-    });
+    try {
+      await upsert({
+        ...key,
+        status: "watching",
+        note: entry?.note ?? null,
+        lastSeason: nextSeason,
+        lastEpisode: nextEpisode,
+      });
+    } catch {
+      return;
+    }
     if (nextSeason !== null && nextEpisode !== null) {
       analytics.logTvProgressSaved(
         {

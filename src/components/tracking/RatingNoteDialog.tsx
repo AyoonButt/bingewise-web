@@ -73,14 +73,18 @@ export function RatingNoteDialog({
   const onSubmit = async (values: FormValues) => {
     const nextRating = values.rating > 0 ? values.rating : null;
     const nextNote = values.note.trim() || null;
-    await upsert({
-      ...key,
-      status: "watched",
-      rating: nextRating,
-      note: nextNote,
-      lastSeason: null,
-      lastEpisode: null,
-    });
+    try {
+      await upsert({
+        ...key,
+        status: "watched",
+        rating: nextRating,
+        note: nextNote,
+        lastSeason: null,
+        lastEpisode: null,
+      });
+    } catch {
+      return;
+    }
     const ref = {
       tmdbId: key.tmdbId,
       mediaType: key.mediaType,

@@ -46,7 +46,7 @@ const productLinks = [
   { label: "Feed", href: "/feed" },
   { label: "Explore", href: "/explore" },
   { label: "Search", href: "/search" },
-  { label: "Watchlists", href: "/watchlists" },
+  { label: "Lists", href: "/watchlists" },
   { label: "Following", href: "/following" },
 ];
 

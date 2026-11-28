@@ -633,8 +633,52 @@ test("guest vibe check posts mobile-shaped vibe-slate preferences", async ({ pag
 test("create account after guest setup saves the exact backend payload and lands on feed", async ({ page }) => {
   let profileSaved = false;
   let profilePayload: Record<string, unknown> | null = null;
+  let guestRecommendationCalls = 0;
+  let claimPayload: Record<string, unknown> | null = null;
+  const userFeedCalls: string[] = [];
   const removedEndpointCalls: string[] = [];
+  const feedResponse = {
+    posts: [post],
+    totalCount: 1,
+    recentCount: 1,
+    qualityCount: 0,
+    hasQualityFallback: false,
+    contentType: "recommendations",
+    nextCursor: null,
+    hasMore: false,
+  };
   await mockApi(page);
+  await page.route("**/api/backend/api/recommendations/guest*", (route) => {
+    guestRecommendationCalls += 1;
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ posts: [post], hasMore: false }),
+    });
+  });
+  await page.route("**/api/backend/api/recommendations/777/**", (route) => {
+    userFeedCalls.push(route.request().url());
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(feedResponse),
+    });
+  });
+  await page.route("**/api/backend/api/users/777/claim-onboarding", (route) => {
+    claimPayload = route.request().postDataJSON() as Record<string, unknown>;
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        userId: 777,
+        vectorStored: true,
+        swipeCount: 2,
+        positiveCount: 1,
+        negativeCount: 1,
+      }),
+    });
+  });
   await page.route("**/api/auth/register", (route) =>
     route.fulfill({
       status: 200,
@@ -680,6 +724,11 @@ test("create account after guest setup saves the exact backend payload and lands
     // 18 is already a hard avoid and must not be duplicated as soft.
     vibeSoftAvoidedGenres: [35, 18],
     vibeExcludedTmdbIds: [999, 999],
+    vibeDeckProgress: {
+      deck: [101, 102],
+      cursor: 2,
+      decisions: { 101: "liked", 102: "soft-avoid" },
+    },
     notificationsEnabled: false,
     isPrivateAccount: true,
     completedSteps: [
@@ -699,9 +748,23 @@ test("create account after guest setup saves the exact backend payload and lands
   await page.getByLabel("Username").fill("tester");
   await page.getByLabel("Email").fill("tester@example.com");
   await page.getByLabel("Password").fill("password123");
+  guestRecommendationCalls = 0;
   await page.getByRole("button", { name: /Create Account|Sign Up|Register/i }).click();
 
   await expect(page).toHaveURL(/\/feed/);
+  await expect.poll(() => userFeedCalls.length).toBeGreaterThan(0);
+  expect(userFeedCalls[0]).toContain("/api/recommendations/777/fr-FR");
+  expect(guestRecommendationCalls).toBe(0);
+  expect(claimPayload).toEqual({
+    preferences: {
+      providerIds: [8],
+      contentRatingAge: 13,
+    },
+    swipes: [
+      { tmdbId: 101, direction: "right" },
+      { tmdbId: 102, direction: "left" },
+    ],
+  });
   expect(profileSaved).toBe(true);
   // Exact match: no extra/mis-cased keys are accepted by the strict backend
   // ObjectMapper, and no value may be dropped or moved into the wrong field.

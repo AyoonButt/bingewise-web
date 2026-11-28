@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import {
   Bookmark,
   Check,
-  Heart,
+  Clock3,
   Loader2,
+  Play,
   Plus,
   Star,
   Trash2,
@@ -33,9 +34,9 @@ interface TrackSheetProps {
   onManageLists: () => void;
 }
 
-const STATUS_OPTIONS: { status: ViewingStatus; label: string; icon: typeof Heart }[] = [
-  { status: "want", label: "Want to watch", icon: Bookmark },
-  { status: "watching", label: "Watching", icon: Heart },
+const STATUS_OPTIONS: { status: ViewingStatus; label: string; icon: typeof Clock3 }[] = [
+  { status: "want", label: "Want to watch", icon: Clock3 },
+  { status: "watching", label: "Watching", icon: Play },
   { status: "watched", label: "Watched", icon: Check },
 ];
 
@@ -274,7 +275,7 @@ export function TrackSheet({ candidate, onClose, onManageLists }: TrackSheetProp
               </div>
             ) : watchlists.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-2">
-                No watchlists yet — create one below.
+                No lists yet — create one below.
               </p>
             ) : (
               <div className="space-y-1">
